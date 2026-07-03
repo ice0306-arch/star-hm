@@ -42,7 +42,7 @@ export const members: Member[] = [
     url: "https://www.sooplive.com/station/suhi370erw",
     linkLabel: "숲티비 채널 바로가기",
     order: 1,
-    avatar: "/members/hyukmin.webp",
+    avatar: "/members/hyukmin.jpg",
   },
   {
     id: "kangmin",
@@ -54,7 +54,7 @@ export const members: Member[] = [
     url: "https://www.sooplive.com/station/nalra82",
     linkLabel: "숲티비 채널 바로가기",
     order: 2,
-    avatar: "/members/kangmin.webp",
+    avatar: "/members/kangmin.jpg",
   },
   {
     id: "choi-hoseon",
@@ -66,7 +66,7 @@ export const members: Member[] = [
     url: "https://www.sooplive.com/station/ghtjs3833",
     linkLabel: "숲티비 채널 바로가기",
     order: 3,
-    avatar: "/members/choi-hoseon.webp",
+    avatar: "/members/choi-hoseon.jpg",
   },
   {
     id: "bang-taesu",
@@ -78,7 +78,7 @@ export const members: Member[] = [
     url: "https://www.sooplive.com/station/bts150",
     linkLabel: "숲티비 채널 바로가기",
     order: 4,
-    avatar: "/members/bang-taesu.webp",
+    avatar: "/members/bang-taesu.jpg",
   },
   {
     id: "park-junhyuk",
@@ -90,7 +90,7 @@ export const members: Member[] = [
     url: "https://www.sooplive.com/station/jhyhlli123",
     linkLabel: "숲티비 채널 바로가기",
     order: 5,
-    avatar: "/members/park-junhyuk.webp",
+    avatar: "/members/park-junhyuk.jpg",
   },
   {
     id: "kim-sungje",
@@ -102,7 +102,7 @@ export const members: Member[] = [
     url: "https://www.sooplive.com/station/erosrainbow",
     linkLabel: "숲티비 채널 바로가기",
     order: 6,
-    avatar: "/members/kim-sungje.webp",
+    avatar: "/members/kim-sungje.jpg",
   },
   {
     id: "pame",
@@ -114,7 +114,7 @@ export const members: Member[] = [
     url: "https://www.sooplive.com/station/heksd",
     linkLabel: "숲티비 채널 바로가기",
     order: 7,
-    avatar: "/members/pame.webp",
+    avatar: "/members/pame.jpg",
   },
   {
     id: "karis",
@@ -126,7 +126,7 @@ export const members: Member[] = [
     url: "https://www.sooplive.com/station/igoldtree",
     linkLabel: "숲티비 채널 바로가기",
     order: 8,
-    avatar: "/members/karis.webp",
+    avatar: "/members/karis.jpg",
   },
   {
     id: "sarange",
@@ -138,7 +138,7 @@ export const members: Member[] = [
     url: "https://www.sooplive.com/station/sr629",
     linkLabel: "숲티비 채널 바로가기",
     order: 9,
-    avatar: "/members/sarange.webp",
+    avatar: "/members/sarange.jpg",
   },
   {
     id: "seula",
@@ -150,7 +150,7 @@ export const members: Member[] = [
     url: "https://www.sooplive.com/station/ekfrqkf",
     linkLabel: "숲티비 채널 바로가기",
     order: 10,
-    avatar: "/members/seula.webp",
+    avatar: "/members/seula.jpg",
   },
   {
     id: "seoldungi",
@@ -162,7 +162,7 @@ export const members: Member[] = [
     url: "https://www.sooplive.com/station/snowssa",
     linkLabel: "숲티비 채널 바로가기",
     order: 11,
-    avatar: "/members/seoldungi.webp",
+    avatar: "/members/seoldungi.jpg",
   },
   {
     id: "yeonblbi",
@@ -174,7 +174,7 @@ export const members: Member[] = [
     url: "https://www.sooplive.com/station/ynblbee",
     linkLabel: "숲티비 채널 바로가기",
     order: 12,
-    avatar: "/members/yeonblbi.webp",
+    avatar: "/members/yeonblbi.jpg",
   },
   {
     id: "sasasam",
@@ -186,7 +186,7 @@ export const members: Member[] = [
     url: "https://www.sooplive.com/station/bangsong12",
     linkLabel: "숲티비 채널 바로가기",
     order: 13,
-    avatar: "/members/sasasam.webp",
+    avatar: "/members/sasasam.jpg",
   },
   {
     id: "sewol",
@@ -198,7 +198,7 @@ export const members: Member[] = [
     url: "https://www.sooplive.com/station/asdsa1113",
     linkLabel: "숲티비 채널 바로가기",
     order: 14,
-    avatar: "/members/sewol.webp",
+    avatar: "/members/sewol.jpg",
   },
   {
     id: "jeongyeon",
@@ -210,7 +210,7 @@ export const members: Member[] = [
     url: "https://www.sooplive.com/station/yeom1020",
     linkLabel: "숲티비 채널 바로가기",
     order: 15,
-    avatar: "/members/jeongyeon.webp",
+    avatar: "/members/jeongyeon.jpg",
   },
   {
     id: "ieungssi",
@@ -222,7 +222,7 @@ export const members: Member[] = [
     url: "https://www.sooplive.com/station/onzzang",
     linkLabel: "숲티비 채널 바로가기",
     order: 16,
-    avatar: "/members/ieungssi.webp",
+    avatar: "/members/ieungssi.jpg",
   },
   {
     id: "iara",
@@ -234,7 +234,7 @@ export const members: Member[] = [
     url: "https://www.sooplive.com/station/ara9687",
     linkLabel: "숲티비 채널 바로가기",
     order: 17,
-    avatar: "/members/iara.webp",
+    avatar: "/members/iara.jpg",
   },
 ];
 

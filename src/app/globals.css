@@ -251,6 +251,18 @@ button:focus-visible {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.028), rgba(255, 255, 255, 0.01));
 }
 
+#roster,
+#intel,
+#about,
+footer {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
+
+#roster {
+  contain-intrinsic-size: auto 1300px;
+}
+
 .theme-light .section-band {
   background: linear-gradient(180deg, rgba(16, 28, 40, 0.035), rgba(202, 163, 91, 0.035));
 }

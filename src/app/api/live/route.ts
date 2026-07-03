@@ -5,7 +5,8 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const SOOP_LIVE_URL = "https://live.sooplive.co.kr/afreeca/player_live_api.php";
-const LIVE_CACHE_TTL_MS = 15_000;
+const LIVE_CACHE_TTL_MS = 30_000;
+const LIVE_FETCH_TIMEOUT_MS = 3_500;
 
 type LiveState = "live" | "offline" | "unknown" | "unavailable";
 
@@ -98,6 +99,7 @@ async function fetchLiveStatus(member: Member): Promise<LiveStatus> {
     },
     body,
     cache: "no-store",
+    signal: AbortSignal.timeout(LIVE_FETCH_TIMEOUT_MS),
   });
 
   if (!response.ok) {
@@ -177,7 +179,7 @@ export async function GET() {
   const payload = await getLivePayload();
   return NextResponse.json(payload, {
     headers: {
-      "Cache-Control": "public, max-age=0, s-maxage=10, stale-while-revalidate=20",
+      "Cache-Control": "public, max-age=0, s-maxage=20, stale-while-revalidate=40",
     },
   });
 }

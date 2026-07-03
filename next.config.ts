@@ -39,10 +39,29 @@ const securityHeaders = [
   },
 ];
 
+const publicAssetHeaders = [
+  {
+    key: "Cache-Control",
+    value: "public, max-age=604800, stale-while-revalidate=86400",
+  },
+];
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   async headers() {
     return [
+      {
+        source: "/brand/:path*",
+        headers: [...securityHeaders, ...publicAssetHeaders],
+      },
+      {
+        source: "/members/:path*",
+        headers: [...securityHeaders, ...publicAssetHeaders],
+      },
+      {
+        source: "/audio/:path*",
+        headers: [...securityHeaders, ...publicAssetHeaders],
+      },
       {
         source: "/(.*)",
         headers: securityHeaders,

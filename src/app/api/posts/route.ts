@@ -5,10 +5,12 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const SOOP_CHANNEL_API = "https://api-channel.sooplive.com/v1.1/channel";
-const MAX_BOARDS_PER_MEMBER = 4;
-const MAX_POSTS_PER_BOARD = 5;
-const MAX_TOTAL_POSTS = 36;
-const POSTS_CACHE_TTL_MS = 60_000;
+const MAX_BOARDS_PER_MEMBER = 2;
+const MAX_POSTS_PER_BOARD = 4;
+const MAX_TOTAL_POSTS = 30;
+const POSTS_CACHE_TTL_MS = 90_000;
+const POSTS_FETCH_TIMEOUT_MS = 3_500;
+const MEMBER_POSTS_CONCURRENCY = 4;
 
 interface BoardMenu {
   bbsNo?: string | number;
@@ -69,6 +71,7 @@ async function fetchJson(url: string) {
       "user-agent": "Mozilla/5.0",
     },
     cache: "no-store",
+    signal: AbortSignal.timeout(POSTS_FETCH_TIMEOUT_MS),
   });
   if (!response.ok) {
     throw new Error(`SOOP ${response.status}`);
@@ -155,6 +158,27 @@ async function fetchMemberPosts(member: Member) {
   return settled.flatMap((item) => (item.status === "fulfilled" ? item.value : []));
 }
 
+async function fetchMembersPosts() {
+  const results: PostItem[][] = [];
+  let cursor = 0;
+
+  async function worker() {
+    while (cursor < orderedMembers.length) {
+      const index = cursor;
+      cursor += 1;
+
+      try {
+        results[index] = await fetchMemberPosts(orderedMembers[index]);
+      } catch {
+        results[index] = [];
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: MEMBER_POSTS_CONCURRENCY }, worker));
+  return results.flat();
+}
+
 function fallbackPosts(): PostItem[] {
   return orderedMembers.map((member) => {
     const soopId = getSoopId(member);
@@ -192,8 +216,7 @@ function sortPosts(posts: PostItem[]) {
 }
 
 async function buildPostsPayload() {
-  const settled = await Promise.allSettled(orderedMembers.map(fetchMemberPosts));
-  const posts = sortPosts(settled.flatMap((item) => (item.status === "fulfilled" ? item.value : [])));
+  const posts = sortPosts(await fetchMembersPosts());
   const fallback = posts.length === 0;
   const finalPosts = fallback ? fallbackPosts() : posts;
   return {
@@ -230,7 +253,7 @@ export async function GET() {
   const payload = await getPostsPayload();
   return NextResponse.json(payload, {
     headers: {
-      "Cache-Control": "public, max-age=0, s-maxage=60, stale-while-revalidate=120",
+      "Cache-Control": "public, max-age=0, s-maxage=90, stale-while-revalidate=180",
     },
   });
 }

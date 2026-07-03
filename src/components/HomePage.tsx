@@ -15,6 +15,7 @@ import {
 const ENTRY_KEY = "the-hm-entry-completed";
 const SOUND_KEY = "the-hm-sound-enabled";
 const THEME_KEY = "the-hm-theme-mode";
+const BRAND_EMBLEM_SRC = "/brand/hm-emblem.png";
 
 type TierFilter = "전체" | Exclude<BalanceTier, null>;
 type NoticeTierFilter = "전체" | "CHAIRMAN" | Exclude<BalanceTier, null>;
@@ -219,24 +220,28 @@ export function HomePage() {
   useEffect(() => {
     const controller = new AbortController();
 
-    async function loadActivity() {
+    async function loadLiveStatus() {
       try {
-        const [liveResponse, postsResponse] = await Promise.allSettled([
-          fetch("/api/live", { signal: controller.signal, cache: "no-store" }),
-          fetch("/api/posts", { signal: controller.signal, cache: "no-store" }),
-        ]);
+        const response = await fetch("/api/live", { signal: controller.signal });
 
-        if (liveResponse.status === "fulfilled" && liveResponse.value.ok) {
-          const payload = await liveResponse.value.json();
-          const nextStatuses = Object.fromEntries(
-            (payload.statuses ?? []).map((status: LiveStatus) => [status.memberId, status]),
+        if (response.ok) {
+          const payload = await response.json();
+          setLiveStatuses(
+            Object.fromEntries((payload.statuses ?? []).map((status: LiveStatus) => [status.memberId, status])),
           );
-          setLiveStatuses(nextStatuses);
           setActivityUpdatedAt(Number(payload.updatedAt || Date.now()));
         }
+      } catch {
+        return;
+      }
+    }
 
-        if (postsResponse.status === "fulfilled" && postsResponse.value.ok) {
-          const payload = await postsResponse.value.json();
+    async function loadPosts() {
+      try {
+        const response = await fetch("/api/posts", { signal: controller.signal });
+
+        if (response.ok) {
+          const payload = await response.json();
           setPosts(Array.isArray(payload.posts) ? payload.posts : []);
         }
       } catch {
@@ -246,9 +251,13 @@ export function HomePage() {
       }
     }
 
-    loadActivity();
+    loadLiveStatus();
+    const postsTimer = window.setTimeout(loadPosts, 300);
 
-    return () => controller.abort();
+    return () => {
+      window.clearTimeout(postsTimer);
+      controller.abort();
+    };
   }, []);
 
   const playEntrySound = async () => {
@@ -334,7 +343,15 @@ export function HomePage() {
 
           <div className="hero-emblem-wrap mx-auto w-full max-w-[430px]">
             <div className="hero-emblem-frame">
-              <img className="mx-auto h-auto w-full max-w-[360px]" src="/brand/hm-emblem.gif" alt="THE HM emblem" />
+              <img
+                className="mx-auto h-auto w-full max-w-[360px]"
+                src={BRAND_EMBLEM_SRC}
+                alt="THE HM emblem"
+                width={512}
+                height={512}
+                fetchPriority="high"
+                decoding="async"
+              />
             </div>
             <div className="mt-5 text-center text-xs font-semibold uppercase tracking-[0.34em] text-steel/80">
               Strategic hierarchy protocol
@@ -476,7 +493,15 @@ function Header({
     <header className="fixed left-0 right-0 top-0 z-40 border-b border-white/10 bg-carbon/82 backdrop-blur-xl">
       <nav className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-10" aria-label="Primary navigation">
         <a className="flex items-center gap-3 text-white" href="#team" onClick={() => setIsMenuOpen(false)}>
-          <img className="h-12 w-12 object-contain" src="/brand/hm-emblem.gif" alt="THE HM emblem" />
+          <img
+            className="h-12 w-12 object-contain"
+            src={BRAND_EMBLEM_SRC}
+            alt="THE HM emblem"
+            width={48}
+            height={48}
+            loading="eager"
+            decoding="async"
+          />
           <span className="text-sm font-black uppercase tracking-[0.24em]">THE HM</span>
         </a>
 
@@ -525,7 +550,15 @@ function EntryOverlay({
   return (
     <div className="entry-overlay" role="dialog" aria-modal="true" aria-labelledby="entry-title">
       <div className="entry-panel">
-        <img className="mx-auto h-auto w-44 sm:w-56" src="/brand/hm-emblem.gif" alt="THE HM emblem" />
+        <img
+          className="mx-auto h-auto w-44 sm:w-56"
+          src={BRAND_EMBLEM_SRC}
+          alt="THE HM emblem"
+          width={224}
+          height={224}
+          loading="eager"
+          decoding="async"
+        />
         <h2 id="entry-title" className="mt-6 text-4xl font-black uppercase tracking-[0.18em] text-white sm:text-6xl">
           THE HM
         </h2>
@@ -680,7 +713,15 @@ function MemberAvatar({
   return (
     <span className={`${compact ? "profile-avatar compact" : "profile-avatar"} ${member.avatar ? "has-image" : ""} ${raceClass(member.race)} ${isLive ? "is-live" : ""}`} aria-hidden="true">
       {member.avatar ? (
-        <img className="profile-avatar-image" src={member.avatar} alt="" loading="lazy" />
+        <img
+          className="profile-avatar-image"
+          src={member.avatar}
+          alt=""
+          width={compact ? 46 : 58}
+          height={compact ? 46 : 58}
+          loading="lazy"
+          decoding="async"
+        />
       ) : (
         <>
           <RaceIcon race={member.race} className="profile-avatar-mark" />
@@ -954,7 +995,15 @@ function Footer({
     <footer className="border-t border-white/10 px-5 py-10 sm:px-8 lg:px-10">
       <div className="mx-auto flex max-w-7xl flex-col gap-6 text-sm text-steel sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <img className="h-14 w-14 object-contain" src="/brand/hm-emblem.gif" alt="THE HM emblem" />
+          <img
+            className="h-14 w-14 object-contain"
+            src={BRAND_EMBLEM_SRC}
+            alt="THE HM emblem"
+            width={56}
+            height={56}
+            loading="lazy"
+            decoding="async"
+          />
           <div className="mt-3 font-black uppercase tracking-[0.2em] text-white">THE HM STARCRAFT TEAM</div>
           <p className="mt-2">Independent community team site. Not affiliated with Blizzard Entertainment.</p>
           <p className="mt-1 text-xs text-steel/70">Copyright 2026 THE HM. All rights reserved.</p>

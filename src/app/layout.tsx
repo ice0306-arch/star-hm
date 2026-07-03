@@ -16,10 +16,11 @@ export const metadata: Metadata = {
     title: "THE HM | StarCraft Team Roster",
     description: "THE HM의 직책, 밸런스 티어, 종족별 로스터를 확인하세요.",
     type: "website",
-    images: ["/brand/hm-emblem.gif"],
+    images: ["/brand/hm-emblem.png"],
   },
   icons: {
-    icon: "/brand/hm-emblem.gif",
+    icon: "/brand/hm-emblem-icon.png",
+    apple: "/brand/hm-emblem-icon.png",
   },
 };
 
