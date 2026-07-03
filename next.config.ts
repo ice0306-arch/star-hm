@@ -6,25 +6,6 @@ const securityHeaders = [
     value: "max-age=63072000; includeSubDomains; preload",
   },
   {
-    key: "Content-Security-Policy",
-    value: [
-      "default-src 'self'",
-      "base-uri 'self'",
-      "object-src 'none'",
-      "frame-ancestors 'none'",
-      "form-action 'self'",
-      "script-src 'self' 'unsafe-inline'",
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https:",
-      "font-src 'self' data:",
-      "media-src 'self'",
-      "connect-src 'self'",
-      "worker-src 'self' blob:",
-      "manifest-src 'self'",
-      "upgrade-insecure-requests",
-    ].join("; "),
-  },
-  {
     key: "X-Content-Type-Options",
     value: "nosniff",
   },
@@ -51,6 +32,10 @@ const securityHeaders = [
   {
     key: "X-DNS-Prefetch-Control",
     value: "on",
+  },
+  {
+    key: "Access-Control-Allow-Origin",
+    value: "https://star-hm.vercel.app",
   },
 ];
 

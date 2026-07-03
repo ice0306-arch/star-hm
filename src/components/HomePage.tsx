@@ -958,6 +958,17 @@ function Footer({
           <div className="mt-3 font-black uppercase tracking-[0.2em] text-white">THE HM STARCRAFT TEAM</div>
           <p className="mt-2">Independent community team site. Not affiliated with Blizzard Entertainment.</p>
           <p className="mt-1 text-xs text-steel/70">Copyright 2026 THE HM. All rights reserved.</p>
+          <nav className="mt-4 flex flex-wrap gap-4 text-xs font-bold uppercase tracking-[0.14em]" aria-label="Legal navigation">
+            <a className="footer-link" href="/privacy">
+              Privacy
+            </a>
+            <a className="footer-link" href="/terms">
+              Terms
+            </a>
+            <a className="footer-link" href="/contact">
+              Contact
+            </a>
+          </nav>
         </div>
         {entryOverlayEnabled ? (
           <button className="replay-button" type="button" onClick={onReplayIntro}>
