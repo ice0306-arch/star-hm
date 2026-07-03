@@ -959,11 +959,11 @@ function Footer({
           <p className="mt-2">Independent community team site. Not affiliated with Blizzard Entertainment.</p>
           <p className="mt-1 text-xs text-steel/70">Copyright 2026 THE HM. All rights reserved.</p>
           <nav className="mt-4 flex flex-wrap gap-4 text-xs font-bold uppercase tracking-[0.14em]" aria-label="Legal navigation">
-            <a className="footer-link" href="/privacy">
-              Privacy
+            <a className="footer-link" href="/privacy-policy">
+              Privacy Policy
             </a>
-            <a className="footer-link" href="/terms">
-              Terms
+            <a className="footer-link" href="/terms-of-service">
+              Terms of Service
             </a>
             <a className="footer-link" href="/contact">
               Contact
