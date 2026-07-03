@@ -4,3 +4,5 @@ out/
 .env*.local
 *.tsbuildinfo
 work/
+.vercel
+.env*
