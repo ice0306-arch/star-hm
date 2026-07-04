@@ -16,7 +16,7 @@ const ENTRY_KEY = "the-hm-entry-completed";
 const SOUND_KEY = "the-hm-sound-enabled";
 const THEME_KEY = "the-hm-theme-mode";
 const BRAND_EMBLEM_SRC = "/brand/hm-emblem.png";
-const BRAND_EMBLEM_ANIMATED_SRC = "/brand/hm-emblem-animated.gif";
+const BRAND_EMBLEM_ANIMATED_SRC = "/brand/hm-emblem.gif";
 
 type NoticeTierFilter = "전체" | "CHAIRMAN" | Exclude<BalanceTier, null>;
 type RaceFilter = "전체" | Race;
