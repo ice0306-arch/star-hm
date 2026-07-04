@@ -1110,6 +1110,18 @@ footer {
   color: currentColor;
 }
 
+.race-chip.race-all {
+  color: rgba(214, 216, 210, 0.86);
+}
+
+.race-chip-dot {
+  width: 0.62rem;
+  height: 0.62rem;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 4px rgba(214, 216, 210, 0.08);
+}
+
 .activity-layout {
   display: grid;
   grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
@@ -1483,6 +1495,44 @@ footer {
 
 .intel-panel {
   padding: clamp(1rem, 2vw, 1.25rem);
+}
+
+.race-intel-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  padding-bottom: 0.9rem;
+}
+
+.race-intel-head strong {
+  display: block;
+  margin-top: 0.25rem;
+  color: white;
+  font-size: 1.05rem;
+  font-weight: 950;
+}
+
+.race-intel-head > span {
+  flex: 0 0 auto;
+  border: 1px solid rgba(202, 163, 91, 0.28);
+  border-radius: 4px;
+  padding: 0.34rem 0.5rem;
+  color: var(--gold);
+  font-size: 0.68rem;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.filter-chip-grid.race-only {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.filter-chip-grid.race-only .filter-chip {
+  justify-content: center;
 }
 
 .intel-list {
@@ -1984,6 +2034,20 @@ footer {
 
   .notice-filter-state {
     justify-content: space-between;
+  }
+
+  .race-intel-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .filter-chip-grid.race-only {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filter-chip-grid.race-only .filter-chip {
+    min-height: 40px;
+    padding: 0.5rem 0.55rem;
   }
 
   .live-list,

@@ -16,11 +16,10 @@ const ENTRY_KEY = "the-hm-entry-completed";
 const SOUND_KEY = "the-hm-sound-enabled";
 const THEME_KEY = "the-hm-theme-mode";
 const BRAND_EMBLEM_SRC = "/brand/hm-emblem.png";
+const BRAND_EMBLEM_ANIMATED_SRC = "/brand/hm-emblem-animated.gif";
 
-type TierFilter = "전체" | Exclude<BalanceTier, null>;
 type NoticeTierFilter = "전체" | "CHAIRMAN" | Exclude<BalanceTier, null>;
 type RaceFilter = "전체" | Race;
-type IntelMode = "tier" | "race";
 type LiveState = "checking" | "live" | "offline" | "unknown" | "unavailable";
 type ThemeMode = "dark" | "light";
 
@@ -114,9 +113,7 @@ export function HomePage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showEntry, setShowEntry] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [activeTier, setActiveTier] = useState<TierFilter>("전체");
   const [activeRace, setActiveRace] = useState<RaceFilter>("전체");
-  const [activeIntel, setActiveIntel] = useState<IntelMode>("tier");
   const [liveStatuses, setLiveStatuses] = useState<Record<string, LiveStatus>>({});
   const [activityUpdatedAt, setActivityUpdatedAt] = useState<number | null>(null);
   const [posts, setPosts] = useState<PostItem[]>([]);
@@ -127,11 +124,6 @@ export function HomePage() {
 
   const entryOverlayEnabled = process.env.NEXT_PUBLIC_ENABLE_ENTRY_OVERLAY !== "false";
   const forceEntryOverlay = process.env.NEXT_PUBLIC_FORCE_ENTRY_OVERLAY === "true";
-
-  const tierCounts = useMemo(
-    () => countBy(orderedMembers, (member) => member.balanceTier),
-    [],
-  );
 
   const raceCounts = useMemo(
     () => countBy(orderedMembers, (member) => member.race),
@@ -159,18 +151,11 @@ export function HomePage() {
   const activePosts = posts.length ? posts : fallbackPosts;
 
   const filteredIntelMembers = useMemo(() => {
-    if (activeIntel === "tier") {
-      if (activeTier === "전체") {
-        return orderedMembers;
-      }
-      return orderedMembers.filter((member) => member.balanceTier === activeTier);
-    }
-
     if (activeRace === "전체") {
       return orderedMembers;
     }
     return orderedMembers.filter((member) => member.race === activeRace);
-  }, [activeIntel, activeRace, activeTier]);
+  }, [activeRace]);
 
   const filteredPosts = useMemo(() => {
     return activePosts.filter((post) => {
@@ -345,10 +330,10 @@ export function HomePage() {
             <div className="hero-emblem-frame">
               <img
                 className="mx-auto h-auto w-full max-w-[360px]"
-                src={BRAND_EMBLEM_SRC}
+                src={BRAND_EMBLEM_ANIMATED_SRC}
                 alt="THE HM emblem"
-                width={512}
-                height={512}
+                width={288}
+                height={288}
                 fetchPriority="high"
                 decoding="async"
               />
@@ -414,47 +399,28 @@ export function HomePage() {
         <div className="mx-auto max-w-7xl">
           <SectionHeader
             eyebrow="INTEL"
-            title="ROSTER INTEL"
-            description="길게 나뉘던 Tier와 Race 필터를 하나의 전술 패널로 압축했습니다."
+            title="RACE INTEL"
+            description="종족별 멤버 구성을 빠르게 볼 수 있도록 정리했습니다."
           />
           <div className="intel-panel mt-8">
-            <div className="segmented-control" role="tablist" aria-label="Roster filter mode">
-              <button className={activeIntel === "tier" ? "is-active" : ""} type="button" role="tab" aria-selected={activeIntel === "tier"} onClick={() => setActiveIntel("tier")}>
-                Tier
-              </button>
-              <button className={activeIntel === "race" ? "is-active" : ""} type="button" role="tab" aria-selected={activeIntel === "race"} onClick={() => setActiveIntel("race")}>
-                Race
-              </button>
+            <div className="race-intel-head">
+              <div>
+                <span className="panel-kicker">RACE FILTER</span>
+                <strong>{activeRace === "전체" ? "전체 종족" : activeRace}</strong>
+              </div>
+              <span>{filteredIntelMembers.length} members</span>
             </div>
-            <div className="filter-chip-grid mt-6">
-              {activeIntel === "tier" ? (
-                <>
-                  <FilterChip label="전체" count={orderedMembers.length} active={activeTier === "전체"} onClick={() => setActiveTier("전체")} />
-                  {balanceTiers.map((tier) => (
-                    <FilterChip
-                      key={tier}
-                      label={tier}
-                      count={tierCounts[tier] ?? 0}
-                      active={activeTier === tier}
-                      featured={specialTiers.has(tier)}
-                      onClick={() => setActiveTier(tier)}
-                    />
-                  ))}
-                </>
-              ) : (
-                <>
-                  <FilterChip label="전체" count={orderedMembers.length} active={activeRace === "전체"} onClick={() => setActiveRace("전체")} />
-                  {races.map((race) => (
-                    <RaceChip
-                      key={race}
-                      race={race}
-                      count={raceCounts[race] ?? 0}
-                      active={activeRace === race}
-                      onClick={() => setActiveRace(race)}
-                    />
-                  ))}
-                </>
-              )}
+            <div className="filter-chip-grid race-only mt-5" aria-label="Race filter">
+              <RaceChip race="전체" count={orderedMembers.length} active={activeRace === "전체"} onClick={() => setActiveRace("전체")} />
+              {races.map((race) => (
+                <RaceChip
+                  key={race}
+                  race={race}
+                  count={raceCounts[race] ?? 0}
+                  active={activeRace === race}
+                  onClick={() => setActiveRace(race)}
+                />
+              ))}
             </div>
             <div className="mt-6">
               <IntelMemberList members={filteredIntelMembers} liveStatuses={liveStatuses} />
@@ -552,10 +518,10 @@ function EntryOverlay({
       <div className="entry-panel">
         <img
           className="mx-auto h-auto w-44 sm:w-56"
-          src={BRAND_EMBLEM_SRC}
+          src={BRAND_EMBLEM_ANIMATED_SRC}
           alt="THE HM emblem"
-          width={224}
-          height={224}
+          width={288}
+          height={288}
           loading="eager"
           decoding="async"
         />
@@ -943,33 +909,7 @@ function IdentityTags({ member }: { member: Member }) {
   );
 }
 
-function FilterChip({
-  label,
-  count,
-  active,
-  featured = false,
-  onClick,
-}: {
-  label: TierFilter;
-  count: number;
-  active: boolean;
-  featured?: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      className={active ? "filter-chip is-active" : featured ? "filter-chip is-featured" : "filter-chip"}
-      type="button"
-      data-filter-value={label}
-      onClick={onClick}
-    >
-      <span>{label}</span>
-      <span>{count}</span>
-    </button>
-  );
-}
-
-function RaceChip({ race, count, active, onClick }: { race: Race; count: number; active: boolean; onClick: () => void }) {
+function RaceChip({ race, count, active, onClick }: { race: RaceFilter; count: number; active: boolean; onClick: () => void }) {
   return (
     <button
       className={active ? `filter-chip race-chip is-active ${raceClass(race)}` : `filter-chip race-chip ${raceClass(race)}`}
@@ -977,7 +917,7 @@ function RaceChip({ race, count, active, onClick }: { race: Race; count: number;
       data-race-value={race}
       onClick={onClick}
     >
-      <RaceIcon race={race} className="h-5 w-5" />
+      {race === "전체" ? <span className="race-chip-dot" aria-hidden="true" /> : <RaceIcon race={race} className="h-5 w-5" />}
       <span>{race}</span>
       <span>{count}</span>
     </button>
@@ -1183,7 +1123,10 @@ function identityRaceClass(race: Race) {
   return `identity-tag tag-race ${raceClass(race)}`;
 }
 
-function raceClass(race: Race) {
+function raceClass(race: RaceFilter) {
+  if (race === "전체") {
+    return "race-all";
+  }
   if (race === "Protoss") {
     return "race-protoss";
   }
