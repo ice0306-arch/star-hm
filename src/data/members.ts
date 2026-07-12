@@ -177,18 +177,6 @@ export const members: Member[] = [
     avatar: "/members/yeonblbi.jpg",
   },
   {
-    id: "sasasam",
-    name: "사사삼",
-    role: "학생",
-    group: "student",
-    balanceTier: "7티어",
-    race: "Protoss",
-    url: "https://www.sooplive.com/station/bangsong12",
-    linkLabel: "숲티비 채널 바로가기",
-    order: 13,
-    avatar: "/members/sasasam.jpg",
-  },
-  {
     id: "sewol",
     name: "세월",
     role: "학생",
