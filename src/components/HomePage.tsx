@@ -1019,7 +1019,7 @@ function statusMessage(state?: LiveState) {
     return "외부 페이지 연결";
   }
   if (state === "unknown") {
-    return "상태 확인 실패";
+    return "상태 확인 지연";
   }
   return "온라인 상태 확인중";
 }
