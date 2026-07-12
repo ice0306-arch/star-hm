@@ -93,18 +93,6 @@ export const members: Member[] = [
     avatar: "/members/park-junhyuk.jpg",
   },
   {
-    id: "kim-sungje",
-    name: "김성제",
-    role: "교수",
-    group: "faculty-coach",
-    balanceTier: "Spade",
-    race: "Protoss",
-    url: "https://www.sooplive.com/station/erosrainbow",
-    linkLabel: "숲티비 채널 바로가기",
-    order: 6,
-    avatar: "/members/kim-sungje.jpg",
-  },
-  {
     id: "pame",
     name: "파메",
     role: "코치",
