@@ -177,18 +177,6 @@ export const members: Member[] = [
     avatar: "/members/sewol.jpg",
   },
   {
-    id: "jeongyeon",
-    name: "정연이",
-    role: "학생",
-    group: "student",
-    balanceTier: "8티어",
-    race: "Protoss",
-    url: "https://www.sooplive.com/station/yeom1020",
-    linkLabel: "숲티비 채널 바로가기",
-    order: 15,
-    avatar: "/members/jeongyeon.jpg",
-  },
-  {
     id: "ieungssi",
     name: "이응씨",
     role: "학생",
