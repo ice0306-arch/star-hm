@@ -121,6 +121,7 @@ export function HomePage() {
   const [activePostTier, setActivePostTier] = useState<NoticeTierFilter>("전체");
   const [activePostMember, setActivePostMember] = useState("전체");
   const [themeMode, setThemeMode] = useState<ThemeMode>("dark");
+  const [hasCompletedEntry, setHasCompletedEntry] = useState(true);
 
   const entryOverlayEnabled = process.env.NEXT_PUBLIC_ENABLE_ENTRY_OVERLAY !== "false";
   const forceEntryOverlay = process.env.NEXT_PUBLIC_FORCE_ENTRY_OVERLAY === "true";
@@ -192,12 +193,15 @@ export function HomePage() {
     setSoundEnabled(readStorage(SOUND_KEY) !== "false");
     setThemeMode(readStorage(THEME_KEY) === "light" ? "light" : "dark");
 
+    const completed = readStorage(ENTRY_KEY) === "true";
+    setHasCompletedEntry(entryOverlayEnabled ? completed : true);
+
     if (!entryOverlayEnabled) {
       return;
     }
 
-    const completed = readStorage(ENTRY_KEY) === "true";
     if (forceEntryOverlay || !completed) {
+      setHasCompletedEntry(false);
       setShowEntry(true);
     }
   }, [entryOverlayEnabled, forceEntryOverlay]);
@@ -262,6 +266,7 @@ export function HomePage() {
   const handleEnter = async () => {
     await playEntrySound();
     writeStorage(ENTRY_KEY, "true");
+    setHasCompletedEntry(true);
     setShowEntry(false);
   };
 
@@ -271,6 +276,7 @@ export function HomePage() {
     }
 
     removeStorage(ENTRY_KEY);
+    setHasCompletedEntry(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
     setShowEntry(true);
   };
@@ -297,57 +303,66 @@ export function HomePage() {
         <EntryOverlay onEnter={handleEnter} soundEnabled={soundEnabled} onSoundToggle={handleSoundToggle} />
       ) : null}
 
-      <Header isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
+      <Header
+        isMenuOpen={isMenuOpen}
+        setIsMenuOpen={setIsMenuOpen}
+        homeHref={hasCompletedEntry ? "#activity" : "#team"}
+        items={hasCompletedEntry ? navItems.filter((item) => item.href !== "#team") : navItems}
+      />
 
-      <section id="team" className="hero-shell relative isolate flex min-h-[92vh] items-center px-5 pt-24 sm:px-8 lg:px-10">
-        <div className="mx-auto grid w-full max-w-7xl gap-10 py-14 lg:grid-cols-[1fr_0.86fr] lg:items-center">
-          <div className="max-w-3xl">
-            <div className="mb-7 inline-flex items-center gap-3 border border-gold/35 bg-gold/10 px-3 py-2 text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-gold">
-              <span className="h-1.5 w-1.5 bg-gold" />
-              Premium esports institution
-            </div>
-            <h1 className="text-[clamp(3.25rem,12vw,8.7rem)] font-black uppercase leading-[0.84] tracking-0 text-white">
-              THE HM
-            </h1>
-            <p className="mt-5 text-sm font-semibold uppercase tracking-[0.42em] text-steel sm:text-base">
-              StarCraft Team Roster
-            </p>
-            <p className="mt-7 max-w-2xl text-balance text-lg leading-8 text-silver/84 sm:text-xl">
-              전략, 성장, 그리고 팀워크로 완성되는 스타크래프트 팀 THE HM
-            </p>
-            <div className="mt-9 flex flex-wrap gap-3">
-              <a className="command-button command-button-primary" href="#activity">
-                LIVE STATUS
-              </a>
-              <a className="command-button" href="#roster">
-                VIEW ROSTER
-              </a>
-            </div>
-            <StatsGrid stats={stats} className="mt-8 lg:hidden" />
-          </div>
+      {!hasCompletedEntry ? (
+        <>
+          <section id="team" className="hero-shell relative isolate flex min-h-[92vh] items-center px-5 pt-24 sm:px-8 lg:px-10">
+            <div className="mx-auto grid w-full max-w-7xl gap-10 py-14 lg:grid-cols-[1fr_0.86fr] lg:items-center">
+              <div className="max-w-3xl">
+                <div className="mb-7 inline-flex items-center gap-3 border border-gold/35 bg-gold/10 px-3 py-2 text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-gold">
+                  <span className="h-1.5 w-1.5 bg-gold" />
+                  Premium esports institution
+                </div>
+                <h1 className="text-[clamp(3.25rem,12vw,8.7rem)] font-black uppercase leading-[0.84] tracking-0 text-white">
+                  THE HM
+                </h1>
+                <p className="mt-5 text-sm font-semibold uppercase tracking-[0.42em] text-steel sm:text-base">
+                  StarCraft Team Roster
+                </p>
+                <p className="mt-7 max-w-2xl text-balance text-lg leading-8 text-silver/84 sm:text-xl">
+                  전략, 성장, 그리고 팀워크로 완성되는 스타크래프트 팀 THE HM
+                </p>
+                <div className="mt-9 flex flex-wrap gap-3">
+                  <a className="command-button command-button-primary" href="#activity">
+                    LIVE STATUS
+                  </a>
+                  <a className="command-button" href="#roster">
+                    VIEW ROSTER
+                  </a>
+                </div>
+                <StatsGrid stats={stats} className="mt-8 lg:hidden" />
+              </div>
 
-          <div className="hero-emblem-wrap mx-auto w-full max-w-[430px]">
-            <div className="hero-emblem-frame">
-              <img
-                className="mx-auto h-auto w-full max-w-[360px]"
-                src={BRAND_EMBLEM_ANIMATED_SRC}
-                alt="THE HM emblem"
-                width={288}
-                height={288}
-                fetchPriority="high"
-                decoding="async"
-              />
+              <div className="hero-emblem-wrap mx-auto w-full max-w-[430px]">
+                <div className="hero-emblem-frame">
+                  <img
+                    className="mx-auto h-auto w-full max-w-[360px]"
+                    src={BRAND_EMBLEM_ANIMATED_SRC}
+                    alt="THE HM emblem"
+                    width={288}
+                    height={288}
+                    fetchPriority="high"
+                    decoding="async"
+                  />
+                </div>
+                <div className="mt-5 text-center text-xs font-semibold uppercase tracking-[0.34em] text-steel/80">
+                  Strategic hierarchy protocol
+                </div>
+              </div>
             </div>
-            <div className="mt-5 text-center text-xs font-semibold uppercase tracking-[0.34em] text-steel/80">
-              Strategic hierarchy protocol
-            </div>
-          </div>
-        </div>
-      </section>
+          </section>
 
-      <section aria-label="Team statistics" className="hidden px-5 pb-12 sm:px-8 lg:block lg:px-10">
-        <StatsGrid stats={stats} className="mx-auto max-w-7xl" />
-      </section>
+          <section aria-label="Team statistics" className="hidden px-5 pb-12 sm:px-8 lg:block lg:px-10">
+            <StatsGrid stats={stats} className="mx-auto max-w-7xl" />
+          </section>
+        </>
+      ) : null}
 
       <section id="activity" className="activity-priority section-band px-5 py-20 sm:px-8 lg:px-10">
         <div className="mx-auto max-w-7xl">
@@ -451,14 +466,18 @@ export function HomePage() {
 function Header({
   isMenuOpen,
   setIsMenuOpen,
+  homeHref,
+  items,
 }: {
   isMenuOpen: boolean;
   setIsMenuOpen: (value: boolean) => void;
+  homeHref: string;
+  items: typeof navItems;
 }) {
   return (
     <header className="fixed left-0 right-0 top-0 z-40 border-b border-white/10 bg-carbon/82 backdrop-blur-xl">
       <nav className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-10" aria-label="Primary navigation">
-        <a className="flex items-center gap-3 text-white" href="#team" onClick={() => setIsMenuOpen(false)}>
+        <a className="flex items-center gap-3 text-white" href={homeHref} onClick={() => setIsMenuOpen(false)}>
           <img
             className="h-12 w-12 object-contain"
             src={BRAND_EMBLEM_SRC}
@@ -485,7 +504,7 @@ function Header({
         </button>
 
         <div className="hidden items-center gap-7 md:flex">
-          {navItems.map((item) => (
+          {items.map((item) => (
             <a key={item.href} className="nav-link" href={item.href}>
               {item.label}
             </a>
@@ -494,7 +513,7 @@ function Header({
       </nav>
 
       <div id="mobile-menu" className={isMenuOpen ? "mobile-menu is-open" : "mobile-menu"} aria-hidden={!isMenuOpen}>
-        {navItems.map((item) => (
+        {items.map((item) => (
           <a key={item.href} href={item.href} onClick={() => setIsMenuOpen(false)}>
             {item.label}
           </a>
