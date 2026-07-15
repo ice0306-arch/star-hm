@@ -525,21 +525,28 @@ footer {
   display: flex;
   width: 100%;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 0.45rem;
+  flex-wrap: nowrap;
+  gap: 0.32rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding-top: 0.9rem;
   color: var(--silver);
-  font-size: 0.86rem;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: clamp(0.68rem, 1.7vw, 0.84rem);
   font-weight: 900;
 }
 
 .member-card-link a {
   display: inline-flex;
+  min-width: 0;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.24rem;
   color: inherit;
   transition: color 140ms ease;
+}
+
+.member-card-link a span {
+  flex: 0 0 auto;
 }
 
 .member-card-link a:hover {
@@ -547,6 +554,7 @@ footer {
 }
 
 .member-card-link-divider {
+  flex: 0 0 auto;
   color: rgba(214, 216, 210, 0.34);
 }
 
