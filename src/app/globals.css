@@ -522,10 +522,11 @@ footer {
   position: relative;
   z-index: 1;
   margin-top: 1.35rem;
-  display: inline-flex;
+  display: flex;
   width: 100%;
   align-items: center;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.45rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding-top: 0.9rem;
   color: var(--silver);
@@ -533,8 +534,32 @@ footer {
   font-weight: 900;
 }
 
+.member-card-link a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: inherit;
+  transition: color 140ms ease;
+}
+
+.member-card-link a:hover {
+  color: white;
+}
+
+.member-card-link-divider {
+  color: rgba(214, 216, 210, 0.34);
+}
+
 .theme-light .member-card-link {
   border-color: rgba(18, 26, 34, 0.11);
+}
+
+.theme-light .member-card-link a:hover {
+  color: var(--carbon);
+}
+
+.theme-light .member-card-link-divider {
+  color: rgba(18, 26, 34, 0.28);
 }
 
 .member-card::before {

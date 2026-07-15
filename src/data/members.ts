@@ -27,6 +27,7 @@ export interface Member {
   race: Race;
   url: string;
   linkLabel: string;
+  youtubeUrl?: string;
   order: number;
   avatar?: string;
 }
@@ -53,6 +54,7 @@ export const members: Member[] = [
     race: "Protoss",
     url: "https://www.sooplive.com/station/nalra82",
     linkLabel: "숲티비 채널 바로가기",
+    youtubeUrl: "https://www.youtube.com/channel/UCLq5ztFVqiXP0CTmHVL3rmA/featured?view_as=subscriber",
     order: 2,
     avatar: "/members/kangmin.jpg",
   },
@@ -125,6 +127,7 @@ export const members: Member[] = [
     race: "Protoss",
     url: "https://www.sooplive.com/station/sr629",
     linkLabel: "숲티비 채널 바로가기",
+    youtubeUrl: "https://www.youtube.com/@sarangtube3",
     order: 9,
     avatar: "/members/sarange.jpg",
   },

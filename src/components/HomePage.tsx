@@ -655,7 +655,7 @@ function MemberCard({ member, liveStatus }: { member: Member; liveStatus?: LiveS
   const isSpecial = member.balanceTier ? specialTiers.has(member.balanceTier) : false;
 
   return (
-    <a className={`member-card ${raceClass(member.race)}`} href={member.url} target="_blank" rel="noopener noreferrer" aria-label={`${member.name} ${member.linkLabel}`}>
+    <article className={`member-card ${raceClass(member.race)}`}>
       <div className="member-card-status">
         <StatusPill liveStatus={liveStatus} />
       </div>
@@ -676,10 +676,21 @@ function MemberCard({ member, liveStatus }: { member: Member; liveStatus?: LiveS
         </div>
       </div>
       <span className="member-card-link">
-        {member.linkLabel}
-        <span aria-hidden="true">↗</span>
+        <a href={member.url} target="_blank" rel="noopener noreferrer" aria-label={`${member.name} ${member.linkLabel}`}>
+          {member.linkLabel}
+          <span aria-hidden="true">↗</span>
+        </a>
+        {member.youtubeUrl ? (
+          <>
+            <span className="member-card-link-divider" aria-hidden="true">|</span>
+            <a href={member.youtubeUrl} target="_blank" rel="noopener noreferrer" aria-label={`${member.name} 유튜브 채널 바로가기`}>
+              유튜브 채널 바로가기
+              <span aria-hidden="true">↗</span>
+            </a>
+          </>
+        ) : null}
       </span>
-    </a>
+    </article>
   );
 }
 
