@@ -350,6 +350,25 @@ footer {
   letter-spacing: 0.2em;
 }
 
+.mobile-menu-group {
+  display: grid;
+}
+
+.academy-mobile-subnav {
+  display: grid;
+  gap: 0.15rem;
+  border-left: 1px solid rgba(202, 163, 91, 0.34);
+  margin: 0 0 0.5rem 0.25rem;
+  padding-left: 0.8rem;
+}
+
+.academy-mobile-subnav a {
+  padding: 0.46rem 0;
+  color: rgba(214, 216, 210, 0.72);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+}
+
 .roster-group-head {
   margin-bottom: 1.05rem;
   display: flex;
@@ -2111,5 +2130,899 @@ footer {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+  }
+}
+
+/* STAR HM ACADEMY */
+.academy-shell {
+  --academy-cyan: #70d8f6;
+  --academy-blue: #4f8ec8;
+  --academy-orange: #f1a14d;
+  --academy-green: #71d89a;
+  --academy-red: #ff7373;
+  --academy-panel: rgba(13, 18, 25, 0.88);
+}
+
+.academy-header {
+  background: rgba(8, 10, 13, 0.88);
+}
+
+.academy-hero-panel {
+  position: relative;
+  display: grid;
+  min-height: 420px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2rem;
+  overflow: hidden;
+  border: 1px solid rgba(214, 216, 210, 0.14);
+  border-radius: 8px;
+  padding: clamp(1.4rem, 4vw, 3rem);
+  background:
+    linear-gradient(90deg, rgba(112, 216, 246, 0.11), transparent 44%, rgba(241, 161, 77, 0.09)),
+    linear-gradient(155deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.018)),
+    rgba(12, 17, 24, 0.92);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 24px 70px rgba(0, 0, 0, 0.32);
+}
+
+.academy-hero-panel::after {
+  position: absolute;
+  inset: 1rem;
+  pointer-events: none;
+  border: 1px solid rgba(112, 216, 246, 0.14);
+  border-radius: 6px;
+  content: "";
+}
+
+.academy-hero-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
+}
+
+.academy-hero-copy h1 {
+  margin-top: 1rem;
+  color: white;
+  font-size: clamp(2.4rem, 7vw, 6.2rem);
+  font-weight: 950;
+  line-height: 0.92;
+  text-transform: uppercase;
+}
+
+.academy-hero-copy p {
+  margin-top: 1.1rem;
+  max-width: 720px;
+  color: rgba(214, 216, 210, 0.86);
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  font-weight: 800;
+  line-height: 1.6;
+}
+
+.academy-hero-copy > span {
+  display: block;
+  margin-top: 0.85rem;
+  max-width: 720px;
+  color: rgba(155, 167, 181, 0.92);
+  line-height: 1.75;
+}
+
+.academy-hero-actions,
+.lesson-card div,
+.build-card-meta,
+.build-card-actions,
+.build-card-top,
+.build-detail-actions,
+.sticky-step-controls,
+.live-mode-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.academy-hero-actions {
+  margin-top: 2rem;
+}
+
+.academy-command-mark {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: min(26vw, 220px);
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid rgba(202, 163, 91, 0.28);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.12);
+  font-size: clamp(3rem, 9vw, 7rem);
+  font-weight: 950;
+}
+
+.academy-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  color: rgba(155, 167, 181, 0.86);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.academy-breadcrumb a {
+  color: rgba(214, 216, 210, 0.82);
+}
+
+.academy-breadcrumb strong {
+  color: var(--gold);
+}
+
+.academy-mode-grid,
+.matchup-card-grid,
+.academy-card-grid,
+.build-grid,
+.lesson-grid,
+.beginner-intro-grid,
+.hotkey-reference-grid,
+.glossary-grid,
+.reaction-grid,
+.progress-console-grid,
+.live-mode-grid,
+.control-preset-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.academy-mode-grid,
+.matchup-card-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.matchup-card-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.academy-mode-card,
+.academy-search-panel,
+.progress-console,
+.lesson-card,
+.build-card,
+.matchup-card,
+.academy-inline-panel,
+.academy-data-card,
+.beginner-step-card,
+.lesson-progress-panel,
+.build-detail-head,
+.playbook-main-panel,
+.condition-box,
+.reaction-card,
+.practice-panel,
+.practice-card,
+.academy-complete-panel,
+.live-build-mode,
+.control-preset-editor,
+.info-block,
+.filter-summary-panel,
+.hotkey-card,
+.glossary-card {
+  border: 1px solid rgba(214, 216, 210, 0.14);
+  border-radius: 8px;
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.066), rgba(255, 255, 255, 0.018)),
+    var(--academy-panel);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 18px 46px rgba(0, 0, 0, 0.24);
+}
+
+.academy-mode-card,
+.academy-search-panel,
+.progress-console,
+.lesson-card,
+.build-card,
+.matchup-card,
+.academy-inline-panel,
+.academy-data-card,
+.beginner-step-card,
+.lesson-progress-panel,
+.build-detail-head,
+.playbook-main-panel,
+.condition-box,
+.reaction-card,
+.practice-panel,
+.practice-card,
+.academy-complete-panel,
+.live-build-mode,
+.control-preset-editor,
+.info-block,
+.filter-summary-panel,
+.hotkey-card,
+.glossary-card {
+  padding: clamp(1rem, 2vw, 1.25rem);
+}
+
+.academy-mode-card {
+  display: flex;
+  min-height: 270px;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.academy-mode-card span,
+.matchup-card span,
+.lesson-card > span,
+.reaction-card span,
+.practice-card > span,
+.panel-kicker {
+  color: var(--gold);
+}
+
+.academy-mode-card h3,
+.academy-section-head h2,
+.progress-console h2,
+.academy-search-panel h2,
+.lesson-card h3,
+.build-card h3,
+.matchup-card h2,
+.academy-data-card h2,
+.beginner-step-card h2,
+.build-detail-head h2,
+.live-build-mode h2,
+.academy-complete-panel h2,
+.control-preset-editor h2,
+.info-block h2 {
+  color: white;
+  font-weight: 950;
+  line-height: 1.1;
+}
+
+.academy-mode-card h3 {
+  margin-top: 0.7rem;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+}
+
+.academy-mode-card p,
+.academy-section-head p,
+.lesson-card p,
+.build-card p,
+.matchup-card p,
+.academy-data-card p,
+.beginner-step-card p,
+.reaction-card p,
+.info-block li,
+.academy-search-row p {
+  color: rgba(214, 216, 210, 0.78);
+  line-height: 1.65;
+}
+
+.academy-mode-rookie {
+  border-color: rgba(112, 216, 246, 0.24);
+}
+
+.academy-mode-playbook {
+  border-color: rgba(241, 161, 77, 0.28);
+}
+
+.academy-section-head {
+  max-width: 760px;
+  margin-top: 3rem;
+}
+
+.academy-section-head h2 {
+  margin-top: 0.6rem;
+  font-size: clamp(1.7rem, 4vw, 3rem);
+}
+
+.academy-search-panel input,
+.control-preset-editor input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid rgba(214, 216, 210, 0.14);
+  border-radius: 6px;
+  margin-top: 1rem;
+  padding: 0.8rem 0.9rem;
+  background: rgba(255, 255, 255, 0.045);
+  color: white;
+  font-weight: 800;
+}
+
+.academy-search-results,
+.step-stack,
+.timeline-list,
+.lesson-step-actions,
+.practice-options,
+.filter-summary-panel {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.academy-search-row,
+.recent-list a {
+  display: grid;
+  gap: 0.2rem;
+  border: 1px solid rgba(214, 216, 210, 0.1);
+  border-radius: 6px;
+  padding: 0.85rem;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.academy-search-row span,
+.recent-list span {
+  color: var(--academy-cyan);
+  font-size: 0.68rem;
+  font-weight: 950;
+}
+
+.academy-search-row strong,
+.recent-list strong {
+  color: white;
+}
+
+.progress-meter {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  margin-top: 1rem;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.progress-meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--academy-cyan), var(--gold));
+}
+
+.progress-console-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 1rem 0;
+}
+
+.progress-console-grid div,
+.live-mode-grid div {
+  border: 1px solid rgba(214, 216, 210, 0.1);
+  border-radius: 6px;
+  padding: 0.85rem;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.progress-console-grid strong,
+.live-mode-grid strong {
+  display: block;
+  color: white;
+}
+
+.progress-console-grid span,
+.live-mode-grid span {
+  color: rgba(155, 167, 181, 0.88);
+  font-size: 0.75rem;
+  font-weight: 850;
+}
+
+.lesson-grid,
+.build-grid,
+.academy-card-grid,
+.glossary-grid,
+.beginner-intro-grid,
+.hotkey-reference-grid,
+.reaction-grid {
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+}
+
+.lesson-card {
+  display: flex;
+  min-height: 230px;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.lesson-card h3,
+.build-card h3,
+.matchup-card h2 {
+  margin-top: 0.55rem;
+  font-size: 1.35rem;
+}
+
+.lesson-card a,
+.build-card-actions a,
+.build-card-actions span,
+.favorite-button,
+.text-reset-button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(202, 163, 91, 0.32);
+  border-radius: 6px;
+  padding: 0.55rem 0.75rem;
+  color: var(--gold);
+  font-size: 0.75rem;
+  font-weight: 950;
+}
+
+.lesson-card-featured,
+.academy-tier-standard {
+  border-color: rgba(112, 216, 246, 0.24);
+}
+
+.build-card {
+  min-height: 310px;
+}
+
+.build-card > strong {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--academy-cyan);
+}
+
+.build-card-meta span,
+.filter-summary-panel span,
+.filter-summary-panel a {
+  border: 1px solid rgba(214, 216, 210, 0.13);
+  border-radius: 999px;
+  padding: 0.35rem 0.55rem;
+  color: rgba(214, 216, 210, 0.78);
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.build-tier-badge,
+.difficulty-badge,
+.matchup-badge {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 0.32rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 950;
+}
+
+.academy-tier-top {
+  color: #ffd777;
+  background: rgba(202, 163, 91, 0.14);
+}
+
+.academy-tier-variable {
+  color: var(--academy-orange);
+  background: rgba(241, 161, 77, 0.12);
+}
+
+.academy-tier-standard {
+  color: var(--academy-cyan);
+  background: rgba(112, 216, 246, 0.1);
+}
+
+.academy-tier-experimental {
+  color: var(--academy-green);
+  background: rgba(113, 216, 154, 0.1);
+}
+
+.academy-tier-deprecated {
+  color: var(--academy-red);
+  background: rgba(255, 115, 115, 0.1);
+}
+
+.matchup-tvz {
+  color: #b184dc;
+}
+
+.matchup-tvp {
+  color: #f1cd72;
+}
+
+.matchup-tvt {
+  color: #7fb6d7;
+}
+
+.playbook-quick-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr 0.8fr;
+  gap: 1rem;
+}
+
+.playbook-quick-grid > a,
+.playbook-quick-grid > span {
+  display: flex;
+  min-height: 94px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(214, 216, 210, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+  color: white;
+  font-weight: 950;
+}
+
+.lesson-layout,
+.playbook-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  align-items: start;
+  gap: 1rem;
+}
+
+.beginner-step-card dl,
+.academy-data-card dl,
+.build-detail-head dl {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.build-detail-head dl {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.beginner-step-card dt,
+.academy-data-card dt,
+.build-detail-head dt {
+  color: var(--academy-cyan);
+  font-size: 0.72rem;
+  font-weight: 950;
+}
+
+.beginner-step-card dd,
+.academy-data-card dd,
+.build-detail-head dd {
+  margin: 0.25rem 0 0;
+  color: rgba(214, 216, 210, 0.82);
+}
+
+.lesson-progress-panel,
+.playbook-side-panel {
+  position: sticky;
+  top: 6rem;
+}
+
+.playbook-side-panel {
+  display: grid;
+  gap: 1rem;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.lesson-step-actions button,
+.sticky-step-controls button,
+.practice-options button {
+  min-height: 44px;
+  border: 1px solid rgba(214, 216, 210, 0.14);
+  border-radius: 6px;
+  padding: 0.65rem 0.8rem;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(214, 216, 210, 0.84);
+  font-weight: 900;
+}
+
+.lesson-step-actions button.is-complete,
+.practice-options button.is-selected {
+  border-color: rgba(112, 216, 246, 0.5);
+  background: rgba(112, 216, 246, 0.12);
+  color: white;
+}
+
+.hotkey-keycap {
+  display: inline-flex;
+  min-width: 34px;
+  min-height: 32px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(214, 216, 210, 0.28);
+  border-bottom-width: 3px;
+  border-radius: 5px;
+  padding: 0.22rem 0.48rem;
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 950;
+}
+
+.hotkey-combination {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.32rem;
+}
+
+.hotkey-joiner {
+  margin-right: 0.32rem;
+  color: var(--gold);
+  font-weight: 950;
+}
+
+.hotkey-card strong,
+.glossary-card h2,
+.reaction-card strong {
+  display: block;
+  margin-top: 0.75rem;
+  color: white;
+  font-weight: 950;
+}
+
+.academy-placeholder-icon {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border: 1px solid rgba(112, 216, 246, 0.32);
+  border-radius: 50%;
+  color: var(--academy-cyan);
+  font-weight: 950;
+}
+
+.glossary-card span,
+.filter-summary-panel span {
+  color: var(--gold);
+}
+
+.glossary-card strong,
+.reaction-card strong {
+  color: var(--academy-cyan);
+}
+
+.glossary-card em,
+.reaction-card em,
+.condition-box p {
+  display: block;
+  margin-top: 0.6rem;
+  color: rgba(155, 167, 181, 0.9);
+  font-style: normal;
+  line-height: 1.55;
+}
+
+.rookie-action-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+.rookie-action-strip span {
+  border: 1px solid rgba(112, 216, 246, 0.24);
+  border-radius: 999px;
+  padding: 0.55rem 0.8rem;
+  color: var(--academy-cyan);
+  font-weight: 900;
+}
+
+.timeline-row {
+  border-left: 3px solid var(--academy-cyan);
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.timeline-row span {
+  color: var(--gold);
+  font-size: 0.75rem;
+  font-weight: 950;
+}
+
+.timeline-row strong {
+  display: block;
+  margin-top: 0.25rem;
+  color: white;
+}
+
+.timeline-row em {
+  display: inline-flex;
+  margin-top: 0.45rem;
+  color: var(--academy-orange);
+  font-style: normal;
+  font-weight: 850;
+}
+
+.condition-box h3,
+.reaction-card h3 {
+  color: white;
+  font-weight: 950;
+}
+
+.condition-box ul {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.8rem;
+}
+
+.condition-box li {
+  display: flex;
+  gap: 0.55rem;
+  color: rgba(214, 216, 210, 0.82);
+}
+
+.condition-go li span {
+  color: var(--academy-green);
+}
+
+.condition-stop li span {
+  color: var(--academy-orange);
+}
+
+.live-build-mode {
+  margin-top: 1rem;
+}
+
+.live-mode-head {
+  justify-content: space-between;
+}
+
+.live-mode-now {
+  border: 1px solid rgba(112, 216, 246, 0.24);
+  border-radius: 8px;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(112, 216, 246, 0.08);
+}
+
+.live-mode-now span,
+.live-mode-grid span {
+  color: var(--gold);
+}
+
+.live-mode-now strong {
+  display: block;
+  margin-top: 0.4rem;
+  color: white;
+  font-size: clamp(1.5rem, 4vw, 2.6rem);
+  font-weight: 950;
+}
+
+.live-mode-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 0.75rem;
+}
+
+.sticky-step-controls {
+  position: sticky;
+  bottom: 1rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.practice-score {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(214, 216, 210, 0.1);
+  padding-bottom: 1rem;
+}
+
+.practice-score strong {
+  color: white;
+  font-size: 2rem;
+}
+
+.practice-card {
+  margin-top: 1rem;
+}
+
+.practice-feedback {
+  margin-top: 1rem;
+  border-radius: 6px;
+  padding: 0.8rem;
+}
+
+.practice-feedback.is-correct {
+  background: rgba(113, 216, 154, 0.11);
+  color: #baf2ce;
+}
+
+.practice-feedback.is-wrong {
+  background: rgba(255, 115, 115, 0.1);
+  color: #ffc8c8;
+}
+
+.control-preset-grid {
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  margin-top: 1rem;
+}
+
+.control-preset-grid label span {
+  display: block;
+  color: var(--gold);
+  font-size: 0.72rem;
+  font-weight: 950;
+}
+
+.filter-summary-panel div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.academy-footer {
+  background: rgba(8, 10, 13, 0.48);
+}
+
+@media (max-width: 900px) {
+  .academy-hero-panel,
+  .academy-mode-grid,
+  .matchup-card-grid,
+  .playbook-quick-grid,
+  .lesson-layout,
+  .playbook-detail-layout,
+  .build-detail-head dl,
+  .live-mode-grid,
+  .progress-console-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .academy-command-mark {
+    display: none;
+  }
+
+  .lesson-progress-panel,
+  .playbook-side-panel {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .academy-hero {
+    padding-top: 6rem;
+  }
+
+  .academy-hero-panel {
+    min-height: 0;
+  }
+
+  .sticky-step-controls {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  header,
+  footer,
+  .print-hidden,
+  .academy-hero,
+  .academy-breadcrumb,
+  .theme-control,
+  .sound-control {
+    display: none !important;
+  }
+
+  .academy-section {
+    padding: 0 !important;
+  }
+
+  .academy-shell,
+  .playbook-main-panel,
+  .build-detail-head,
+  .condition-box,
+  .reaction-card,
+  .timeline-row,
+  .live-build-mode {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
+
+  .build-detail-head,
+  .playbook-main-panel,
+  .condition-box,
+  .reaction-card,
+  .timeline-row {
+    border-color: #888 !important;
+    break-inside: avoid;
+  }
+
+  h1,
+  h2,
+  h3,
+  strong,
+  p,
+  dd,
+  li,
+  span {
+    color: black !important;
   }
 }

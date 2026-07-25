@@ -69,6 +69,7 @@ const navItems = [
   { label: "ACTIVITY", href: "#activity" },
   { label: "ROSTER", href: "#roster" },
   { label: "INTEL", href: "#intel" },
+  { label: "ACADEMY", href: "/academy" },
   { label: "ABOUT", href: "#about" },
 ];
 
@@ -514,9 +515,21 @@ function Header({
 
       <div id="mobile-menu" className={isMenuOpen ? "mobile-menu is-open" : "mobile-menu"} aria-hidden={!isMenuOpen}>
         {items.map((item) => (
-          <a key={item.href} href={item.href} onClick={() => setIsMenuOpen(false)}>
-            {item.label}
-          </a>
+          <div key={item.href} className={item.label === "ACADEMY" ? "mobile-menu-group" : undefined}>
+            <a href={item.href} onClick={() => setIsMenuOpen(false)}>
+              {item.label === "ACADEMY" ? "HM 아카데미" : item.label}
+            </a>
+            {item.label === "ACADEMY" ? (
+              <div className="academy-mobile-subnav">
+                <a href="/academy/rookie" onClick={() => setIsMenuOpen(false)}>
+                  입문 훈련
+                </a>
+                <a href="/academy/playbook" onClick={() => setIsMenuOpen(false)}>
+                  실전 플레이북
+                </a>
+              </div>
+            ) : null}
+          </div>
         ))}
       </div>
     </header>
