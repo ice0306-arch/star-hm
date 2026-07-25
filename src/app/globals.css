@@ -2183,10 +2183,12 @@ footer {
 .academy-hero-copy h1 {
   margin-top: 1rem;
   color: white;
-  font-size: clamp(2.4rem, 7vw, 6.2rem);
+  font-size: clamp(2.35rem, 5.8vw, 5.35rem);
   font-weight: 950;
-  line-height: 0.92;
+  line-height: 1;
   text-transform: uppercase;
+  word-break: keep-all;
+  overflow-wrap: normal;
 }
 
 .academy-hero-copy p {
@@ -3059,6 +3061,11 @@ footer {
 
   .academy-hero-panel {
     min-height: 0;
+  }
+
+  .academy-hero-copy h1 {
+    font-size: clamp(2.15rem, 12vw, 3.8rem);
+    line-height: 1.04;
   }
 
   .sticky-step-controls {
