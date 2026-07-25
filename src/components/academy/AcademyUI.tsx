@@ -32,11 +32,20 @@ export function AcademyBreadcrumb({ items }: { items: Array<{ label: string; hre
       <a href="/">Star HM</a>
       {items.map((item) => (
         <span key={item.label}>
-          <span aria-hidden="true">/</span>
+          <span className="academy-breadcrumb-separator" aria-hidden="true">/</span>
           {item.href ? <a href={item.href}>{item.label}</a> : <strong>{item.label}</strong>}
         </span>
       ))}
     </nav>
+  );
+}
+
+export function AcademyBackLink({ href, label }: { href: string; label: string }) {
+  return (
+    <a className="academy-back-link print-hidden" href={href}>
+      <span aria-hidden="true">←</span>
+      {label}
+    </a>
   );
 }
 

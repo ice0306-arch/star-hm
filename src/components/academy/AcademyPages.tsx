@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { AcademyFrame } from "@/components/academy/AcademyFrame";
 import {
   AcademyBreadcrumb,
+  AcademyBackLink,
   AcademyHero,
   AcademyModeCard,
   AcademySectionHeader,
@@ -284,6 +285,7 @@ export function PlaybookBuildDetailPage({ slug }: { slug: string }) {
       <section className="academy-section px-5 pb-24 sm:px-8 lg:px-10">
         <div className="mx-auto max-w-7xl">
           <AcademyBreadcrumb items={[{ label: "HM 아카데미", href: "/academy" }, { label: "실전 플레이북", href: "/academy/playbook" }, { label: build.originalTitle }]} />
+          <AcademyBackLink href={matchupMeta[build.matchup].href} label={`${build.matchup} 목록으로 돌아가기`} />
           <BuildDetailHeader build={build} />
           <LiveBuildMode build={build} />
           <div className="playbook-detail-layout mt-8">
@@ -334,6 +336,7 @@ export function RookieBuildDetailPage({ slug }: { slug: string }) {
       <section className="academy-section px-5 pb-24 sm:px-8 lg:px-10">
         <div className="mx-auto max-w-7xl">
           <AcademyBreadcrumb items={[{ label: "HM 아카데미", href: "/academy" }, { label: "입문 훈련", href: "/academy/rookie" }, { label: build.easyTitle }]} />
+          <AcademyBackLink href="/academy/rookie" label="입문 훈련 목록으로 돌아가기" />
           <BuildDetailHeader build={build} beginner />
           <div className="beginner-intro-grid mt-8">
             <InfoBlock title="이 빌드는 무엇인가요?" items={[build.beginner.purpose]} />

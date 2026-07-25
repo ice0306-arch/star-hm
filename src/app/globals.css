@@ -2241,10 +2241,22 @@ footer {
 .academy-breadcrumb {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.45rem;
+  gap: 0.38rem;
+  align-items: center;
+  margin-bottom: 0.95rem;
   color: rgba(155, 167, 181, 0.86);
   font-size: 0.78rem;
   font-weight: 850;
+}
+
+.academy-breadcrumb > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+}
+
+.academy-breadcrumb-separator {
+  color: rgba(202, 163, 91, 0.52);
 }
 
 .academy-breadcrumb a {
@@ -2253,6 +2265,21 @@ footer {
 
 .academy-breadcrumb strong {
   color: var(--gold);
+}
+
+.academy-back-link {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(112, 216, 246, 0.24);
+  border-radius: 6px;
+  margin: 0 0 1rem;
+  padding: 0.62rem 0.8rem;
+  background: rgba(112, 216, 246, 0.07);
+  color: var(--academy-cyan);
+  font-size: 0.8rem;
+  font-weight: 950;
 }
 
 .academy-mode-grid,
@@ -2653,6 +2680,55 @@ footer {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.build-detail-head {
+  display: grid;
+  gap: 1.1rem;
+  margin-top: 0.3rem;
+  padding: clamp(1.15rem, 2.4vw, 1.6rem);
+}
+
+.build-detail-head > div:first-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.build-detail-head h2 {
+  max-width: 900px;
+  font-size: clamp(1.65rem, 3.2vw, 2.8rem);
+}
+
+.build-detail-head > p {
+  max-width: 920px;
+  color: rgba(214, 216, 210, 0.84);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.build-detail-head dl {
+  gap: 0.75rem;
+  margin-top: 0;
+}
+
+.build-detail-head dl > div {
+  min-width: 0;
+  border: 1px solid rgba(214, 216, 210, 0.1);
+  border-radius: 7px;
+  padding: 0.85rem;
+  background: rgba(255, 255, 255, 0.034);
+}
+
+.build-detail-head dd {
+  font-size: 1rem;
+  font-weight: 850;
+  line-height: 1.45;
+}
+
+.build-detail-actions {
+  gap: 0.65rem;
+  margin-top: 0.1rem;
+}
+
 .beginner-step-card dt,
 .academy-data-card dt,
 .build-detail-head dt {
@@ -2841,18 +2917,22 @@ footer {
 }
 
 .live-build-mode {
-  margin-top: 1rem;
+  margin-top: 1.35rem;
+  padding: clamp(1.1rem, 2.4vw, 1.45rem);
 }
 
 .live-mode-head {
   justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(214, 216, 210, 0.1);
+  padding-bottom: 1rem;
 }
 
 .live-mode-now {
   border: 1px solid rgba(112, 216, 246, 0.24);
   border-radius: 8px;
   margin-top: 1rem;
-  padding: 1rem;
+  padding: clamp(1rem, 2.6vw, 1.35rem);
   background: rgba(112, 216, 246, 0.08);
 }
 
@@ -2865,13 +2945,22 @@ footer {
   display: block;
   margin-top: 0.4rem;
   color: white;
-  font-size: clamp(1.5rem, 4vw, 2.6rem);
+  font-size: clamp(1.75rem, 4vw, 2.9rem);
   font-weight: 950;
+  line-height: 1.05;
+}
+
+.live-mode-now p {
+  margin-top: 0.8rem;
+  max-width: 780px;
+  color: rgba(214, 216, 210, 0.84);
+  font-size: 1rem;
+  line-height: 1.65;
 }
 
 .live-mode-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-top: 0.75rem;
+  margin-top: 1rem;
 }
 
 .sticky-step-controls {
@@ -2957,6 +3046,10 @@ footer {
   .playbook-side-panel {
     position: static;
   }
+
+  .build-detail-head dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
@@ -2971,6 +3064,16 @@ footer {
   .sticky-step-controls {
     display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .build-detail-head dl {
+    grid-template-columns: 1fr;
+  }
+
+  .build-detail-actions .command-button,
+  .build-detail-actions .favorite-button,
+  .academy-back-link {
+    width: 100%;
   }
 }
 
