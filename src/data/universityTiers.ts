@@ -68,5 +68,5 @@ export const universityTierSnapshots: UniversityTierSnapshot[] = [
   { college: "BGM", total: 19, race: race(5, 5, 9), tiers: { Jack: 2, Joker: 1, Spade: 2, "1": 1, "2": 1, "3": 1, "4": 1, "5": 3, "6": 1, "7": 2, "8": 2, Baby: 2 } },
   { college: "HM", total: 14, race: race(3, 3, 8), tiers: { God: 1, King: 1, Joker: 1, Spade: 1, "0": 1, "1": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1, "8": 1, Baby: 2 }, featured: true },
   { college: "DM", total: 13, race: race(4, 4, 5), tiers: { King: 3, Spade: 1, "0": 1, "2": 1, "3": 1, "4": 1, "6": 1, "7": 3, "8": 1 } },
-  { college: "신세계", total: 14, race: race(3, 3, 7, 1), tiers: { God: 1, King: 1, Jack: 1, Joker: 2, "2": 1, "4": 1, "5": 1, "6": 1, "7": 2, "8": 2, Baby: 1 } },
+  { college: "신세계", total: 14, race: race(3, 3, 8), tiers: { God: 1, King: 1, Jack: 1, Joker: 2, "2": 1, "4": 1, "5": 1, "6": 1, "7": 2, "8": 2, Baby: 1 } },
 ];

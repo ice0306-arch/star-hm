@@ -19,7 +19,8 @@ const raceLabels: Record<UniversityRaceKey, string> = {
   Unknown: "미분류",
 };
 
-const raceOrder: UniversityRaceKey[] = ["Terran", "Zerg", "Protoss", "Unknown"];
+const allRaceOrder: UniversityRaceKey[] = ["Terran", "Zerg", "Protoss", "Unknown"];
+const visibleRaceOrder: UniversityRaceKey[] = ["Terran", "Zerg", "Protoss"];
 const tierFilters: Array<UniversityTierKey | "all"> = ["all", ...universityTierOrder];
 
 function topTierCount(college: UniversityTierSnapshot) {
@@ -27,7 +28,7 @@ function topTierCount(college: UniversityTierSnapshot) {
 }
 
 function mainRace(college: UniversityTierSnapshot) {
-  return raceOrder.reduce((current, race) => (college.race[race] > college.race[current] ? race : current), "Terran" as UniversityRaceKey);
+  return visibleRaceOrder.reduce((current, race) => (college.race[race] > college.race[current] ? race : current), "Terran" as UniversityRaceKey);
 }
 
 function shareClass(value: number, total: number) {
@@ -54,7 +55,7 @@ export function UniversityTiersPage() {
     const topPlayers = filteredColleges.reduce((sum, college) => sum + topTierCount(college), 0);
     const raceTotals = filteredColleges.reduce<Record<UniversityRaceKey, number>>(
       (acc, college) => {
-        raceOrder.forEach((race) => {
+        allRaceOrder.forEach((race) => {
           acc[race] += college.race[race];
         });
         return acc;
@@ -120,7 +121,7 @@ export function UniversityTiersPage() {
               <span>종족</span>
               <select value={activeRace} onChange={(event) => setActiveRace(event.target.value as UniversityRaceKey | "all")}>
                 <option value="all">전체</option>
-                {raceOrder.map((race) => (
+                {visibleRaceOrder.map((race) => (
                   <option key={race} value={race}>{raceLabels[race]}</option>
                 ))}
               </select>
@@ -174,7 +175,7 @@ function UniversityTierCard({ college }: { college: UniversityTierSnapshot }) {
       </div>
 
       <div className="university-race-bars">
-        {raceOrder.filter((race) => college.race[race] > 0).map((race) => (
+        {visibleRaceOrder.filter((race) => college.race[race] > 0).map((race) => (
           <div key={race} className={`university-race-row race-${race.toLowerCase()}`}>
             <span>{raceLabels[race]}</span>
             <div><i className={shareClass(college.race[race], college.total)} /></div>
