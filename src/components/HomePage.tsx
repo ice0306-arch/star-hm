@@ -69,6 +69,7 @@ const navItems = [
   { label: "ACTIVITY", href: "#activity" },
   { label: "ROSTER", href: "#roster" },
   { label: "INTEL", href: "#intel" },
+  { label: "TIERS", href: "/university-tiers" },
   { label: "ACADEMY", href: "/academy" },
   { label: "ABOUT", href: "#about" },
 ];

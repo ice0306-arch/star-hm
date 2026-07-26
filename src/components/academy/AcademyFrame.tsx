@@ -7,6 +7,7 @@ const BRAND_EMBLEM_SRC = "/brand/hm-emblem.png";
 
 const academyNav = [
   { label: "HOME", href: "/" },
+  { label: "TIERS", href: "/university-tiers" },
   { label: "ACADEMY", href: "/academy" },
   { label: "ROOKIE", href: "/academy/rookie" },
   { label: "PLAYBOOK", href: "/academy/playbook" },

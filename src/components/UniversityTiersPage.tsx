@@ -1,0 +1,195 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import {
+  universityTierLabels,
+  universityTierOrder,
+  universityTierSnapshots,
+  universityTopTierKeys,
+  type UniversityRaceKey,
+  type UniversityTierKey,
+  type UniversityTierSnapshot,
+} from "@/data/universityTiers";
+
+const BRAND_EMBLEM_SRC = "/brand/hm-emblem.png";
+const raceLabels: Record<UniversityRaceKey, string> = {
+  Terran: "Terran",
+  Zerg: "Zerg",
+  Protoss: "Protoss",
+  Unknown: "미분류",
+};
+
+const raceOrder: UniversityRaceKey[] = ["Terran", "Zerg", "Protoss", "Unknown"];
+const tierFilters: Array<UniversityTierKey | "all"> = ["all", ...universityTierOrder];
+
+function topTierCount(college: UniversityTierSnapshot) {
+  return universityTopTierKeys.reduce((sum, tier) => sum + (college.tiers[tier] ?? 0), 0);
+}
+
+function mainRace(college: UniversityTierSnapshot) {
+  return raceOrder.reduce((current, race) => (college.race[race] > college.race[current] ? race : current), "Terran" as UniversityRaceKey);
+}
+
+function shareClass(value: number, total: number) {
+  const share = total > 0 ? Math.max(10, Math.round((value / total) * 10) * 10) : 0;
+  return `share-${Math.min(100, share)}`;
+}
+
+export function UniversityTiersPage() {
+  const [activeCollege, setActiveCollege] = useState("전체");
+  const [activeTier, setActiveTier] = useState<UniversityTierKey | "all">("all");
+  const [activeRace, setActiveRace] = useState<UniversityRaceKey | "all">("all");
+
+  const filteredColleges = useMemo(() => {
+    return universityTierSnapshots.filter((college) => {
+      const collegeMatches = activeCollege === "전체" || college.college === activeCollege;
+      const tierMatches = activeTier === "all" || (college.tiers[activeTier] ?? 0) > 0;
+      const raceMatches = activeRace === "all" || college.race[activeRace] > 0;
+      return collegeMatches && tierMatches && raceMatches;
+    });
+  }, [activeCollege, activeRace, activeTier]);
+
+  const summary = useMemo(() => {
+    const totalPlayers = filteredColleges.reduce((sum, college) => sum + college.total, 0);
+    const topPlayers = filteredColleges.reduce((sum, college) => sum + topTierCount(college), 0);
+    const raceTotals = filteredColleges.reduce<Record<UniversityRaceKey, number>>(
+      (acc, college) => {
+        raceOrder.forEach((race) => {
+          acc[race] += college.race[race];
+        });
+        return acc;
+      },
+      { Terran: 0, Zerg: 0, Protoss: 0, Unknown: 0 },
+    );
+    return { totalPlayers, topPlayers, raceTotals };
+  }, [filteredColleges]);
+
+  return (
+    <main className="site-shell university-tier-shell min-h-screen text-silver">
+      <header className="fixed left-0 right-0 top-0 z-40 border-b border-white/10 bg-carbon/82 backdrop-blur-xl">
+        <nav className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-10" aria-label="대학 티어표 내비게이션">
+          <a className="flex items-center gap-3 text-white" href="/">
+            <img className="h-12 w-12 object-contain" src={BRAND_EMBLEM_SRC} alt="THE HM emblem" width={48} height={48} />
+            <span className="text-sm font-black uppercase tracking-[0.24em]">THE HM</span>
+          </a>
+          <div className="university-tier-nav-links">
+            <a className="nav-link" href="/">HOME</a>
+            <a className="nav-link" href="/university-tiers">TIERS</a>
+            <a className="nav-link" href="/academy">ACADEMY</a>
+          </div>
+        </nav>
+      </header>
+
+      <section className="university-tier-hero px-5 pb-10 pt-28 sm:px-8 lg:px-10">
+        <div className="mx-auto max-w-7xl">
+          <div className="panel-kicker">UNIVERSITY TIER BOARD</div>
+          <h1>각 대학 티어표 현황</h1>
+          <p>대학별 총원, 상위 티어 비중, 종족 분포를 한 화면에서 비교합니다.</p>
+          <div className="university-tier-summary" aria-label="대학 티어표 요약">
+            <SummaryTile value={filteredColleges.length} label="대학" />
+            <SummaryTile value={summary.totalPlayers} label="총 인원" />
+            <SummaryTile value={summary.topPlayers} label="상위 티어" />
+            <SummaryTile value={summary.raceTotals.Protoss} label="Protoss" />
+            <SummaryTile value={summary.raceTotals.Terran} label="Terran" />
+            <SummaryTile value={summary.raceTotals.Zerg} label="Zerg" />
+          </div>
+        </div>
+      </section>
+
+      <section className="px-5 pb-20 sm:px-8 lg:px-10">
+        <div className="mx-auto max-w-7xl">
+          <div className="university-tier-controls">
+            <label>
+              <span>대학</span>
+              <select value={activeCollege} onChange={(event) => setActiveCollege(event.target.value)}>
+                <option value="전체">전체</option>
+                {universityTierSnapshots.map((college) => (
+                  <option key={college.college} value={college.college}>{college.college}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>티어</span>
+              <select value={activeTier} onChange={(event) => setActiveTier(event.target.value as UniversityTierKey | "all")}>
+                {tierFilters.map((tier) => (
+                  <option key={tier} value={tier}>{tier === "all" ? "전체" : universityTierLabels[tier]}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>종족</span>
+              <select value={activeRace} onChange={(event) => setActiveRace(event.target.value as UniversityRaceKey | "all")}>
+                <option value="all">전체</option>
+                {raceOrder.map((race) => (
+                  <option key={race} value={race}>{raceLabels[race]}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="university-tier-grid mt-8">
+            {filteredColleges.map((college) => (
+              <UniversityTierCard key={college.college} college={college} />
+            ))}
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function SummaryTile({ value, label }: { value: number; label: string }) {
+  return (
+    <div>
+      <strong>{value}</strong>
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function UniversityTierCard({ college }: { college: UniversityTierSnapshot }) {
+  const strongestRace = mainRace(college);
+  const topCount = topTierCount(college);
+  const sortedTiers = universityTierOrder.filter((tier) => (college.tiers[tier] ?? 0) > 0);
+
+  return (
+    <article className={college.featured ? "university-tier-card is-featured" : "university-tier-card"}>
+      <div className="university-tier-card-head">
+        <div>
+          <span>{college.featured ? "THE HM" : "UNIVERSITY"}</span>
+          <h2>{college.college}</h2>
+        </div>
+        <strong>{college.total}</strong>
+      </div>
+
+      <div className="university-tier-card-metrics">
+        <div>
+          <span>상위 티어</span>
+          <strong>{topCount}</strong>
+        </div>
+        <div>
+          <span>주 종족</span>
+          <strong>{raceLabels[strongestRace]}</strong>
+        </div>
+      </div>
+
+      <div className="university-race-bars">
+        {raceOrder.filter((race) => college.race[race] > 0).map((race) => (
+          <div key={race} className={`university-race-row race-${race.toLowerCase()}`}>
+            <span>{raceLabels[race]}</span>
+            <div><i className={shareClass(college.race[race], college.total)} /></div>
+            <em>{college.race[race]}</em>
+          </div>
+        ))}
+      </div>
+
+      <div className="university-tier-chip-list">
+        {sortedTiers.map((tier) => (
+          <span key={tier} className={`university-tier-chip tier-chip-${tier.toLowerCase()}`}>
+            {universityTierLabels[tier]} <strong>{college.tiers[tier]}</strong>
+          </span>
+        ))}
+      </div>
+    </article>
+  );
+}
