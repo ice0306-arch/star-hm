@@ -39,6 +39,7 @@ const tierCardSuits: Record<UniversityTierKey, string> = {
   "8": "8",
   Baby: "B",
 };
+const liveTierOrder: Array<UniversityTierKey | "Unknown"> = [...universityTierOrder, "Unknown"];
 
 type UniversityLivePlayer = {
   id: string;
@@ -226,6 +227,13 @@ function SummaryTile({ value, label }: { value: number; label: string }) {
 }
 
 function UniversityLiveBoard({ players, updatedAt }: { players: UniversityLivePlayer[]; updatedAt: number | null }) {
+  const groupedPlayers = liveTierOrder
+    .map((tier) => ({
+      tier,
+      players: players.filter((player) => player.tier === tier),
+    }))
+    .filter((group) => group.players.length > 0);
+
   return (
     <section className="university-live-board" aria-labelledby="university-live-title">
       <div className="university-live-board-head">
@@ -237,15 +245,26 @@ function UniversityLiveBoard({ players, updatedAt }: { players: UniversityLivePl
         <span>{updatedAt ? `${new Date(updatedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })} 기준` : "확인 중"}</span>
       </div>
 
-      {players.length > 0 ? (
-        <div className="university-live-grid">
-          {players.map((player) => (
-            <a key={`${player.college}-${player.id}`} className={`university-live-card race-${player.race.toLowerCase()}`} href={player.url} target="_blank" rel="noreferrer">
-              <span>{player.college}{player.viewers ? ` · ${player.viewers.toLocaleString()}명` : ""}</span>
-              <strong>{player.name}</strong>
-              <em>{player.tier === "Unknown" ? "티어 확인" : universityTierLabels[player.tier]} · {raceLabels[player.race]}</em>
-              {player.title ? <p>{player.title}</p> : null}
-            </a>
+      {groupedPlayers.length > 0 ? (
+        <div className="university-live-tier-stack">
+          {groupedPlayers.map((group) => (
+            <section key={group.tier} className={`university-live-tier-row tier-card-${group.tier.toLowerCase()}`} aria-label={`${group.tier === "Unknown" ? "티어 확인" : universityTierLabels[group.tier]} 라이브 선수`}>
+              <div className="university-live-tier-rank">
+                <em>{group.tier === "Unknown" ? "?" : tierCardSuits[group.tier]}</em>
+                <strong>{group.tier === "Unknown" ? "티어 확인" : universityTierLabels[group.tier]}</strong>
+                <span>{group.players.length} LIVE</span>
+              </div>
+              <div className="university-live-tier-players">
+                {group.players.map((player) => (
+                  <a key={`${player.college}-${player.id}`} className={`university-live-card race-${player.race.toLowerCase()}`} href={player.url} target="_blank" rel="noreferrer">
+                    <span>{player.college}{player.viewers ? ` · ${player.viewers.toLocaleString()}명` : ""}</span>
+                    <strong>{player.name}</strong>
+                    <em>{raceLabels[player.race]}</em>
+                    {player.title ? <p>{player.title}</p> : null}
+                  </a>
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       ) : (
