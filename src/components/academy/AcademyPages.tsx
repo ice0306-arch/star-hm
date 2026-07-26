@@ -288,6 +288,7 @@ export function PlaybookBuildDetailPage({ slug }: { slug: string }) {
           <AcademyBackLink href={matchupMeta[build.matchup].href} label={`${build.matchup} 목록으로 돌아가기`} />
           <BuildDetailHeader build={build} />
           <LiveBuildMode build={build} />
+          <BuildCommandCuePanel build={build} />
           <div className="playbook-detail-layout mt-8">
             <article className="playbook-main-panel">
               <AcademySectionHeader eyebrow="BUILD ORDER" title="빌드오더 타임라인" />
@@ -598,6 +599,33 @@ function BuildDetailHeader({ build, beginner = false }: { build: BuildGuide; beg
         ) : (
           <span>연결된 초보자 설명이 아직 준비되지 않았습니다.</span>
         )}
+      </div>
+    </section>
+  );
+}
+
+function BuildCommandCuePanel({ build }: { build: BuildGuide }) {
+  return (
+    <section className="command-cue-panel" aria-labelledby="command-cue-title">
+      <div className="command-cue-head">
+        <div>
+          <div className="panel-kicker">BUILD HOTKEY CUES</div>
+          <h2 id="command-cue-title">빌드별 단축키 큐</h2>
+        </div>
+        <span>{build.originalTitle}</span>
+      </div>
+      <div className="command-cue-grid">
+        {build.playbook.commandCues.map((cue) => (
+          <article key={cue.id} className="command-cue-card">
+            <div>
+              <span>{cue.time ?? "상황"}</span>
+              <strong>{cue.trigger}</strong>
+            </div>
+            <p>{cue.action}</p>
+            <HotkeyCombination guide={cue.hotkey} />
+            {cue.note ? <em>{cue.note}</em> : null}
+          </article>
+        ))}
       </div>
     </section>
   );

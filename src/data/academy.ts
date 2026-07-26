@@ -63,6 +63,15 @@ export type ControlGroupGuide = {
   description?: string;
 };
 
+export type BuildCommandCue = {
+  id: string;
+  time?: string;
+  trigger: string;
+  action: string;
+  hotkey: HotkeyGuide;
+  note?: string;
+};
+
 export type PracticeQuestion = {
   id: string;
   type: "single-choice" | "order" | "hotkey" | "reaction" | "control-group";
@@ -101,6 +110,7 @@ export type BuildGuide = {
     stopConditions: string[];
     transitions: TransitionGuide[];
     controlGroups: ControlGroupGuide[];
+    commandCues: BuildCommandCue[];
   };
   beginnerGuideSlug?: string;
   playbookSlug: string;
@@ -329,6 +339,47 @@ const baseBuild = (
       { id: `${id}-t2`, title: "2차 압박", description: "첫 압박으로 피해를 줬다면 후속 병력과 함께 다시 타이밍을 잡습니다." },
     ],
     controlGroups,
+    commandCues: [
+      {
+        id: `${id}-cue-scv`,
+        time: "0:00",
+        trigger: "게임 시작 / 커맨드센터 선택",
+        action: "SCV 생산을 바로 예약합니다.",
+        hotkey: hotkey("sequence", ["S"], "커맨드센터 선택 후 S를 누릅니다.", "SCV 생산", "생산"),
+        note: "첫 일꾼 생산이 끊기면 모든 빌드 타이밍이 뒤로 밀립니다.",
+      },
+      {
+        id: `${id}-cue-first-building`,
+        time: "1:25",
+        trigger: "인구수 8 / 첫 생산 건물 타이밍",
+        action: "SCV를 보내 첫 생산 건물을 찍습니다.",
+        hotkey: hotkey("sequence", ["B", "B"], "SCV 선택 후 B, B를 누릅니다.", "배럭 건설", "건설"),
+        note: "건설 위치를 찍은 뒤 바로 본진 생산 상태를 다시 봅니다.",
+      },
+      {
+        id: `${id}-cue-control-group`,
+        time: "2:30",
+        trigger: `${keyUnits[0]} 생산 시작`,
+        action: "첫 주력 병력을 1번 부대로 묶습니다.",
+        hotkey: hotkey("simultaneous", ["Ctrl", "1"], "주력 병력을 선택하고 Ctrl+1을 누릅니다.", "1번 부대지정", "부대지정"),
+        note: "이후 1번 두 번으로 병력 위치를 바로 확인합니다.",
+      },
+      {
+        id: `${id}-cue-attack-move`,
+        time: keyTiming,
+        trigger: "첫 병력 진출 / 상대 앞마당 확인",
+        action: "상대 앞마당 또는 입구 쪽으로 공격 이동을 찍습니다.",
+        hotkey: hotkey("keyAndClick", ["A", "왼쪽 클릭"], "A를 누른 뒤 압박할 위치를 클릭합니다.", "공격 이동", "공격"),
+        note: "방어가 늦으면 계속 압박하고, 완성된 방어선이면 바로 멈춥니다.",
+      },
+      {
+        id: `${id}-cue-retreat`,
+        trigger: "성큰, 벙커, 탱크 라인처럼 방어 완성 확인",
+        action: "무리하지 말고 병력을 빼며 생산 화면으로 돌아갑니다.",
+        hotkey: hotkey("sequence", ["1", "우클릭", "4"], "1번 병력을 뒤로 빼고 4번 생산 건물을 확인합니다.", "후퇴 후 생산 확인", "운영 전환"),
+        note: "막힌 공격을 오래 끌면 후속 생산과 확장이 같이 늦어집니다.",
+      },
+    ],
   },
   beginnerGuideSlug: id,
   playbookSlug: id,
