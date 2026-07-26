@@ -22,6 +22,23 @@ const raceLabels: Record<UniversityRaceKey, string> = {
 const allRaceOrder: UniversityRaceKey[] = ["Terran", "Zerg", "Protoss", "Unknown"];
 const visibleRaceOrder: UniversityRaceKey[] = ["Terran", "Zerg", "Protoss"];
 const tierFilters: Array<UniversityTierKey | "all"> = ["all", ...universityTierOrder];
+const tierCardSuits: Record<UniversityTierKey, string> = {
+  God: "G",
+  King: "K",
+  Jack: "J",
+  Joker: "JK",
+  Spade: "♠",
+  "0": "0",
+  "1": "1",
+  "2": "2",
+  "3": "3",
+  "4": "4",
+  "5": "5",
+  "6": "6",
+  "7": "7",
+  "8": "8",
+  Baby: "B",
+};
 
 type UniversityLivePlayer = {
   id: string;
@@ -282,8 +299,10 @@ function UniversityTierCard({ college, liveCount }: { college: UniversityTierSna
 
       <div className="university-tier-chip-list">
         {sortedTiers.map((tier) => (
-          <span key={tier} className={`university-tier-chip tier-chip-${tier.toLowerCase()}`}>
-            {universityTierLabels[tier]} <strong>{college.tiers[tier]}</strong>
+          <span key={tier} className={`university-tier-playing-card tier-card-${tier.toLowerCase()}`}>
+            <em>{tierCardSuits[tier]}</em>
+            <span>{universityTierLabels[tier]}</span>
+            <strong>{college.tiers[tier]}</strong>
           </span>
         ))}
       </div>
