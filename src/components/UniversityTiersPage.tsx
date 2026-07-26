@@ -258,8 +258,8 @@ function UniversityLiveBoard({ players, updatedAt }: { players: UniversityLivePl
                 {group.players.map((player) => (
                   <a key={`${player.college}-${player.id}`} className={`university-live-card race-${player.race.toLowerCase()}`} href={player.url} target="_blank" rel="noreferrer">
                     <span>{player.college}{player.viewers ? ` · ${player.viewers.toLocaleString()}명` : ""}</span>
+                    <i>{raceLabels[player.race]}</i>
                     <strong>{player.name}</strong>
-                    <em>{raceLabels[player.race]}</em>
                     {player.title ? <p>{player.title}</p> : null}
                   </a>
                 ))}

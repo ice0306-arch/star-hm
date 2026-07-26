@@ -3418,37 +3418,54 @@ footer {
 
 .university-live-card {
   display: grid;
+  position: relative;
   min-height: 104px;
   align-content: start;
   gap: 0.32rem;
   border: 1px solid var(--theme-panel-border);
   border-radius: 7px;
-  padding: 0.75rem;
+  padding: 0.75rem 0.75rem 0.75rem 0.85rem;
   background: var(--theme-panel-soft);
 }
 
 .university-live-card:hover {
-  border-color: rgba(113, 216, 154, 0.38);
-  background: rgba(113, 216, 154, 0.08);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.18);
+}
+
+.university-live-card::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  border-radius: 7px 0 0 7px;
+  content: "";
 }
 
 .university-live-card span {
+  max-width: calc(100% - 74px);
   color: var(--gold);
   font-size: 0.7rem;
   font-weight: 950;
+}
+
+.university-live-card i {
+  position: absolute;
+  top: 0.62rem;
+  right: 0.62rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 0.22rem 0.42rem;
+  background: rgba(255, 255, 255, 0.055);
+  font-size: 0.62rem;
+  font-style: normal;
+  font-weight: 950;
+  line-height: 1;
 }
 
 .university-live-card strong {
   color: var(--theme-strong);
   font-size: 1.15rem;
   font-weight: 950;
-}
-
-.university-live-card em {
-  color: var(--theme-muted);
-  font-size: 0.78rem;
-  font-style: normal;
-  font-weight: 850;
 }
 
 .university-live-card p {
@@ -3461,6 +3478,51 @@ footer {
   font-size: 0.74rem;
   font-weight: 750;
   line-height: 1.45;
+}
+
+.university-live-card.race-terran {
+  border-color: rgba(113, 199, 236, 0.28);
+  background:
+    linear-gradient(135deg, rgba(113, 199, 236, 0.13), rgba(255, 255, 255, 0.025)),
+    var(--theme-panel-soft);
+}
+
+.university-live-card.race-terran::before {
+  background: #71c7ec;
+}
+
+.university-live-card.race-terran i {
+  color: #9adcf6;
+}
+
+.university-live-card.race-zerg {
+  border-color: rgba(180, 137, 240, 0.32);
+  background:
+    linear-gradient(135deg, rgba(180, 137, 240, 0.14), rgba(255, 255, 255, 0.025)),
+    var(--theme-panel-soft);
+}
+
+.university-live-card.race-zerg::before {
+  background: #b489f0;
+}
+
+.university-live-card.race-zerg i {
+  color: #cba8ff;
+}
+
+.university-live-card.race-protoss {
+  border-color: rgba(244, 195, 91, 0.34);
+  background:
+    linear-gradient(135deg, rgba(244, 195, 91, 0.15), rgba(255, 255, 255, 0.025)),
+    var(--theme-panel-soft);
+}
+
+.university-live-card.race-protoss::before {
+  background: #f4c35b;
+}
+
+.university-live-card.race-protoss i {
+  color: #ffd77a;
 }
 
 .university-live-empty {
