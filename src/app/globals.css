@@ -2774,6 +2774,33 @@ footer {
   font-weight: 900;
 }
 
+.source-mark-list {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.source-mark {
+  display: inline-flex;
+  min-width: 1.55rem;
+  min-height: 1.55rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(202, 163, 91, 0.34);
+  border-radius: 5px;
+  padding: 0.16rem 0.38rem;
+  background: rgba(202, 163, 91, 0.1);
+  color: var(--gold);
+  font-size: 0.78rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.source-mark-empty {
+  min-width: 0;
+  color: rgba(214, 216, 210, 0.68);
+}
+
 .lesson-layout,
 .playbook-detail-layout {
   display: grid;
@@ -3299,7 +3326,7 @@ footer {
   }
 
   .timing-board-row > span:nth-child(2)::before {
-    content: "분류";
+    content: "원문 표식";
   }
 
   .timing-board-row > span:nth-child(3)::before {

@@ -3,6 +3,7 @@ export type Matchup = "TvZ" | "TvP" | "TvT";
 export type BuildCategory = "all-in" | "semi-all-in" | "semi-macro" | "macro" | "defense" | "situational" | "pressure" | "transition";
 
 export type BuildTier = "top" | "variable" | "standard" | "experimental" | "deprecated";
+export type BuildSourceMark = "★" | "！" | "○" | "△" | "Ⅹ";
 
 export type HotkeyActionType = "simultaneous" | "sequence" | "keyAndClick" | "mouseOnly";
 
@@ -117,6 +118,13 @@ export type BuildGuide = {
   maps: string[];
   tags: string[];
   videoUrls: string[];
+  source?: {
+    title: string;
+    url: string;
+    section: string;
+    marks: BuildSourceMark[];
+    extractedAt: string;
+  };
   isPublished: boolean;
   order: number;
   createdAt?: string;
@@ -302,6 +310,8 @@ const baseBuild = (
   keyUnits: string[],
   order: number,
   tags: string[],
+  sourceMarks: BuildSourceMark[] = [],
+  sourceSection = "",
 ): BuildGuide => ({
   id,
   easyTitle,
@@ -386,6 +396,13 @@ const baseBuild = (
   maps: ["투혼", "폴리포이드", "라이트"],
   tags,
   videoUrls: [],
+  source: {
+    title: "테란 메모(26.07.24)",
+    url: "https://www.fmkorea.com/10084279690",
+    section: sourceSection || matchup,
+    marks: sourceMarks,
+    extractedAt: "2026-07-26",
+  },
   isPublished: true,
   order,
   createdAt: "2026-07-26",
@@ -393,18 +410,24 @@ const baseBuild = (
 });
 
 export const buildGuides: BuildGuide[] = [
-  baseBuild("marine-vulture-88", "초반 마린·벌쳐 기습", "88", "TvZ", "all-in", "top", 2, "3:30", ["마린", "벌쳐"], 1, ["저그전", "쇼부", "초보자 설명"]),
-  baseBuild("center-eight-rax-111", "센터 배럭 이후 빠른 레이스", "센터 8배럭 111", "TvZ", "all-in", "variable", 4, "4:40", ["마린", "레이스"], 2, ["저그전", "변수", "레이스"]),
-  baseBuild("ten-rax-wall", "큰입막 10배럭", "큰입막 10배럭", "TvZ", "defense", "standard", 2, "3:20", ["마린", "벙커"], 3, ["저그전", "수비", "입구"]),
-  baseBuild("two-fac-four-rax-golionic", "2팩4배럭 골리오닉", "2팩4배럭 골리오닉", "TvZ", "semi-macro", "standard", 4, "7:30", ["골리앗", "마린", "메딕"], 4, ["저그전", "뮤탈 대응"]),
-  baseBuild("bbs", "전진 배럭 초반 압박", "BBS", "TvP", "all-in", "variable", 3, "2:50", ["마린", "SCV"], 5, ["프로토스전", "쇼부"]),
-  baseBuild("one-fac-two-rax-cheese", "1팩2배럭 마린벌쳐 치즈", "1팩2배럭 마린벌쳐 치즈", "TvP", "all-in", "variable", 4, "5:00", ["마린", "벌쳐"], 6, ["프로토스전", "벌쳐"]),
-  baseBuild("two-fac-one-star-speed-vulture", "투팩 원스타 속마업 벌쳐", "투팩 원스타 속마업 벌쳐", "TvP", "semi-all-in", "experimental", 5, "6:10", ["벌쳐", "레이스"], 7, ["프로토스전", "견제"]),
-  baseBuild("nine-supply-nine-rax", "9서플 9배럭 안정 시작", "9서플 9배럭", "TvP", "macro", "standard", 1, "4:30", ["마린", "팩토리"], 8, ["프로토스전", "정석"]),
-  baseBuild("jisung-three-fac-vulture", "김지성식 3팩 벌쳐", "김지성식 3팩 벌쳐", "TvT", "pressure", "top", 4, "5:30", ["벌쳐"], 9, ["테테전", "주력", "벌쳐전"]),
-  baseBuild("fifteen-cc-rax-double", "15컴 배럭더블", "15컴 배럭더블", "TvT", "macro", "top", 3, "6:00", ["탱크", "벌쳐"], 10, ["테테전", "운영"]),
-  baseBuild("forward-eleven-rax-scout", "전진 11배럭 투서치 3마찌", "전진 11배럭 투서치 3마찌", "TvT", "all-in", "variable", 4, "3:40", ["마린", "SCV"], 11, ["테테전", "압박"]),
-  baseBuild("gas-first-two-fac-tank-goliath", "선가스 투팩 탱골", "선가스 투팩 탱골", "TvT", "semi-all-in", "variable", 4, "5:50", ["탱크", "골리앗"], 12, ["테테전", "변수"]),
+  baseBuild("marine-vulture-88", "초반 마린·벌쳐 기습", "88", "TvZ", "all-in", "variable", 3, "3:30", ["마린", "벌쳐"], 1, ["저그전", "쇼부", "초반 기습"], ["！"], "TvZ / 쇼부 빌드"),
+  baseBuild("center-eight-rax-111", "센터 배럭 이후 빠른 레이스", "센터 8배럭 111", "TvZ", "all-in", "variable", 4, "4:40", ["마린", "레이스"], 2, ["저그전", "센터 배럭", "레이스"], ["！", "△"], "TvZ / 극초반 압박"),
+  baseBuild("ten-rax-wall", "큰입막 10배럭", "큰입막 10배럭", "TvZ", "defense", "experimental", 2, "3:20", ["마린", "벙커"], 3, ["저그전", "입구", "수비"], ["△"], "TvZ / 극초반 압박"),
+  baseBuild("academy-21", "빠른 21아카 압박", "21아카", "TvZ", "semi-all-in", "variable", 3, "4:45", ["마린", "메딕", "파이어뱃"], 4, ["저그전", "반쇼부", "바이오닉"], ["！"], "TvZ / 반쇼부 빌드"),
+  baseBuild("standard-two-rax-academy", "정석 투배아카 운영", "정석 투배아카(26아카)", "TvZ", "macro", "top", 3, "5:05", ["마린", "메딕", "스캔"], 5, ["저그전", "정석", "바이오닉"], ["★", "△"], "TvZ / 바이오닉 운영"),
+  baseBuild("fast-ebay-four-rax", "선엔베 4배럭 운영", "선엔베 4배럭", "TvZ", "macro", "top", 4, "9:30", ["마린", "메딕", "업그레이드"], 6, ["저그전", "정석", "업그레이드"], ["★", "○"], "TvZ / 바이오닉 운영"),
+  baseBuild("one-one-one", "원원원 레이스 운영", "111(원원원)", "TvZ", "macro", "top", 4, "5:30", ["벌쳐", "레이스", "탱크"], 7, ["저그전", "111", "테크"], ["★", "○"], "TvZ / 바이오닉 운영"),
+  baseBuild("two-fac-four-rax-golionic", "2팩4배럭 골리오닉", "2팩4배럭 골리오닉", "TvZ", "semi-macro", "experimental", 4, "8:30", ["골리앗", "마린", "메딕"], 8, ["저그전", "뮤탈 대응", "골리오닉"], ["△"], "TvZ / 반쇼부 빌드"),
+  baseBuild("bbs", "전진 배럭 초반 압박", "BBS", "TvP", "all-in", "experimental", 3, "2:50", ["마린", "SCV"], 9, ["프로토스전", "쇼부"], ["△"], "TvP / 초반 쇼부"),
+  baseBuild("one-fac-two-rax-cheese", "1팩2배럭 마린벌쳐 치즈", "1팩2배럭 마린벌쳐 치즈", "TvP", "all-in", "experimental", 4, "5:00", ["마린", "벌쳐"], 10, ["프로토스전", "벌쳐", "치즈"], ["△"], "TvP / 초반 쇼부"),
+  baseBuild("two-fac-one-star-speed-vulture", "투팩 원스타 속마업 벌쳐", "투팩 원스타 속마업 벌쳐", "TvP", "semi-all-in", "variable", 5, "6:10", ["벌쳐", "레이스"], 11, ["프로토스전", "견제"], ["！", "△"], "TvP / 초반 쇼부"),
+  baseBuild("factory-double", "팩더블 안정 운영", "팩더블", "TvP", "macro", "top", 2, "5:30", ["탱크", "벌쳐"], 12, ["프로토스전", "정석", "더블"], ["★", "○"], "TvP / 더블 시작"),
+  baseBuild("one-up-six-fac", "공1업 6팩 타이밍", "공1업6팩 타이밍", "TvP", "semi-all-in", "top", 4, "9:00", ["탱크", "벌쳐"], 13, ["프로토스전", "타이밍", "업그레이드"], ["★", "！", "○"], "TvP / 공1업5팩 연계"),
+  baseBuild("double-starport", "더블원스타 운영", "더블원스타", "TvP", "macro", "top", 4, "7:00", ["드랍쉽", "벌쳐", "탱크"], 14, ["프로토스전", "운영", "드랍쉽"], ["★", "！", "○"], "TvP / 운영 빌드"),
+  baseBuild("jisung-three-fac-vulture", "김지성식 3팩 벌쳐", "김지성식 3팩 벌쳐", "TvT", "pressure", "top", 4, "5:30", ["벌쳐"], 15, ["테테전", "주력", "벌쳐전"], ["★", "○"], "TvT / 주력 빌드"),
+  baseBuild("fifteen-cc-rax-double", "15컴 배럭더블", "15컴 배더", "TvT", "macro", "top", 3, "6:00", ["탱크", "벌쳐"], 16, ["테테전", "운영"], ["★", "○"], "TvT / 주력 빌드"),
+  baseBuild("forward-eleven-rax-scout", "전진 11배럭 투서치 3마찌", "전진 11배럭 투서치 3마찌", "TvT", "all-in", "top", 4, "3:40", ["마린", "SCV"], 17, ["테테전", "압박"], ["★", "○"], "TvT / 주력 빌드"),
+  baseBuild("gas-first-two-fac-tank-goliath", "선가스 투팩 탱골", "선가스 투팩 탱골", "TvT", "semi-all-in", "variable", 4, "5:50", ["탱크", "골리앗"], 18, ["테테전", "변수"], ["！", "△"], "TvT / 변수 빌드"),
 ];
 
 export const lessons: AcademyLesson[] = [

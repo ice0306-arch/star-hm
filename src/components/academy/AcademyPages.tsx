@@ -551,7 +551,7 @@ function BuildTimingBoard({ id, builds, title, description }: { id?: string; bui
       <div className="timing-board-table" role="table" aria-label={title}>
         <div className="timing-board-row timing-board-row-head" role="row">
           <span role="columnheader">빌드</span>
-          <span role="columnheader">분류</span>
+          <span role="columnheader">원문 표식</span>
           <span role="columnheader">핵심 시간</span>
           <span role="columnheader">핵심 유닛</span>
           <span role="columnheader">첫 행동</span>
@@ -563,7 +563,9 @@ function BuildTimingBoard({ id, builds, title, description }: { id?: string; bui
               {build.originalTitle}
               <small>{build.easyTitle}</small>
             </strong>
-            <span role="cell">{categoryLabels[build.category]}</span>
+            <span role="cell">
+              <SourceMarkList build={build} />
+            </span>
             <span role="cell">{build.playbook.keyTiming ?? "확인"}</span>
             <span role="cell">{build.playbook.keyUnits.join(" · ")}</span>
             <span role="cell">{build.playbook.buildSteps[1]?.title ?? build.playbook.buildSteps[0]?.title ?? "시작"}</span>
@@ -624,6 +626,9 @@ function BuildDetailHeader({ build, beginner = false }: { build: BuildGuide; beg
         <div><dt>핵심 타이밍</dt><dd>{build.playbook.keyTiming ?? "타이밍 확인"}</dd></div>
         <div><dt>핵심 유닛</dt><dd>{build.playbook.keyUnits.join(" · ")}</dd></div>
         <div><dt>추천 맵</dt><dd>{build.maps.join(" · ")}</dd></div>
+        {build.source ? (
+          <div><dt>데이터 출처</dt><dd><a href={build.source.url} target="_blank" rel="noreferrer">{build.source.title}</a> <SourceMarkList build={build} /></dd></div>
+        ) : null}
       </dl>
       <div className="build-detail-actions print-hidden">
         <FavoriteButton buildId={build.id} />
@@ -641,6 +646,20 @@ function BuildDetailHeader({ build, beginner = false }: { build: BuildGuide; beg
         )}
       </div>
     </section>
+  );
+}
+
+function SourceMarkList({ build }: { build: BuildGuide }) {
+  const marks = build.source?.marks ?? [];
+  if (marks.length === 0) {
+    return <span className="source-mark source-mark-empty">검토</span>;
+  }
+  return (
+    <span className="source-mark-list" aria-label={`원문 중요도 ${marks.join(", ")}`}>
+      {marks.map((mark) => (
+        <span key={mark} className="source-mark">{mark}</span>
+      ))}
+    </span>
   );
 }
 
