@@ -75,8 +75,7 @@ export function UniversityTiersPage() {
           </a>
           <div className="university-tier-nav-links">
             <a className="nav-link" href="/">HOME</a>
-            <a className="nav-link" href="/university-tiers">TIERS</a>
-            <a className="nav-link" href="/academy">ACADEMY</a>
+            <a className="nav-link" href="/university-tiers">대학티어</a>
           </div>
         </nav>
       </header>
