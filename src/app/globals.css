@@ -3317,6 +3317,98 @@ footer {
   gap: 1rem;
 }
 
+.university-live-board {
+  margin-top: 1rem;
+  border: 1px solid var(--theme-panel-border);
+  border-radius: 8px;
+  padding: 1rem;
+  background: var(--theme-panel);
+  box-shadow: 0 20px 60px var(--theme-shadow);
+}
+
+.university-live-board-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--theme-line);
+  padding-bottom: 1rem;
+}
+
+.university-live-board-head h2 {
+  margin-top: 0.25rem;
+  color: var(--theme-strong);
+  font-size: 1.65rem;
+  font-weight: 950;
+}
+
+.university-live-board-head p {
+  margin-top: 0.45rem;
+  max-width: 680px;
+  color: var(--theme-muted);
+  line-height: 1.55;
+}
+
+.university-live-board-head > span {
+  border: 1px solid rgba(113, 216, 154, 0.28);
+  border-radius: 999px;
+  padding: 0.45rem 0.7rem;
+  color: #71d89a;
+  font-size: 0.76rem;
+  font-weight: 950;
+}
+
+.university-live-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.university-live-card {
+  display: grid;
+  gap: 0.32rem;
+  border: 1px solid var(--theme-panel-border);
+  border-radius: 7px;
+  padding: 0.8rem;
+  background: var(--theme-panel-soft);
+}
+
+.university-live-card:hover {
+  border-color: rgba(113, 216, 154, 0.38);
+  background: rgba(113, 216, 154, 0.08);
+}
+
+.university-live-card span {
+  color: var(--gold);
+  font-size: 0.7rem;
+  font-weight: 950;
+}
+
+.university-live-card strong {
+  color: var(--theme-strong);
+  font-size: 1.05rem;
+  font-weight: 950;
+}
+
+.university-live-card em {
+  color: var(--theme-muted);
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 850;
+}
+
+.university-live-empty {
+  margin-top: 1rem;
+  border: 1px dashed var(--theme-panel-border);
+  border-radius: 7px;
+  padding: 1rem;
+  color: var(--theme-muted);
+  font-weight: 850;
+  text-align: center;
+}
+
 .university-tier-card {
   display: grid;
   align-content: start;
@@ -3367,7 +3459,7 @@ footer {
 
 .university-tier-card-metrics {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.55rem;
 }
 
@@ -3547,6 +3639,10 @@ footer {
   .university-tier-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .university-live-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
@@ -3629,7 +3725,9 @@ footer {
 
   .university-tier-summary,
   .university-tier-controls,
-  .university-tier-grid {
+  .university-tier-grid,
+  .university-live-grid,
+  .university-tier-card-metrics {
     grid-template-columns: 1fr;
   }
 

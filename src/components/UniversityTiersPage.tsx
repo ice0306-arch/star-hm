@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   universityTierLabels,
   universityTierOrder,
@@ -23,6 +23,21 @@ const allRaceOrder: UniversityRaceKey[] = ["Terran", "Zerg", "Protoss", "Unknown
 const visibleRaceOrder: UniversityRaceKey[] = ["Terran", "Zerg", "Protoss"];
 const tierFilters: Array<UniversityTierKey | "all"> = ["all", ...universityTierOrder];
 
+type UniversityLivePlayer = {
+  id: string;
+  name: string;
+  college: string;
+  race: UniversityRaceKey;
+  tier: UniversityTierKey | "Unknown";
+  url: string;
+};
+
+type UniversityLivePayload = {
+  players: UniversityLivePlayer[];
+  liveCount: number;
+  updatedAt: number;
+};
+
 function topTierCount(college: UniversityTierSnapshot) {
   return universityTopTierKeys.reduce((sum, tier) => sum + (college.tiers[tier] ?? 0), 0);
 }
@@ -40,6 +55,36 @@ export function UniversityTiersPage() {
   const [activeCollege, setActiveCollege] = useState("전체");
   const [activeTier, setActiveTier] = useState<UniversityTierKey | "all">("all");
   const [activeRace, setActiveRace] = useState<UniversityRaceKey | "all">("all");
+  const [livePayload, setLivePayload] = useState<UniversityLivePayload | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadLivePlayers() {
+      try {
+        const response = await fetch("/api/university-live", { cache: "no-store" });
+        if (!response.ok) {
+          return;
+        }
+        const payload = (await response.json()) as UniversityLivePayload;
+        if (isMounted) {
+          setLivePayload(payload);
+        }
+      } catch {
+        if (isMounted) {
+          setLivePayload({ players: [], liveCount: 0, updatedAt: Date.now() });
+        }
+      }
+    }
+
+    loadLivePlayers();
+    const timer = window.setInterval(loadLivePlayers, 60_000);
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(timer);
+    };
+  }, []);
 
   const filteredColleges = useMemo(() => {
     return universityTierSnapshots.filter((college) => {
@@ -65,6 +110,16 @@ export function UniversityTiersPage() {
     return { totalPlayers, topPlayers, raceTotals };
   }, [filteredColleges]);
 
+  const livePlayers = livePayload?.players ?? [];
+  const filteredLivePlayers = useMemo(() => {
+    return livePlayers.filter((player) => {
+      const collegeMatches = activeCollege === "전체" || player.college === activeCollege;
+      const tierMatches = activeTier === "all" || player.tier === activeTier;
+      const raceMatches = activeRace === "all" || player.race === activeRace;
+      return collegeMatches && tierMatches && raceMatches;
+    });
+  }, [activeCollege, activeRace, activeTier, livePlayers]);
+
   return (
     <main className="site-shell university-tier-shell min-h-screen text-silver">
       <header className="fixed left-0 right-0 top-0 z-40 border-b border-white/10 bg-carbon/82 backdrop-blur-xl">
@@ -88,10 +143,10 @@ export function UniversityTiersPage() {
           <div className="university-tier-summary" aria-label="대학 티어표 요약">
             <SummaryTile value={filteredColleges.length} label="대학" />
             <SummaryTile value={summary.totalPlayers} label="총 인원" />
+            <SummaryTile value={filteredLivePlayers.length} label="라이브" />
             <SummaryTile value={summary.topPlayers} label="상위 티어" />
             <SummaryTile value={summary.raceTotals.Protoss} label="Protoss" />
             <SummaryTile value={summary.raceTotals.Terran} label="Terran" />
-            <SummaryTile value={summary.raceTotals.Zerg} label="Zerg" />
           </div>
         </div>
       </section>
@@ -127,9 +182,11 @@ export function UniversityTiersPage() {
             </label>
           </div>
 
+          <UniversityLiveBoard players={filteredLivePlayers} updatedAt={livePayload?.updatedAt ?? null} />
+
           <div className="university-tier-grid mt-8">
             {filteredColleges.map((college) => (
-              <UniversityTierCard key={college.college} college={college} />
+              <UniversityTierCard key={college.college} college={college} liveCount={livePlayers.filter((player) => player.college === college.college).length} />
             ))}
           </div>
         </div>
@@ -147,7 +204,38 @@ function SummaryTile({ value, label }: { value: number; label: string }) {
   );
 }
 
-function UniversityTierCard({ college }: { college: UniversityTierSnapshot }) {
+function UniversityLiveBoard({ players, updatedAt }: { players: UniversityLivePlayer[]; updatedAt: number | null }) {
+  return (
+    <section className="university-live-board" aria-labelledby="university-live-title">
+      <div className="university-live-board-head">
+        <div>
+          <div className="panel-kicker">LIVE PLAYERS</div>
+          <h2 id="university-live-title">현재 라이브 선수</h2>
+          <p>스폰 게임이나 매치업 상담을 바로 물어볼 수 있게, 방송 중인 선수만 먼저 보여줍니다.</p>
+        </div>
+        <span>{updatedAt ? `${new Date(updatedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })} 기준` : "확인 중"}</span>
+      </div>
+
+      {players.length > 0 ? (
+        <div className="university-live-grid">
+          {players.map((player) => (
+            <a key={`${player.college}-${player.id}`} className={`university-live-card race-${player.race.toLowerCase()}`} href={player.url} target="_blank" rel="noreferrer">
+              <span>{player.college}</span>
+              <strong>{player.name}</strong>
+              <em>{player.tier === "Unknown" ? "티어 확인" : universityTierLabels[player.tier]} · {raceLabels[player.race]}</em>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div className="university-live-empty">
+          현재 조건에 맞는 라이브 선수가 없습니다.
+        </div>
+      )}
+    </section>
+  );
+}
+
+function UniversityTierCard({ college, liveCount }: { college: UniversityTierSnapshot; liveCount: number }) {
   const strongestRace = mainRace(college);
   const topCount = topTierCount(college);
   const sortedTiers = universityTierOrder.filter((tier) => (college.tiers[tier] ?? 0) > 0);
@@ -170,6 +258,10 @@ function UniversityTierCard({ college }: { college: UniversityTierSnapshot }) {
         <div>
           <span>주 종족</span>
           <strong>{raceLabels[strongestRace]}</strong>
+        </div>
+        <div>
+          <span>라이브</span>
+          <strong>{liveCount}</strong>
         </div>
       </div>
 
