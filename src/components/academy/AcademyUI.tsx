@@ -146,6 +146,7 @@ export function MatchupBadge({ matchup }: { matchup: Matchup }) {
 export function BuildCard({ build }: { build: BuildGuide }) {
   return (
     <article className="build-card">
+      <a className="build-card-hit-area" href={`/academy/playbook/build/${build.playbookSlug}`} aria-label={`${build.originalTitle} 상세 보기`} />
       <div className="build-card-top">
         <BuildTierBadge tier={build.tier} />
         <MatchupBadge matchup={build.matchup} />

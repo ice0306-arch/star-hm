@@ -2573,6 +2573,17 @@ footer {
 
 .build-card {
   min-height: 310px;
+  position: relative;
+  cursor: pointer;
+}
+
+.build-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.build-card > :not(.build-card-hit-area):not(.build-card-actions) {
+  pointer-events: none;
 }
 
 .build-card > strong {
@@ -2590,6 +2601,28 @@ footer {
   color: rgba(214, 216, 210, 0.78);
   font-size: 0.72rem;
   font-weight: 850;
+}
+
+.build-card-hit-area {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: 8px;
+}
+
+.build-card-actions {
+  position: relative;
+  z-index: 2;
+}
+
+.build-card-actions a,
+.build-card-actions span {
+  position: relative;
+}
+
+.build-card:focus-within,
+.build-card:hover {
+  border-color: rgba(202, 163, 91, 0.34);
 }
 
 .build-tier-badge,
