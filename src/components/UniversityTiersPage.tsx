@@ -40,6 +40,7 @@ const tierCardSuits: Record<UniversityTierKey, string> = {
   Baby: "B",
 };
 const liveTierOrder: Array<UniversityTierKey | "Unknown"> = [...universityTierOrder, "Unknown"];
+const liveRefreshIntervalMs = 120_000;
 
 type UniversityLivePlayer = {
   id: string;
@@ -100,7 +101,7 @@ export function UniversityTiersPage() {
     }
 
     loadLivePlayers();
-    const timer = window.setInterval(loadLivePlayers, 60_000);
+    const timer = window.setInterval(loadLivePlayers, liveRefreshIntervalMs);
 
     return () => {
       isMounted = false;
@@ -242,7 +243,7 @@ function UniversityLiveBoard({ players, updatedAt }: { players: UniversityLivePl
           <h2 id="university-live-title">현재 라이브 선수</h2>
           <p>스폰 게임이나 매치업 상담을 바로 물어볼 수 있게, 방송 중인 선수만 먼저 보여줍니다.</p>
         </div>
-        <span>{updatedAt ? `${new Date(updatedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })} 기준` : "확인 중"}</span>
+        <span>{updatedAt ? `${new Date(updatedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })} 기준 · 2분 자동 갱신` : "확인 중"}</span>
       </div>
 
       {groupedPlayers.length > 0 ? (
