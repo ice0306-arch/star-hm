@@ -30,6 +30,10 @@ type UniversityLivePlayer = {
   race: UniversityRaceKey;
   tier: UniversityTierKey | "Unknown";
   url: string;
+  title?: string;
+  viewers?: number;
+  startedAt?: string;
+  thumbnail?: string;
 };
 
 type UniversityLivePayload = {
@@ -220,9 +224,10 @@ function UniversityLiveBoard({ players, updatedAt }: { players: UniversityLivePl
         <div className="university-live-grid">
           {players.map((player) => (
             <a key={`${player.college}-${player.id}`} className={`university-live-card race-${player.race.toLowerCase()}`} href={player.url} target="_blank" rel="noreferrer">
-              <span>{player.college}</span>
+              <span>{player.college}{player.viewers ? ` · ${player.viewers.toLocaleString()}명` : ""}</span>
               <strong>{player.name}</strong>
               <em>{player.tier === "Unknown" ? "티어 확인" : universityTierLabels[player.tier]} · {raceLabels[player.race]}</em>
+              {player.title ? <p>{player.title}</p> : null}
             </a>
           ))}
         </div>

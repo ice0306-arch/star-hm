@@ -3399,6 +3399,18 @@ footer {
   font-weight: 850;
 }
 
+.university-live-card p {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0.2rem 0 0;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--theme-muted);
+  font-size: 0.74rem;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
 .university-live-empty {
   margin-top: 1rem;
   border: 1px dashed var(--theme-panel-border);

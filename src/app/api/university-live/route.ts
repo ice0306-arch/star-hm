@@ -15,6 +15,19 @@ type UniversityLivePlayer = {
   race: UniversityRaceKey;
   tier: UniversityTierKey | "Unknown";
   url: string;
+  title: string;
+  viewers: number;
+  startedAt: string;
+  thumbnail: string;
+};
+
+type SourceLiveStatus = {
+  isLive?: boolean;
+  thumbnail?: string;
+  title?: string;
+  viewers?: string | number;
+  nickname?: string;
+  broad_start?: string;
 };
 
 interface UniversityLiveCache {
@@ -82,8 +95,27 @@ function decodeHtml(value: string) {
     .trim();
 }
 
+function numberFrom(value: unknown) {
+  const normalized = Number(String(value ?? "").replaceAll(",", "").trim());
+  return Number.isFinite(normalized) && normalized > 0 ? normalized : 0;
+}
+
+function parseLiveStatuses(html: string) {
+  const match = html.match(/const\s+liveStatuses\s*=\s*(\{[\s\S]*?\});/);
+  if (!match) {
+    return {} as Record<string, SourceLiveStatus>;
+  }
+
+  try {
+    return JSON.parse(match[1]) as Record<string, SourceLiveStatus>;
+  } catch {
+    return {} as Record<string, SourceLiveStatus>;
+  }
+}
+
 function parseLivePlayers(html: string): UniversityLivePlayer[] {
   const players: UniversityLivePlayer[] = [];
+  const liveStatuses = parseLiveStatuses(html);
   const tierSections = html.matchAll(/<div class="tier-section" id="([^"]+)">([\s\S]*?)(?=<div class="tier-section" id=|<script>)/g);
 
   for (const section of tierSections) {
@@ -94,8 +126,8 @@ function parseLivePlayers(html: string): UniversityLivePlayer[] {
     );
 
     for (const card of cards) {
-      const className = card[1];
-      if (className.includes("offline")) {
+      const liveStatus = liveStatuses[decodeHtml(card[2])];
+      if (!liveStatus?.isLive) {
         continue;
       }
 
@@ -106,6 +138,10 @@ function parseLivePlayers(html: string): UniversityLivePlayer[] {
         college: decodeHtml(card[5]) || "무소속",
         tier,
         url: decodeHtml(card[6]),
+        title: String(liveStatus.title ?? "").trim(),
+        viewers: numberFrom(liveStatus.viewers),
+        startedAt: String(liveStatus.broad_start ?? "").trim(),
+        thumbnail: String(liveStatus.thumbnail ?? "").trim(),
       });
     }
   }
