@@ -237,7 +237,7 @@ export function PlaybookHomePage() {
           <div className="playbook-quick-grid mt-8">
             <RecentlyViewedList />
             <a href="/academy/playbook/hotkeys">단축키</a>
-            <span aria-disabled="true">인쇄용 치트시트 준비 중</span>
+            <a href="#build-timings">빌드 타이밍</a>
           </div>
           <div className="matchup-card-grid mt-8">
             {Object.entries(matchupMeta).map(([matchup, meta]) => (
@@ -249,6 +249,7 @@ export function PlaybookHomePage() {
               </a>
             ))}
           </div>
+          <BuildTimingBoard id="build-timings" builds={builds} title="전체 빌드 타이밍 모음" description="빌드별 첫 생산, 병력 집결, 핵심 진출 시간을 한 화면에서 비교합니다." />
           <AcademySectionHeader eyebrow="RECOMMENDED BUILDS" title="초기 추천 빌드" description="관리자 데이터로 옮기기 쉽게 TypeScript 데이터와 repository 계층으로 분리했습니다." />
           <BuildGrid builds={builds.slice(0, 6)} />
         </div>
@@ -267,6 +268,7 @@ export function MatchupBuildListPage({ matchup }: { matchup: Matchup }) {
         <div className="mx-auto max-w-7xl">
           <AcademyBreadcrumb items={[{ label: "HM 아카데미", href: "/academy" }, { label: "실전 플레이북", href: "/academy/playbook" }, { label: matchup }]} />
           <BuildFilterSummary matchup={matchup} />
+          <BuildTimingBoard builds={builds} title={`${matchup} 빌드 타이밍 모음`} description="이 매치업에서 비교해야 할 핵심 진출 시간과 중단 기준만 먼저 확인합니다." />
           <BuildGrid builds={builds} />
         </div>
       </section>
@@ -529,6 +531,44 @@ function BasicsPageContent() {
       <div className="rookie-action-strip">
         {["유닛 선택", "이동", "공격", "건물 건설", "유닛 생산"].map((item) => (
           <span key={item}>{item}</span>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function BuildTimingBoard({ id, builds, title, description }: { id?: string; builds: BuildGuide[]; title: string; description: string }) {
+  const titleId = id ? `${id}-title` : `timing-board-${builds[0]?.matchup.toLowerCase() ?? "all"}-title`;
+  return (
+    <section id={id} className="timing-board" aria-labelledby={titleId}>
+      <div className="timing-board-head">
+        <div>
+          <div className="panel-kicker">BUILD TIMINGS</div>
+          <h2 id={titleId}>{title}</h2>
+          <p>{description}</p>
+        </div>
+      </div>
+      <div className="timing-board-table" role="table" aria-label={title}>
+        <div className="timing-board-row timing-board-row-head" role="row">
+          <span role="columnheader">빌드</span>
+          <span role="columnheader">분류</span>
+          <span role="columnheader">핵심 시간</span>
+          <span role="columnheader">핵심 유닛</span>
+          <span role="columnheader">첫 행동</span>
+          <span role="columnheader">중단 기준</span>
+        </div>
+        {builds.map((build) => (
+          <a key={build.id} className="timing-board-row" href={`/academy/playbook/build/${build.playbookSlug}`} role="row">
+            <strong role="cell">
+              {build.originalTitle}
+              <small>{build.easyTitle}</small>
+            </strong>
+            <span role="cell">{categoryLabels[build.category]}</span>
+            <span role="cell">{build.playbook.keyTiming ?? "확인"}</span>
+            <span role="cell">{build.playbook.keyUnits.join(" · ")}</span>
+            <span role="cell">{build.playbook.buildSteps[1]?.title ?? build.playbook.buildSteps[0]?.title ?? "시작"}</span>
+            <span role="cell">{build.playbook.stopConditions[0] ?? "상대 방어 확인"}</span>
+          </a>
         ))}
       </div>
     </section>

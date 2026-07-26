@@ -2329,6 +2329,7 @@ footer {
 .academy-complete-panel,
 .live-build-mode,
 .command-cue-panel,
+.timing-board,
 .control-preset-editor,
 .info-block,
 .filter-summary-panel,
@@ -2361,6 +2362,7 @@ footer {
 .academy-complete-panel,
 .live-build-mode,
 .command-cue-panel,
+.timing-board,
 .control-preset-editor,
 .info-block,
 .filter-summary-panel,
@@ -2696,6 +2698,80 @@ footer {
   background: rgba(255, 255, 255, 0.035);
   color: white;
   font-weight: 950;
+}
+
+.timing-board {
+  margin-top: 1rem;
+  padding: clamp(1rem, 2.4vw, 1.35rem);
+}
+
+.timing-board-head {
+  border-bottom: 1px solid rgba(214, 216, 210, 0.1);
+  padding-bottom: 1rem;
+}
+
+.timing-board-head h2 {
+  margin-top: 0.25rem;
+  color: white;
+  font-size: clamp(1.45rem, 2.8vw, 2.25rem);
+  font-weight: 950;
+  line-height: 1.1;
+}
+
+.timing-board-head p {
+  margin-top: 0.45rem;
+  max-width: 760px;
+  color: rgba(214, 216, 210, 0.78);
+  line-height: 1.6;
+}
+
+.timing-board-table {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 1rem;
+}
+
+.timing-board-row {
+  display: grid;
+  grid-template-columns: minmax(170px, 1.15fr) 0.55fr 0.55fr 0.9fr 0.9fr 1.2fr;
+  gap: 0.6rem;
+  align-items: center;
+  border: 1px solid rgba(214, 216, 210, 0.1);
+  border-radius: 7px;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.034);
+  color: rgba(214, 216, 210, 0.86);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.timing-board-row:not(.timing-board-row-head):hover {
+  border-color: rgba(202, 163, 91, 0.32);
+  background: rgba(202, 163, 91, 0.07);
+}
+
+.timing-board-row-head {
+  border-color: transparent;
+  background: transparent;
+  color: var(--gold);
+  font-size: 0.7rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.timing-board-row strong {
+  color: white;
+  font-weight: 950;
+  line-height: 1.35;
+}
+
+.timing-board-row small {
+  display: block;
+  margin-top: 0.18rem;
+  color: var(--academy-cyan);
+  font-size: 0.72rem;
+  font-weight: 900;
 }
 
 .lesson-layout,
@@ -3164,6 +3240,16 @@ footer {
   .build-detail-head dl {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .timing-board-row,
+  .timing-board-row-head {
+    grid-template-columns: minmax(160px, 1.2fr) repeat(3, minmax(90px, 0.75fr));
+  }
+
+  .timing-board-row > :nth-child(5),
+  .timing-board-row > :nth-child(6) {
+    display: none;
+  }
 }
 
 @media (max-width: 640px) {
@@ -3193,6 +3279,43 @@ footer {
   .build-detail-actions .favorite-button,
   .academy-back-link {
     width: 100%;
+  }
+
+  .timing-board-row,
+  .timing-board-row-head {
+    grid-template-columns: 1fr;
+  }
+
+  .timing-board-row-head {
+    display: none;
+  }
+
+  .timing-board-row > span::before {
+    display: block;
+    margin-bottom: 0.15rem;
+    color: var(--gold);
+    font-size: 0.68rem;
+    font-weight: 950;
+  }
+
+  .timing-board-row > span:nth-child(2)::before {
+    content: "분류";
+  }
+
+  .timing-board-row > span:nth-child(3)::before {
+    content: "핵심 시간";
+  }
+
+  .timing-board-row > span:nth-child(4)::before {
+    content: "핵심 유닛";
+  }
+
+  .timing-board-row > span:nth-child(5)::before {
+    content: "첫 행동";
+  }
+
+  .timing-board-row > span:nth-child(6)::before {
+    content: "중단 기준";
   }
 }
 
