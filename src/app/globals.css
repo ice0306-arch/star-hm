@@ -3610,6 +3610,17 @@ footer {
   padding: 4px;
 }
 
+.university-icon.has-image {
+  border-color: rgba(202, 163, 91, 0.34);
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.12), transparent 34%),
+    #111419;
+}
+
+.university-icon.has-image img {
+  padding: 3px;
+}
+
 .university-icon.is-small {
   width: 24px;
   height: 24px;
@@ -3624,7 +3635,7 @@ footer {
 }
 
 .university-icon.is-small img {
-  padding: 2px;
+  padding: 1px;
 }
 
 .university-icon.icon-surgery {

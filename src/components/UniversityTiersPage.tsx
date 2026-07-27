@@ -51,18 +51,18 @@ type UniversityIconInfo = {
 const universityIcons: Record<string, UniversityIconInfo> = {
   수술대: { label: "수", className: "icon-surgery" },
   흑카데미: { label: "흑", className: "icon-black" },
-  JSA: { label: "J", className: "icon-jsa" },
+  JSA: { label: "J", className: "icon-jsa", image: "/universities/jsa.webp" },
   YB: { label: "Y", className: "icon-yb" },
-  케이대: { label: "K", className: "icon-k" },
-  씨나인: { label: "C9", className: "icon-c9" },
-  캄몬스타즈: { label: "캄", className: "icon-kammon" },
-  엠비대: { label: "MB", className: "icon-mb" },
-  와플대: { label: "W", className: "icon-waffle" },
-  뉴캣슬: { label: "N", className: "icon-newcastle" },
-  BGM: { label: "B", className: "icon-bgm" },
-  HM: { label: "HM", className: "icon-hm", image: BRAND_EMBLEM_SRC },
-  DM: { label: "D", className: "icon-dm" },
-  신세계: { label: "신", className: "icon-shinsegae" },
+  케이대: { label: "K", className: "icon-k", image: "/universities/k-university.webp" },
+  씨나인: { label: "C9", className: "icon-c9", image: "/universities/c9.webp" },
+  캄몬스타즈: { label: "캄", className: "icon-kammon", image: "/universities/kammon-stars.webp" },
+  엠비대: { label: "MB", className: "icon-mb", image: "/universities/mbu.webp" },
+  와플대: { label: "W", className: "icon-waffle", image: "/universities/waffle.webp" },
+  뉴캣슬: { label: "N", className: "icon-newcastle", image: "/universities/newcastle.webp" },
+  BGM: { label: "B", className: "icon-bgm", image: "/universities/bgm.webp" },
+  HM: { label: "HM", className: "icon-hm", image: "/universities/hm.webp" },
+  DM: { label: "D", className: "icon-dm", image: "/universities/dm.webp" },
+  신세계: { label: "신", className: "icon-shinsegae", image: "/universities/shinsegae.webp" },
   무소속: { label: "FA", className: "icon-free" },
 };
 
@@ -366,7 +366,7 @@ function UniversityTierCard({ college, liveCount }: { college: UniversityTierSna
 
 function UniversityIcon({ college, size = "regular" }: { college: string; size?: "regular" | "small" }) {
   const icon = getUniversityIcon(college);
-  const className = `university-icon ${icon.className} ${size === "small" ? "is-small" : ""}`;
+  const className = `university-icon ${icon.className} ${icon.image ? "has-image" : ""} ${size === "small" ? "is-small" : ""}`;
 
   return (
     <span className={className} aria-hidden="true">
