@@ -3412,19 +3412,21 @@ footer {
 
 .university-live-tier-players {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 0.55rem;
 }
 
 .university-live-card {
   display: grid;
   position: relative;
-  min-height: 104px;
-  align-content: start;
-  gap: 0.32rem;
+  grid-template-columns: 4.85rem minmax(0, 1fr);
+  min-height: 128px;
+  align-content: center;
+  column-gap: 1rem;
+  row-gap: 0.34rem;
   border: 1px solid var(--theme-panel-border);
   border-radius: 7px;
-  padding: 0.78rem 0.78rem 0.78rem 3.9rem;
+  padding: 0.9rem 0.9rem 0.9rem 1rem;
   background: var(--theme-panel-soft);
 }
 
@@ -3442,52 +3444,56 @@ footer {
 }
 
 .university-live-emblem {
-  position: absolute;
-  top: 0.78rem;
-  left: 1.02rem;
   display: grid;
-  width: 2.24rem;
-  height: 2.24rem;
+  grid-row: 1 / span 3;
+  align-self: center;
+  width: 4.45rem;
+  height: 4.45rem;
   place-items: center;
 }
 
 .university-live-emblem .university-icon {
-  width: 2.24rem;
-  height: 2.24rem;
-  border-radius: 9px;
+  width: 4.45rem;
+  height: 4.45rem;
+  border-radius: 15px;
   box-shadow: none;
 }
 
 .university-live-emblem .university-icon::after {
-  inset: 3px;
-  border-radius: 7px;
+  inset: 5px;
+  border-radius: 11px;
 }
 
 .university-live-college {
   display: inline-flex;
+  grid-column: 2;
+  flex-wrap: wrap;
   align-items: center;
   min-width: 0;
-  gap: 0.42rem;
-  max-width: calc(100% - 74px);
+  gap: 0.38rem;
+  max-width: 100%;
+  padding-right: 5.8rem;
   color: var(--gold);
-  font-size: 1.02rem;
+  font-size: 1.08rem;
   font-weight: 950;
-  line-height: 1.08;
+  line-height: 1.12;
 }
 
 .university-live-college > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .university-live-college em {
   flex: 0 0 auto;
-  color: var(--theme-muted);
-  font-size: 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 0.15rem 0.42rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--theme-strong);
+  font-size: 0.62rem;
   font-style: normal;
   font-weight: 950;
-  letter-spacing: 0.02em;
+  line-height: 1;
 }
 
 .university-live-card i {
@@ -3505,14 +3511,16 @@ footer {
 }
 
 .university-live-card strong {
+  grid-column: 2;
   color: var(--theme-strong);
-  font-size: 1.22rem;
+  font-size: 1.28rem;
   font-weight: 950;
   line-height: 1.12;
 }
 
 .university-live-card p {
   display: -webkit-box;
+  grid-column: 2;
   overflow: hidden;
   margin: 0.22rem 0 0;
   -webkit-box-orient: vertical;
