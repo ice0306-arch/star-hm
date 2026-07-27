@@ -42,6 +42,30 @@ const tierCardSuits: Record<UniversityTierKey, string> = {
 const liveTierOrder: Array<UniversityTierKey | "Unknown"> = [...universityTierOrder, "Unknown"];
 const liveRefreshIntervalMs = 120_000;
 
+type UniversityIconInfo = {
+  label: string;
+  className: string;
+  image?: string;
+};
+
+const universityIcons: Record<string, UniversityIconInfo> = {
+  수술대: { label: "수", className: "icon-surgery" },
+  흑카데미: { label: "흑", className: "icon-black" },
+  JSA: { label: "J", className: "icon-jsa" },
+  YB: { label: "Y", className: "icon-yb" },
+  케이대: { label: "K", className: "icon-k" },
+  씨나인: { label: "C9", className: "icon-c9" },
+  캄몬스타즈: { label: "캄", className: "icon-kammon" },
+  엠비대: { label: "MB", className: "icon-mb" },
+  와플대: { label: "W", className: "icon-waffle" },
+  뉴캣슬: { label: "N", className: "icon-newcastle" },
+  BGM: { label: "B", className: "icon-bgm" },
+  HM: { label: "HM", className: "icon-hm", image: BRAND_EMBLEM_SRC },
+  DM: { label: "D", className: "icon-dm" },
+  신세계: { label: "신", className: "icon-shinsegae" },
+  무소속: { label: "FA", className: "icon-free" },
+};
+
 type UniversityLivePlayer = {
   id: string;
   name: string;
@@ -72,6 +96,10 @@ function mainRace(college: UniversityTierSnapshot) {
 function shareClass(value: number, total: number) {
   const share = total > 0 ? Math.max(10, Math.round((value / total) * 10) * 10) : 0;
   return `share-${Math.min(100, share)}`;
+}
+
+function getUniversityIcon(college: string) {
+  return universityIcons[college] ?? { label: college.slice(0, 2) || "?", className: "icon-free" };
 }
 
 export function UniversityTiersPage() {
@@ -258,7 +286,10 @@ function UniversityLiveBoard({ players, updatedAt }: { players: UniversityLivePl
               <div className="university-live-tier-players">
                 {group.players.map((player) => (
                   <a key={`${player.college}-${player.id}`} className={`university-live-card race-${player.race.toLowerCase()}`} href={player.url} target="_blank" rel="noreferrer">
-                    <span>{player.college}{player.viewers ? ` · ${player.viewers.toLocaleString()}명` : ""}</span>
+                    <span className="university-live-college">
+                      <UniversityIcon college={player.college} size="small" />
+                      <span>{player.college}{player.viewers ? ` · ${player.viewers.toLocaleString()}명` : ""}</span>
+                    </span>
                     <i>{raceLabels[player.race]}</i>
                     <strong>{player.name}</strong>
                     {player.title ? <p>{player.title}</p> : null}
@@ -285,9 +316,12 @@ function UniversityTierCard({ college, liveCount }: { college: UniversityTierSna
   return (
     <article className={college.featured ? "university-tier-card is-featured" : "university-tier-card"}>
       <div className="university-tier-card-head">
-        <div>
-          <span>{college.featured ? "THE HM" : "UNIVERSITY"}</span>
-          <h2>{college.college}</h2>
+        <div className="university-tier-title">
+          <UniversityIcon college={college.college} />
+          <div>
+            <span>{college.featured ? "THE HM" : "UNIVERSITY"}</span>
+            <h2>{college.college}</h2>
+          </div>
         </div>
         <strong>{college.total}</strong>
       </div>
@@ -327,5 +361,16 @@ function UniversityTierCard({ college, liveCount }: { college: UniversityTierSna
         ))}
       </div>
     </article>
+  );
+}
+
+function UniversityIcon({ college, size = "regular" }: { college: string; size?: "regular" | "small" }) {
+  const icon = getUniversityIcon(college);
+  const className = `university-icon ${icon.className} ${size === "small" ? "is-small" : ""}`;
+
+  return (
+    <span className={className} aria-hidden="true">
+      {icon.image ? <img src={icon.image} alt="" width={size === "small" ? 22 : 42} height={size === "small" ? 22 : 42} /> : <span>{icon.label}</span>}
+    </span>
   );
 }

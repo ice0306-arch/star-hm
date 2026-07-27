@@ -3441,11 +3441,20 @@ footer {
   content: "";
 }
 
-.university-live-card span {
+.university-live-college {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
   max-width: calc(100% - 74px);
   color: var(--gold);
   font-size: 0.7rem;
   font-weight: 950;
+}
+
+.university-live-college > span:not(.university-icon) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .university-live-card i {
@@ -3556,12 +3565,161 @@ footer {
   gap: 1rem;
 }
 
+.university-tier-title {
+  display: flex;
+  align-items: center;
+  gap: 0.78rem;
+  min-width: 0;
+}
+
+.university-icon {
+  --university-icon-a: #caa35b;
+  --university-icon-b: #f4d88f;
+  display: inline-grid;
+  position: relative;
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--university-icon-a) 64%, transparent);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.28), transparent 32%),
+    linear-gradient(135deg, var(--university-icon-a), var(--university-icon-b));
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
+  color: #101114;
+  font-size: 0.86rem;
+  font-weight: 1000;
+  letter-spacing: 0;
+}
+
+.university-icon::after {
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 9px;
+  content: "";
+  pointer-events: none;
+}
+
+.university-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+
+.university-icon.is-small {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  box-shadow: none;
+  font-size: 0.58rem;
+}
+
+.university-icon.is-small::after {
+  inset: 2px;
+  border-radius: 5px;
+}
+
+.university-icon.is-small img {
+  padding: 2px;
+}
+
+.university-icon.icon-surgery {
+  --university-icon-a: #dc394d;
+  --university-icon-b: #ffd35d;
+}
+
+.university-icon.icon-black {
+  --university-icon-a: #17191f;
+  --university-icon-b: #7a8494;
+  color: #f5f7fb;
+}
+
+.university-icon.icon-jsa {
+  --university-icon-a: #5c7cff;
+  --university-icon-b: #42e8d6;
+}
+
+.university-icon.icon-yb {
+  --university-icon-a: #f2ce52;
+  --university-icon-b: #1c232f;
+}
+
+.university-icon.icon-k {
+  --university-icon-a: #7cd76f;
+  --university-icon-b: #276bff;
+}
+
+.university-icon.icon-c9 {
+  --university-icon-a: #dd4a97;
+  --university-icon-b: #55c9ff;
+}
+
+.university-icon.icon-kammon {
+  --university-icon-a: #7c5cff;
+  --university-icon-b: #ff8b4a;
+}
+
+.university-icon.icon-mb {
+  --university-icon-a: #ca8a39;
+  --university-icon-b: #f4e3b2;
+}
+
+.university-icon.icon-waffle {
+  --university-icon-a: #f0b35d;
+  --university-icon-b: #8a4a22;
+}
+
+.university-icon.icon-newcastle {
+  --university-icon-a: #2f75ff;
+  --university-icon-b: #f4f7ff;
+}
+
+.university-icon.icon-bgm {
+  --university-icon-a: #38bdf8;
+  --university-icon-b: #1b2a52;
+  color: #f7fbff;
+}
+
+.university-icon.icon-hm {
+  --university-icon-a: #caa35b;
+  --university-icon-b: #2b3038;
+  background: var(--theme-panel-soft);
+}
+
+.university-icon.icon-dm {
+  --university-icon-a: #ef6f6c;
+  --university-icon-b: #4b1e4f;
+  color: #fff;
+}
+
+.university-icon.icon-shinsegae {
+  --university-icon-a: #e4e4e4;
+  --university-icon-b: #294c8f;
+}
+
+.university-icon.icon-free {
+  --university-icon-a: #76808f;
+  --university-icon-b: #252b34;
+  color: #fff;
+}
+
 .university-tier-card-head span,
 .university-tier-card-metrics span {
   color: var(--gold);
   font-size: 0.68rem;
   font-weight: 950;
   letter-spacing: 0.1em;
+}
+
+.university-icon > span {
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: 0;
 }
 
 .university-tier-card-head h2 {
