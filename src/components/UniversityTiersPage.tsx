@@ -286,10 +286,8 @@ function UniversityLiveBoard({ players, updatedAt }: { players: UniversityLivePl
               <div className="university-live-tier-players">
                 {group.players.map((player) => (
                   <a key={`${player.college}-${player.id}`} className={`university-live-card race-${player.race.toLowerCase()}`} href={player.url} target="_blank" rel="noreferrer">
-                    <span className="university-live-college">
-                      <UniversityIcon college={player.college} size="small" />
-                      <span>{player.college}{player.viewers ? ` · ${player.viewers.toLocaleString()}명` : ""}</span>
-                    </span>
+                    <span className="university-live-emblem"><UniversityIcon college={player.college} /></span>
+                    <span className="university-live-college"><span>{player.college}</span>{player.viewers ? <em>{player.viewers.toLocaleString()}명</em> : null}</span>
                     <i>{raceLabels[player.race]}</i>
                     <strong>{player.name}</strong>
                     {player.title ? <p>{player.title}</p> : null}

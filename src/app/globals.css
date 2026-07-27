@@ -3424,7 +3424,7 @@ footer {
   gap: 0.32rem;
   border: 1px solid var(--theme-panel-border);
   border-radius: 7px;
-  padding: 0.75rem 0.75rem 0.75rem 0.85rem;
+  padding: 0.78rem 0.78rem 0.78rem 3.9rem;
   background: var(--theme-panel-soft);
 }
 
@@ -3436,25 +3436,58 @@ footer {
 .university-live-card::before {
   position: absolute;
   inset: 0 auto 0 0;
-  width: 4px;
+  width: 0.52rem;
   border-radius: 7px 0 0 7px;
   content: "";
+}
+
+.university-live-emblem {
+  position: absolute;
+  top: 0.78rem;
+  left: 1.02rem;
+  display: grid;
+  width: 2.24rem;
+  height: 2.24rem;
+  place-items: center;
+}
+
+.university-live-emblem .university-icon {
+  width: 2.24rem;
+  height: 2.24rem;
+  border-radius: 9px;
+  box-shadow: none;
+}
+
+.university-live-emblem .university-icon::after {
+  inset: 3px;
+  border-radius: 7px;
 }
 
 .university-live-college {
   display: inline-flex;
   align-items: center;
+  min-width: 0;
   gap: 0.42rem;
   max-width: calc(100% - 74px);
   color: var(--gold);
-  font-size: 0.7rem;
+  font-size: 1.02rem;
   font-weight: 950;
+  line-height: 1.08;
 }
 
-.university-live-college > span:not(.university-icon) {
+.university-live-college > span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.university-live-college em {
+  flex: 0 0 auto;
+  color: var(--theme-muted);
+  font-size: 0.7rem;
+  font-style: normal;
+  font-weight: 950;
+  letter-spacing: 0.02em;
 }
 
 .university-live-card i {
@@ -3473,14 +3506,15 @@ footer {
 
 .university-live-card strong {
   color: var(--theme-strong);
-  font-size: 1.15rem;
+  font-size: 1.22rem;
   font-weight: 950;
+  line-height: 1.12;
 }
 
 .university-live-card p {
   display: -webkit-box;
   overflow: hidden;
-  margin: 0.2rem 0 0;
+  margin: 0.22rem 0 0;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   color: var(--theme-muted);
