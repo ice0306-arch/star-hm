@@ -168,18 +168,18 @@ export function FreeAgentsPage() {
             <div className="free-agent-hero-copy">
               <div className="panel-kicker">FREE AGENT BOARD</div>
               <h1>FA 현황판</h1>
-              <p>무소속 라이브 선수만 따로 모아서, 티어와 종족 기준으로 바로 확인합니다.</p>
+              <p>전체 FA 등록 인원과 현재 라이브 선수를 분리해서, 티어와 종족 기준으로 바로 확인합니다.</p>
             </div>
             <a className="free-agent-back-link" href="/university-tiers">대학티어 보기</a>
           </div>
 
           <div className="university-tier-summary" aria-label="FA 현황 요약">
+            <SummaryTile value={freeAgentSnapshot?.total ?? 0} label="등록 FA" />
             <SummaryTile value={freeAgents.length} label="라이브 FA" />
             <SummaryTile value={totalViewers} label="총 시청자" />
-            <SummaryTile value={topTierCount(freeAgents)} label="상위 티어" />
-            <SummaryTile value={raceCounts.Protoss} label="Protoss" />
             <SummaryTile value={raceCounts.Terran} label="Terran" />
             <SummaryTile value={raceCounts.Zerg} label="Zerg" />
+            <SummaryTile value={raceCounts.Protoss} label="Protoss" />
           </div>
         </div>
       </section>
@@ -192,8 +192,8 @@ export function FreeAgentsPage() {
               <strong>{raceLabels[strongestRace]}</strong>
             </div>
             <div>
-              <span>등록 기준</span>
-              <strong>{freeAgentSnapshot ? `${freeAgentSnapshot.total}명` : "확인 중"}</strong>
+              <span>상위 티어 라이브</span>
+              <strong>{topTierCount(freeAgents)}명</strong>
             </div>
             <div>
               <span>현재 조건</span>
