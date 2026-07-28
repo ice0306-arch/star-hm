@@ -63,7 +63,7 @@ const universityIcons: Record<string, UniversityIconInfo> = {
   HM: { label: "HM", className: "icon-hm", image: "/universities/hm.webp" },
   DM: { label: "D", className: "icon-dm", image: "/universities/dm.webp" },
   신세계: { label: "신", className: "icon-shinsegae", image: "/universities/shinsegae.webp" },
-  무소속: { label: "FA", className: "icon-free" },
+  무소속: { label: "FA", className: "icon-free", image: "/universities/free-agent.webp" },
 };
 
 type UniversityLivePlayer = {
