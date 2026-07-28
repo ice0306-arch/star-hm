@@ -49,7 +49,7 @@ type UniversityIconInfo = {
 };
 
 const universityIcons: Record<string, UniversityIconInfo> = {
-  수술대: { label: "수", className: "icon-surgery" },
+  수술대: { label: "수", className: "icon-surgery", image: "/universities/surgery.webp" },
   흑카데미: { label: "흑", className: "icon-black", image: "/universities/black-academy.webp" },
   JSA: { label: "J", className: "icon-jsa", image: "/universities/jsa.webp" },
   YB: { label: "Y", className: "icon-yb" },
