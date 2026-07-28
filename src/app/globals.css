@@ -3402,7 +3402,7 @@ footer {
 
 .free-agent-roster-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 0.6rem;
   margin-top: 1rem;
 }
@@ -3410,13 +3410,13 @@ footer {
 .free-agent-roster-card {
   display: grid;
   position: relative;
-  grid-template-columns: 44px minmax(0, 1fr) auto;
-  gap: 0.7rem;
-  align-items: center;
-  min-height: 72px;
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 0.85rem;
+  align-items: start;
+  min-height: 116px;
   border: 1px solid var(--theme-panel-border);
   border-radius: 7px;
-  padding: 0.7rem;
+  padding: 0.85rem;
   background: var(--theme-panel-soft);
 }
 
@@ -3425,15 +3425,33 @@ footer {
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.16);
 }
 
-.free-agent-roster-card img {
-  width: 44px;
-  height: 44px;
+.free-agent-roster-avatar {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 12px;
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.12), transparent 34%),
+    #111419;
+}
+
+.free-agent-roster-avatar img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 
-.free-agent-roster-card span {
+.free-agent-roster-body {
+  display: grid;
+  min-width: 0;
+  gap: 0.28rem;
+}
+
+.free-agent-roster-card span,
+.free-agent-roster-tags {
   min-width: 0;
 }
 
@@ -3454,18 +3472,27 @@ footer {
 .free-agent-roster-card small {
   margin-top: 0.16rem;
   color: var(--theme-muted);
-  font-size: 0.68rem;
+  font-size: 0.76rem;
   font-weight: 800;
+}
+
+.free-agent-roster-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.38rem;
+  margin-top: 0.38rem;
 }
 
 .free-agent-roster-card em,
 .free-agent-roster-card i,
 .free-agent-roster-card b {
-  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
   border: 1px solid currentColor;
   border-radius: 999px;
-  padding: 0.18rem 0.42rem;
-  font-size: 0.62rem;
+  padding: 0.22rem 0.48rem;
+  font-size: 0.66rem;
   font-style: normal;
   font-weight: 950;
   line-height: 1;
@@ -3476,14 +3503,10 @@ footer {
 }
 
 .free-agent-roster-card i {
-  grid-column: 3;
   color: var(--theme-muted);
 }
 
 .free-agent-roster-card b {
-  position: absolute;
-  right: 0.55rem;
-  bottom: 0.5rem;
   border-color: rgba(113, 216, 154, 0.34);
   background: rgba(113, 216, 154, 0.12);
   color: #71d89a;

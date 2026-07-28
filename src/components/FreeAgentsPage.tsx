@@ -255,14 +255,18 @@ function FreeAgentRosterBoard({ players, liveBySoopId }: { players: readonly FaR
 
           return (
             <a key={player.soopId} className={`free-agent-roster-card race-${player.race.toLowerCase()} ${live ? "is-live" : ""}`} href={href} target="_blank" rel="noreferrer">
-              <img src={player.profileImage} alt="" width={44} height={44} loading="lazy" referrerPolicy="no-referrer" />
-              <span>
+              <span className="free-agent-roster-avatar">
+                <img src={player.profileImage} alt="" width={48} height={48} loading="lazy" referrerPolicy="no-referrer" />
+              </span>
+              <span className="free-agent-roster-body">
                 <strong>{player.name}</strong>
                 <small>{player.registeredName ? `${player.registeredName} · ` : ""}{player.soopId}</small>
+                <span className="free-agent-roster-tags">
+                  <em>{universityTierLabels[player.tier]}</em>
+                  <i>{raceLabels[player.race]}</i>
+                  {live ? <b>LIVE</b> : null}
+                </span>
               </span>
-              <em>{universityTierLabels[player.tier]}</em>
-              <i>{raceLabels[player.race]}</i>
-              {live ? <b>LIVE</b> : null}
             </a>
           );
         })}
