@@ -106,6 +106,7 @@ export function UniversityTiersPage() {
   const [activeCollege, setActiveCollege] = useState("전체");
   const [activeTier, setActiveTier] = useState<UniversityTierKey | "all">("all");
   const [activeRace, setActiveRace] = useState<UniversityRaceKey | "all">("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [livePayload, setLivePayload] = useState<UniversityLivePayload | null>(null);
 
   useEffect(() => {
@@ -137,14 +138,26 @@ export function UniversityTiersPage() {
     };
   }, []);
 
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+
+  const livePlayers = livePayload?.players ?? [];
   const filteredColleges = useMemo(() => {
     return universityTierSnapshots.filter((college) => {
       const collegeMatches = activeCollege === "전체" || college.college === activeCollege;
       const tierMatches = activeTier === "all" || (college.tiers[activeTier] ?? 0) > 0;
       const raceMatches = activeRace === "all" || college.race[activeRace] > 0;
-      return collegeMatches && tierMatches && raceMatches;
+      const searchMatches =
+        !normalizedSearch ||
+        college.college.toLowerCase().includes(normalizedSearch) ||
+        livePlayers.some((player) => {
+          return (
+            player.college === college.college &&
+            [player.name, player.id, player.title ?? ""].some((value) => value.toLowerCase().includes(normalizedSearch))
+          );
+        });
+      return collegeMatches && tierMatches && raceMatches && searchMatches;
     });
-  }, [activeCollege, activeRace, activeTier]);
+  }, [activeCollege, activeRace, activeTier, livePlayers, normalizedSearch]);
 
   const summary = useMemo(() => {
     const totalPlayers = filteredColleges.reduce((sum, college) => sum + college.total, 0);
@@ -161,15 +174,17 @@ export function UniversityTiersPage() {
     return { totalPlayers, topPlayers, raceTotals };
   }, [filteredColleges]);
 
-  const livePlayers = livePayload?.players ?? [];
   const filteredLivePlayers = useMemo(() => {
     return livePlayers.filter((player) => {
       const collegeMatches = activeCollege === "전체" || player.college === activeCollege;
       const tierMatches = activeTier === "all" || player.tier === activeTier;
       const raceMatches = activeRace === "all" || player.race === activeRace;
-      return collegeMatches && tierMatches && raceMatches;
+      const searchMatches =
+        !normalizedSearch ||
+        [player.name, player.id, player.college, player.title ?? ""].some((value) => value.toLowerCase().includes(normalizedSearch));
+      return collegeMatches && tierMatches && raceMatches && searchMatches;
     });
-  }, [activeCollege, activeRace, activeTier, livePlayers]);
+  }, [activeCollege, activeRace, activeTier, livePlayers, normalizedSearch]);
 
   return (
     <main className="site-shell university-tier-shell min-h-screen text-silver">
@@ -206,6 +221,15 @@ export function UniversityTiersPage() {
       <section className="px-5 pb-20 sm:px-8 lg:px-10">
         <div className="mx-auto max-w-7xl">
           <div className="university-tier-controls">
+            <label className="university-search-control">
+              <span>검색</span>
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="대학명, 선수명, SOOP ID"
+              />
+            </label>
             <label>
               <span>대학</span>
               <select value={activeCollege} onChange={(event) => setActiveCollege(event.target.value)}>

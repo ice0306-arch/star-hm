@@ -88,6 +88,7 @@ function mainRosterRace(players: readonly FaRosterEntry[]) {
 export function FreeAgentsPage() {
   const [activeTier, setActiveTier] = useState<UniversityTierKey | "all">("all");
   const [activeRace, setActiveRace] = useState<UniversityRaceKey | "all">("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [livePayload, setLivePayload] = useState<UniversityLivePayload | null>(null);
 
   useEffect(() => {
@@ -119,22 +120,30 @@ export function FreeAgentsPage() {
     };
   }, []);
 
+  const normalizedSearch = searchQuery.trim().toLowerCase();
   const freeAgents = useMemo(() => (livePayload?.players ?? []).filter((player) => player.college === "무소속"), [livePayload]);
   const filteredPlayers = useMemo(() => {
     return freeAgents.filter((player) => {
       const tierMatches = activeTier === "all" || player.tier === activeTier;
       const raceMatches = activeRace === "all" || player.race === activeRace;
-      return tierMatches && raceMatches;
+      const searchMatches =
+        !normalizedSearch ||
+        [player.name, player.id, player.title ?? ""].some((value) => value.toLowerCase().includes(normalizedSearch));
+      return tierMatches && raceMatches && searchMatches;
     });
-  }, [activeRace, activeTier, freeAgents]);
+  }, [activeRace, activeTier, freeAgents, normalizedSearch]);
 
   const filteredRoster = useMemo(() => {
     return faRoster.filter((player) => {
       const tierMatches = activeTier === "all" || player.tier === activeTier;
       const raceMatches = activeRace === "all" || player.race === activeRace;
-      return tierMatches && raceMatches;
+      const liveTitle = freeAgents.find((livePlayer) => livePlayer.id === player.soopId)?.title ?? "";
+      const searchMatches =
+        !normalizedSearch ||
+        [player.name, player.registeredName ?? "", player.soopId, liveTitle].some((value) => value.toLowerCase().includes(normalizedSearch));
+      return tierMatches && raceMatches && searchMatches;
     });
-  }, [activeRace, activeTier]);
+  }, [activeRace, activeTier, freeAgents, normalizedSearch]);
 
   const liveBySoopId = useMemo(() => new Map(freeAgents.map((player) => [player.id, player])), [freeAgents]);
 
@@ -210,6 +219,15 @@ export function FreeAgentsPage() {
           </div>
 
           <div className="university-tier-controls free-agent-controls">
+            <label className="university-search-control">
+              <span>검색</span>
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="선수명, SOOP ID"
+              />
+            </label>
             <label>
               <span>티어</span>
               <select value={activeTier} onChange={(event) => setActiveTier(event.target.value as UniversityTierKey | "all")}>

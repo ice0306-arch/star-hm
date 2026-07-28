@@ -11,7 +11,7 @@ export type FaRosterEntry = {
   registeredName?: string;
 };
 
-export const faRoster = [
+export const faRoster: FaRosterEntry[] = [
   { name: "김지성", tier: "God", race: "Terran", soopId: "ho1godme", url: "https://www.sooplive.com/station/ho1godme", profileImage: "https://profile.img.sooplive.com/LOGO/ho/ho1godme/ho1godme.jpg", sourceCrew: "FA" },
   { name: "이재호", tier: "God", race: "Terran", soopId: "scv6256", url: "https://www.sooplive.com/station/scv6256", profileImage: "https://profile.img.sooplive.com/LOGO/sc/scv6256/scv6256.jpg", sourceCrew: "FA" },
   { name: "황병영", tier: "God", race: "Terran", soopId: "hby0724", url: "https://www.sooplive.com/station/hby0724", profileImage: "https://profile.img.sooplive.com/LOGO/hb/hby0724/hby0724.jpg", sourceCrew: "FA" },
@@ -109,6 +109,6 @@ export const faRoster = [
   { name: "야생땃쥐", tier: "8", race: "Zerg", soopId: "dlwjddls30", url: "https://www.sooplive.com/station/dlwjddls30", profileImage: "https://profile.img.sooplive.com/LOGO/dl/dlwjddls30/dlwjddls30.jpg", sourceCrew: "FA" },
   { name: "진땅콩", tier: "8", race: "Protoss", soopId: "wlswn6565", url: "https://www.sooplive.com/station/wlswn6565", profileImage: "https://profile.img.sooplive.com/LOGO/wl/wlswn6565/wlswn6565.jpg", sourceCrew: "FA" },
   { name: "요괴버스", tier: "Baby", race: "Terran", soopId: "j4141h", url: "https://www.sooplive.com/station/j4141h", profileImage: "https://profile.img.sooplive.com/LOGO/j4/j4141h/j4141h.jpg", sourceCrew: "FA" },
-] as const satisfies FaRosterEntry[];
+];
 
 export const faRosterBySoopId = new Map(faRoster.map((player) => [player.soopId, player]));
