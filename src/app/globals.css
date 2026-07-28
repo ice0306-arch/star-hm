@@ -1434,6 +1434,18 @@ footer {
   color: #27303b;
 }
 
+.theme-light .university-tier-controls select,
+.theme-light .university-tier-controls input {
+  background: rgba(255, 255, 255, 0.76);
+  color: #17202a;
+  color-scheme: light;
+}
+
+.theme-light .university-tier-controls select option {
+  background: #ffffff;
+  color: #17202a;
+}
+
 .theme-light .notice-filter-state {
   border-color: rgba(176, 126, 38, 0.28);
   background: rgba(202, 163, 91, 0.12);
@@ -3563,8 +3575,14 @@ footer {
   padding: 0 0.8rem;
   background: var(--theme-panel-soft);
   color: var(--theme-strong);
+  color-scheme: dark;
   font: inherit;
   font-weight: 850;
+}
+
+.university-tier-controls select option {
+  background: #151a21;
+  color: #f6f8fb;
 }
 
 .university-tier-controls input::placeholder {
