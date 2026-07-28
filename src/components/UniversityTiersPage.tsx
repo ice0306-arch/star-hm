@@ -287,7 +287,7 @@ function UniversityLiveBoard({ players, updatedAt }: { players: UniversityLivePl
                 {group.players.map((player) => (
                   <a key={`${player.college}-${player.id}`} className={`university-live-card race-${player.race.toLowerCase()}`} href={player.url} target="_blank" rel="noreferrer">
                     <span className="university-live-emblem"><UniversityIcon college={player.college} /></span>
-                    <span className="university-live-college"><span>{player.college}</span>{player.viewers ? <em>{player.viewers.toLocaleString()}명</em> : null}</span>
+                    <span className="university-live-college"><span>{player.college}</span>{player.viewers ? <em>시청자 {player.viewers.toLocaleString()}명</em> : null}</span>
                     <i>{raceLabels[player.race]}</i>
                     <strong>{player.name}</strong>
                     {player.title ? <p>{player.title}</p> : null}
