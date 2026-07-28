@@ -310,6 +310,7 @@ function UniversityTierCard({ college, liveCount }: { college: UniversityTierSna
   const strongestRace = mainRace(college);
   const topCount = topTierCount(college);
   const sortedTiers = universityTierOrder.filter((tier) => (college.tiers[tier] ?? 0) > 0);
+  const eyebrow = college.college === "무소속" ? "FREE AGENT" : college.featured ? "THE HM" : "UNIVERSITY";
 
   return (
     <article className={college.featured ? "university-tier-card is-featured" : "university-tier-card"}>
@@ -317,7 +318,7 @@ function UniversityTierCard({ college, liveCount }: { college: UniversityTierSna
         <div className="university-tier-title">
           <UniversityIcon college={college.college} />
           <div>
-            <span>{college.featured ? "THE HM" : "UNIVERSITY"}</span>
+            <span>{eyebrow}</span>
             <h2>{college.college}</h2>
           </div>
         </div>
