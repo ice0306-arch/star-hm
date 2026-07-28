@@ -182,6 +182,7 @@ export function UniversityTiersPage() {
           <div className="university-tier-nav-links">
             <a className="nav-link" href="/">HOME</a>
             <a className="nav-link" href="/university-tiers">대학티어</a>
+            <a className="nav-link" href="/free-agents">FA현황</a>
           </div>
         </nav>
       </header>

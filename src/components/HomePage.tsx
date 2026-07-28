@@ -70,6 +70,7 @@ const navItems = [
   { label: "ROSTER", href: "#roster" },
   { label: "INTEL", href: "#intel" },
   { label: "대학티어", href: "/university-tiers" },
+  { label: "FA현황", href: "/free-agents" },
   { label: "ABOUT", href: "#about" },
 ];
 

@@ -3281,6 +3281,116 @@ footer {
   text-transform: uppercase;
 }
 
+.free-agent-hero-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  border: 1px solid var(--theme-panel-border);
+  border-radius: 8px;
+  padding: 1rem;
+  background:
+    linear-gradient(135deg, rgba(118, 128, 143, 0.16), rgba(202, 163, 91, 0.07)),
+    var(--theme-panel);
+  box-shadow: 0 20px 60px var(--theme-shadow);
+}
+
+.free-agent-logo {
+  display: grid;
+  width: 6rem;
+  height: 6rem;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(202, 163, 91, 0.34);
+  border-radius: 18px;
+  background: rgba(10, 12, 15, 0.7);
+}
+
+.free-agent-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 0.35rem;
+}
+
+.free-agent-hero-copy h1 {
+  margin-top: 0.35rem;
+  color: var(--theme-strong);
+  font-size: 3.6rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.free-agent-hero-copy p {
+  margin-top: 0.7rem;
+  max-width: 620px;
+  color: var(--theme-muted);
+  font-weight: 800;
+  line-height: 1.55;
+}
+
+.free-agent-back-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  border: 1px solid rgba(202, 163, 91, 0.36);
+  border-radius: 7px;
+  padding: 0 0.85rem;
+  color: var(--theme-strong);
+  font-size: 0.75rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+}
+
+.free-agent-quick-panel {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.free-agent-quick-panel > div {
+  border: 1px solid var(--theme-panel-border);
+  border-radius: 8px;
+  padding: 0.95rem;
+  background: var(--theme-panel);
+  box-shadow: 0 20px 60px var(--theme-shadow);
+}
+
+.free-agent-quick-panel span {
+  display: block;
+  color: var(--gold);
+  font-size: 0.68rem;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+}
+
+.free-agent-quick-panel strong {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--theme-strong);
+  font-size: 1.45rem;
+  font-weight: 950;
+  line-height: 1.1;
+}
+
+.free-agent-controls {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.free-agent-live-board {
+  margin-top: 0.75rem;
+}
+
+.free-agent-player-card .university-live-college {
+  padding-right: 5.2rem;
+}
+
+.free-agent-card-emblem .university-icon img {
+  padding: 0.22rem;
+}
+
 .university-tier-controls {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -4033,6 +4143,19 @@ footer {
     font-size: 3rem;
   }
 
+  .free-agent-hero-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .free-agent-back-link {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .free-agent-hero-copy h1 {
+    font-size: 3rem;
+  }
+
   .university-tier-summary {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -4131,10 +4254,26 @@ footer {
   .university-tier-summary,
   .university-tier-controls,
   .university-tier-grid,
+  .free-agent-hero-card,
+  .free-agent-quick-panel,
   .university-live-tier-row,
   .university-live-tier-players,
   .university-tier-card-metrics {
     grid-template-columns: 1fr;
+  }
+
+  .free-agent-logo {
+    width: 5rem;
+    height: 5rem;
+  }
+
+  .free-agent-hero-copy h1 {
+    font-size: 2.35rem;
+  }
+
+  .free-agent-back-link {
+    grid-column: auto;
+    justify-self: stretch;
   }
 
   .university-tier-summary > div {

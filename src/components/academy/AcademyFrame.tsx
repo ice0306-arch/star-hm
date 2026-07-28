@@ -8,6 +8,7 @@ const BRAND_EMBLEM_SRC = "/brand/hm-emblem.png";
 const academyNav = [
   { label: "HOME", href: "/" },
   { label: "대학티어", href: "/university-tiers" },
+  { label: "FA현황", href: "/free-agents" },
   { label: "ROOKIE", href: "/academy/rookie" },
   { label: "PLAYBOOK", href: "/academy/playbook" },
 ];
