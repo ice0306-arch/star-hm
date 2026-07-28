@@ -311,6 +311,7 @@ function UniversityTierCard({ college, liveCount }: { college: UniversityTierSna
   const topCount = topTierCount(college);
   const sortedTiers = universityTierOrder.filter((tier) => (college.tiers[tier] ?? 0) > 0);
   const eyebrow = college.college === "무소속" ? "FREE AGENT" : college.featured ? "THE HM" : "UNIVERSITY";
+  const displayTotal = college.college === "무소속" && liveCount > 0 ? liveCount : college.total;
 
   return (
     <article className={college.featured ? "university-tier-card is-featured" : "university-tier-card"}>
@@ -322,7 +323,7 @@ function UniversityTierCard({ college, liveCount }: { college: UniversityTierSna
             <h2>{college.college}</h2>
           </div>
         </div>
-        <strong>{college.total}</strong>
+        <strong>{displayTotal}</strong>
       </div>
 
       <div className="university-tier-card-metrics">
