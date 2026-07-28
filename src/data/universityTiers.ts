@@ -60,7 +60,7 @@ export const universityTierSnapshots: UniversityTierSnapshot[] = [
   { college: "JSA", total: 21, race: race(6, 10, 5), tiers: { God: 3, King: 1, Jack: 2, Joker: 1, "2": 1, "3": 3, "4": 1, "6": 1, "7": 3, "8": 1, Baby: 4 } },
   { college: "YB", total: 9, race: race(5, 1, 3), tiers: { Jack: 1, "4": 3, "6": 3, "7": 1, Baby: 1 } },
   { college: "케이대", total: 21, race: race(4, 7, 10), tiers: { God: 2, King: 2, Jack: 2, Joker: 1, Spade: 1, "0": 2, "2": 1, "4": 2, "5": 1, "6": 2, "7": 1, "8": 3, Baby: 1 } },
-  { college: "무소속", total: 98, race: race(22, 37, 39), tiers: { God: 13, King: 4, Jack: 9, Joker: 13, Spade: 13, "0": 5, "1": 4, "2": 1, "3": 4, "4": 7, "5": 7, "6": 8, "7": 5, "8": 4, Baby: 1 } },
+  { college: "무소속", total: 97, race: race(22, 36, 39), tiers: { God: 13, King: 4, Jack: 9, Joker: 13, Spade: 13, "0": 5, "1": 4, "2": 1, "3": 4, "4": 7, "5": 7, "6": 7, "7": 5, "8": 4, Baby: 1 } },
   { college: "캄몬스타즈", total: 21, race: race(6, 10, 5), tiers: { God: 2, King: 2, Jack: 4, "2": 1, "3": 2, "4": 2, "5": 3, "6": 2, "7": 2, Baby: 1 } },
   { college: "엠비대", total: 21, race: race(5, 8, 8), tiers: { King: 1, Jack: 4, Joker: 1, Spade: 1, "0": 1, "2": 1, "3": 1, "5": 3, "6": 2, "7": 1, "8": 5 } },
   { college: "와플대", total: 16, race: race(3, 7, 6), tiers: { Jack: 2, Joker: 2, Spade: 1, "3": 1, "4": 1, "5": 2, "6": 1, "7": 2, "8": 3, Baby: 1 } },

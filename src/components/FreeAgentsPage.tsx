@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { faRoster, type FaRosterEntry } from "@/data/faRoster";
 import {
   universityTierLabels,
   universityTierOrder,
-  universityTierSnapshots,
   universityTopTierKeys,
   type UniversityRaceKey,
   type UniversityTierKey,
@@ -21,7 +21,7 @@ const raceLabels: Record<UniversityRaceKey, string> = {
   Unknown: "미분류",
 };
 
-const visibleRaceOrder: UniversityRaceKey[] = ["Terran", "Zerg", "Protoss"];
+const visibleRaceOrder: Array<Exclude<UniversityRaceKey, "Unknown">> = ["Terran", "Zerg", "Protoss"];
 const tierFilters: Array<UniversityTierKey | "all"> = ["all", ...universityTierOrder];
 const liveTierOrder: Array<UniversityTierKey | "Unknown"> = [...universityTierOrder, "Unknown"];
 const tierCardSuits: Record<UniversityTierKey, string> = {
@@ -61,8 +61,6 @@ type UniversityLivePayload = {
   updatedAt: number;
 };
 
-const freeAgentSnapshot = universityTierSnapshots.find((college) => college.college === "무소속");
-
 function formatTime(value: number | null) {
   if (!value) {
     return "확인 중";
@@ -75,16 +73,16 @@ function topTierCount(players: UniversityLivePlayer[]) {
   return players.filter((player) => player.tier !== "Unknown" && universityTopTierKeys.includes(player.tier)).length;
 }
 
-function mainRace(players: UniversityLivePlayer[]) {
-  const totals = players.reduce<Record<UniversityRaceKey, number>>(
+function mainRosterRace(players: readonly FaRosterEntry[]) {
+  const totals = players.reduce<Record<Exclude<UniversityRaceKey, "Unknown">, number>>(
     (acc, player) => {
       acc[player.race] += 1;
       return acc;
     },
-    { Terran: 0, Zerg: 0, Protoss: 0, Unknown: 0 },
+    { Terran: 0, Zerg: 0, Protoss: 0 },
   );
 
-  return visibleRaceOrder.reduce((current, race) => (totals[race] > totals[current] ? race : current), "Terran" as UniversityRaceKey);
+  return visibleRaceOrder.reduce((current, race) => (totals[race] > totals[current] ? race : current), "Terran" as Exclude<UniversityRaceKey, "Unknown">);
 }
 
 export function FreeAgentsPage() {
@@ -130,18 +128,28 @@ export function FreeAgentsPage() {
     });
   }, [activeRace, activeTier, freeAgents]);
 
-  const raceCounts = useMemo(() => {
-    return freeAgents.reduce<Record<UniversityRaceKey, number>>(
+  const filteredRoster = useMemo(() => {
+    return faRoster.filter((player) => {
+      const tierMatches = activeTier === "all" || player.tier === activeTier;
+      const raceMatches = activeRace === "all" || player.race === activeRace;
+      return tierMatches && raceMatches;
+    });
+  }, [activeRace, activeTier]);
+
+  const liveBySoopId = useMemo(() => new Map(freeAgents.map((player) => [player.id, player])), [freeAgents]);
+
+  const rosterRaceCounts = useMemo(() => {
+    return faRoster.reduce<Record<Exclude<UniversityRaceKey, "Unknown">, number>>(
       (acc, player) => {
         acc[player.race] += 1;
         return acc;
       },
-      { Terran: 0, Zerg: 0, Protoss: 0, Unknown: 0 },
+      { Terran: 0, Zerg: 0, Protoss: 0 },
     );
-  }, [freeAgents]);
+  }, []);
 
   const totalViewers = freeAgents.reduce((sum, player) => sum + (player.viewers ?? 0), 0);
-  const strongestRace = freeAgents.length > 0 ? mainRace(freeAgents) : "Protoss";
+  const strongestRace = mainRosterRace(faRoster);
 
   return (
     <main className="site-shell university-tier-shell free-agent-shell min-h-screen text-silver">
@@ -174,12 +182,12 @@ export function FreeAgentsPage() {
           </div>
 
           <div className="university-tier-summary" aria-label="FA 현황 요약">
-            <SummaryTile value={freeAgentSnapshot?.total ?? 0} label="등록 FA" />
+            <SummaryTile value={faRoster.length} label="등록 FA" />
             <SummaryTile value={freeAgents.length} label="라이브 FA" />
             <SummaryTile value={totalViewers} label="총 시청자" />
-            <SummaryTile value={raceCounts.Terran} label="Terran" />
-            <SummaryTile value={raceCounts.Zerg} label="Zerg" />
-            <SummaryTile value={raceCounts.Protoss} label="Protoss" />
+            <SummaryTile value={rosterRaceCounts.Terran} label="Terran" />
+            <SummaryTile value={rosterRaceCounts.Zerg} label="Zerg" />
+            <SummaryTile value={rosterRaceCounts.Protoss} label="Protoss" />
           </div>
         </div>
       </section>
@@ -197,7 +205,7 @@ export function FreeAgentsPage() {
             </div>
             <div>
               <span>현재 조건</span>
-              <strong>{filteredPlayers.length}명</strong>
+              <strong>{filteredRoster.length}명 등록 · {filteredPlayers.length}명 LIVE</strong>
             </div>
           </div>
 
@@ -222,9 +230,44 @@ export function FreeAgentsPage() {
           </div>
 
           <FreeAgentLiveBoard players={filteredPlayers} updatedAt={livePayload?.updatedAt ?? null} />
+          <FreeAgentRosterBoard players={filteredRoster} liveBySoopId={liveBySoopId} />
         </div>
       </section>
     </main>
+  );
+}
+
+function FreeAgentRosterBoard({ players, liveBySoopId }: { players: readonly FaRosterEntry[]; liveBySoopId: Map<string, UniversityLivePlayer> }) {
+  return (
+    <section className="free-agent-roster-board" aria-labelledby="free-agent-roster-title">
+      <div className="university-live-board-head">
+        <div>
+          <div className="panel-kicker">REGISTERED FREE AGENTS</div>
+          <h2 id="free-agent-roster-title">FA 전체 명단</h2>
+          <p>저장된 SOOP 방송국 주소 기준입니다. 라이브 중이면 방송 보기 링크로 연결됩니다.</p>
+        </div>
+        <span>{players.length}명</span>
+      </div>
+      <div className="free-agent-roster-grid">
+        {players.map((player) => {
+          const live = liveBySoopId.get(player.soopId);
+          const href = live?.url ?? player.url;
+
+          return (
+            <a key={player.soopId} className={`free-agent-roster-card race-${player.race.toLowerCase()} ${live ? "is-live" : ""}`} href={href} target="_blank" rel="noreferrer">
+              <img src={player.profileImage} alt="" width={44} height={44} loading="lazy" referrerPolicy="no-referrer" />
+              <span>
+                <strong>{player.name}</strong>
+                <small>{player.registeredName ? `${player.registeredName} · ` : ""}{player.soopId}</small>
+              </span>
+              <em>{universityTierLabels[player.tier]}</em>
+              <i>{raceLabels[player.race]}</i>
+              {live ? <b>LIVE</b> : null}
+            </a>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 

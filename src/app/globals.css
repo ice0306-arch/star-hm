@@ -3391,6 +3391,128 @@ footer {
   padding: 0.22rem;
 }
 
+.free-agent-roster-board {
+  margin-top: 1rem;
+  border: 1px solid var(--theme-panel-border);
+  border-radius: 8px;
+  padding: 1rem;
+  background: var(--theme-panel);
+  box-shadow: 0 20px 60px var(--theme-shadow);
+}
+
+.free-agent-roster-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.free-agent-roster-card {
+  display: grid;
+  position: relative;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  gap: 0.7rem;
+  align-items: center;
+  min-height: 72px;
+  border: 1px solid var(--theme-panel-border);
+  border-radius: 7px;
+  padding: 0.7rem;
+  background: var(--theme-panel-soft);
+}
+
+.free-agent-roster-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.16);
+}
+
+.free-agent-roster-card img {
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.free-agent-roster-card span {
+  min-width: 0;
+}
+
+.free-agent-roster-card strong,
+.free-agent-roster-card small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.free-agent-roster-card strong {
+  color: var(--theme-strong);
+  font-size: 1rem;
+  font-weight: 950;
+}
+
+.free-agent-roster-card small {
+  margin-top: 0.16rem;
+  color: var(--theme-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.free-agent-roster-card em,
+.free-agent-roster-card i,
+.free-agent-roster-card b {
+  justify-self: end;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 0.18rem 0.42rem;
+  font-size: 0.62rem;
+  font-style: normal;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.free-agent-roster-card em {
+  color: var(--gold);
+}
+
+.free-agent-roster-card i {
+  grid-column: 3;
+  color: var(--theme-muted);
+}
+
+.free-agent-roster-card b {
+  position: absolute;
+  right: 0.55rem;
+  bottom: 0.5rem;
+  border-color: rgba(113, 216, 154, 0.34);
+  background: rgba(113, 216, 154, 0.12);
+  color: #71d89a;
+}
+
+.free-agent-roster-card.race-terran {
+  border-color: rgba(113, 199, 236, 0.26);
+}
+
+.free-agent-roster-card.race-terran i {
+  color: #9adcf6;
+}
+
+.free-agent-roster-card.race-zerg {
+  border-color: rgba(180, 137, 240, 0.3);
+}
+
+.free-agent-roster-card.race-zerg i {
+  color: #cba8ff;
+}
+
+.free-agent-roster-card.race-protoss {
+  border-color: rgba(244, 195, 91, 0.3);
+}
+
+.free-agent-roster-card.race-protoss i {
+  color: #ffd77a;
+}
+
 .university-tier-controls {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
