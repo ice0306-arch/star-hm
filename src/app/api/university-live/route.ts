@@ -100,6 +100,14 @@ function numberFrom(value: unknown) {
   return Number.isFinite(normalized) && normalized > 0 ? normalized : 0;
 }
 
+function normalizeCollege(value: string) {
+  const college = decodeHtml(value) || "무소속";
+  if (college === "씨나인" || college.toUpperCase() === "C9") {
+    return "무소속";
+  }
+  return college;
+}
+
 function parseLiveStatuses(html: string) {
   const match = html.match(/const\s+liveStatuses\s*=\s*(\{[\s\S]*?\});/);
   if (!match) {
@@ -135,7 +143,7 @@ function parseLivePlayers(html: string): UniversityLivePlayer[] {
         id: decodeHtml(card[2]),
         race: toRace(card[3]),
         name: decodeHtml(card[4]),
-        college: decodeHtml(card[5]) || "무소속",
+        college: normalizeCollege(card[5]),
         tier,
         url: decodeHtml(card[6]),
         title: String(liveStatus.title ?? "").trim(),
