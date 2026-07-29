@@ -63,6 +63,7 @@ const universityIcons: Record<string, UniversityIconInfo> = {
   엠비대: { label: "MB", className: "icon-mb", image: "/universities/mbu.webp" },
   와플대: { label: "W", className: "icon-waffle", image: "/universities/waffle.webp" },
   뉴캣슬: { label: "N", className: "icon-newcastle", image: "/universities/newcastle.webp" },
+  리셋느: { label: "RE", className: "icon-reset" },
   BGM: { label: "B", className: "icon-bgm", image: "/universities/bgm.webp" },
   HM: { label: "HM", className: "icon-hm", image: "/universities/hm.webp" },
   DM: { label: "D", className: "icon-dm", image: "/universities/dm.webp" },
@@ -362,7 +363,7 @@ function UniversityTierCard({ college, liveCount }: { college: UniversityTierSna
   const strongestRace = mainRace(college);
   const topCount = topTierCount(college);
   const sortedTiers = universitySnapshotTierOrder.filter((tier) => (college.tiers[tier] ?? 0) > 0);
-  const eyebrow = college.college === "무소속" ? "FREE AGENT" : college.featured ? "THE HM" : "UNIVERSITY";
+  const eyebrow = college.college === "무소속" ? "FREE AGENT" : college.college === "리셋느" ? "STAR CLUB" : college.featured ? "THE HM" : "UNIVERSITY";
   const displayTotal = college.college === "무소속" && liveCount > 0 ? liveCount : college.total;
 
   return (

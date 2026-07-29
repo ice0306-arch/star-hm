@@ -10,6 +10,16 @@ const FETCH_TIMEOUT_MS = 4_000;
 const EXCLUDED_LIVE_SOOP_IDS = new Set(["bangsong12", "yeom1020"]);
 const LIVE_PLAYER_OVERRIDES = new Map<string, Partial<Pick<UniversityLivePlayer, "college" | "name">>>([
   ["2ahgo1203", { college: "뉴캣슬", name: "이아깽" }],
+  ["jk890202", { college: "리셋느" }],
+  ["djdbstn", { college: "리셋느" }],
+  ["dbsdydx", { college: "리셋느" }],
+  ["tjgpdus97", { college: "리셋느" }],
+  ["zalalz", { college: "리셋느" }],
+  ["mew030709", { college: "리셋느" }],
+  ["moguleave", { college: "리셋느" }],
+  ["imducko3o", { college: "리셋느" }],
+  ["queen030", { college: "리셋느" }],
+  ["wlswn6565", { college: "리셋느" }],
 ]);
 
 type UniversityLivePlayer = {
