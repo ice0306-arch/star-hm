@@ -316,6 +316,11 @@ function UniversityLiveBoard({ players, updatedAt }: { players: UniversityLivePl
               <div className="university-live-tier-players">
                 {group.players.map((player) => (
                   <a key={`${player.college}-${player.id}`} className={`university-live-card race-${player.race.toLowerCase()}`} href={player.url} target="_blank" rel="noreferrer">
+                    {player.thumbnail ? (
+                      <span className="live-thumbnail-preview" aria-hidden="true">
+                        <img src={player.thumbnail} alt="" loading="lazy" referrerPolicy="no-referrer" />
+                      </span>
+                    ) : null}
                     <span className="university-live-emblem"><UniversityIcon college={player.college} /></span>
                     <span className="university-live-college"><span>{player.college}</span>{player.viewers ? <em>시청자 {player.viewers.toLocaleString()}명</em> : null}</span>
                     <i>{raceLabels[player.race]}</i>

@@ -273,6 +273,11 @@ function FreeAgentRosterBoard({ players, liveBySoopId }: { players: readonly FaR
 
           return (
             <a key={player.soopId} className={`free-agent-roster-card race-${player.race.toLowerCase()} ${live ? "is-live" : ""}`} href={href} target="_blank" rel="noreferrer">
+              {live?.thumbnail ? (
+                <span className="live-thumbnail-preview" aria-hidden="true">
+                  <img src={live.thumbnail} alt="" loading="lazy" referrerPolicy="no-referrer" />
+                </span>
+              ) : null}
               <span className="free-agent-roster-avatar">
                 <img src={player.profileImage} alt="" width={48} height={48} loading="lazy" referrerPolicy="no-referrer" />
               </span>
@@ -333,6 +338,11 @@ function FreeAgentLiveBoard({ players, updatedAt }: { players: UniversityLivePla
               <div className="university-live-tier-players">
                 {group.players.map((player) => (
                   <a key={player.id} className={`university-live-card free-agent-player-card race-${player.race.toLowerCase()}`} href={player.url} target="_blank" rel="noreferrer">
+                    {player.thumbnail ? (
+                      <span className="live-thumbnail-preview" aria-hidden="true">
+                        <img src={player.thumbnail} alt="" loading="lazy" referrerPolicy="no-referrer" />
+                      </span>
+                    ) : null}
                     <span className="university-live-emblem free-agent-card-emblem">
                       <span className="university-icon icon-free has-image" aria-hidden="true">
                         <img src={FA_ICON_SRC} alt="" width={42} height={42} />
