@@ -89,7 +89,6 @@ export const faRoster: FaRosterEntry[] = [
   { name: "단양", tier: "5", race: "Zerg", soopId: "xshinx", url: "https://www.sooplive.com/station/xshinx", profileImage: "https://profile.img.sooplive.com/LOGO/xs/xshinx/xshinx.jpg", sourceCrew: "FA" },
   { name: "아라미", tier: "5", race: "Zerg", soopId: "aram1213", url: "https://www.sooplive.com/station/aram1213", profileImage: "https://profile.img.sooplive.com/LOGO/ar/aram1213/aram1213.jpg", sourceCrew: "FA" },
   { name: "연둥바둥", tier: "5", race: "Protoss", soopId: "ka9rapang", url: "https://www.sooplive.com/station/ka9rapang", profileImage: "https://profile.img.sooplive.com/LOGO/ka/ka9rapang/ka9rapang.jpg", sourceCrew: "FA" },
-  { name: "예실", tier: "5", race: "Protoss", soopId: "dptmfl1258", url: "https://www.sooplive.com/station/dptmfl1258", profileImage: "https://profile.img.sooplive.com/LOGO/dp/dptmfl1258/dptmfl1258.jpg", sourceCrew: "FA" },
   { name: "남수댕", tier: "5", race: "Protoss", soopId: "mew030709", url: "https://www.sooplive.com/station/mew030709", profileImage: "https://profile.img.sooplive.com/LOGO/me/mew030709/mew030709.jpg", sourceCrew: "FA" },
   { name: "주서리", tier: "5", race: "Protoss", soopId: "ys9024", url: "https://www.sooplive.com/station/ys9024", profileImage: "https://profile.img.sooplive.com/LOGO/ys/ys9024/ys9024.jpg", sourceCrew: "수술대" },
   { name: "모리", tier: "6", race: "Terran", soopId: "moguleave", url: "https://www.sooplive.com/station/moguleave", profileImage: "https://profile.img.sooplive.com/LOGO/mo/moguleave/moguleave.jpg", sourceCrew: "FA" },
