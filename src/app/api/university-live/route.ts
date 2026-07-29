@@ -20,6 +20,8 @@ const LIVE_PLAYER_OVERRIDES = new Map<string, Partial<Pick<UniversityLivePlayer,
   ["imducko3o", { college: "리셋느" }],
   ["queen030", { college: "리셋느" }],
   ["wlswn6565", { college: "리셋느" }],
+  ["comcmxx", { college: "수술대" }],
+  ["wjswpalssla1", { college: "수술대" }],
 ]);
 
 type UniversityLivePlayer = {
