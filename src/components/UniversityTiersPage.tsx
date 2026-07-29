@@ -4,9 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import {
   universityTierLabels,
   universityTierOrder,
+  universitySnapshotTierOrder,
   universityTierSnapshots,
   universityTopTierKeys,
   type UniversityRaceKey,
+  type UniversitySnapshotTierKey,
   type UniversityTierKey,
   type UniversityTierSnapshot,
 } from "@/data/universityTiers";
@@ -21,8 +23,8 @@ const raceLabels: Record<UniversityRaceKey, string> = {
 
 const allRaceOrder: UniversityRaceKey[] = ["Terran", "Zerg", "Protoss", "Unknown"];
 const visibleRaceOrder: UniversityRaceKey[] = ["Terran", "Zerg", "Protoss"];
-const tierFilters: Array<UniversityTierKey | "all"> = ["all", ...universityTierOrder];
-const tierCardSuits: Record<UniversityTierKey, string> = {
+const tierFilters: Array<UniversitySnapshotTierKey | "all"> = ["all", ...universitySnapshotTierOrder];
+const tierCardSuits: Record<UniversitySnapshotTierKey, string> = {
   God: "G",
   King: "K",
   Jack: "J",
@@ -38,6 +40,7 @@ const tierCardSuits: Record<UniversityTierKey, string> = {
   "7": "7",
   "8": "8",
   Baby: "B",
+  Unknown: "?",
 };
 const liveTierOrder: Array<UniversityTierKey | "Unknown"> = [...universityTierOrder, "Unknown"];
 const liveRefreshIntervalMs = 120_000;
@@ -104,7 +107,7 @@ function getUniversityIcon(college: string) {
 
 export function UniversityTiersPage() {
   const [activeCollege, setActiveCollege] = useState("전체");
-  const [activeTier, setActiveTier] = useState<UniversityTierKey | "all">("all");
+  const [activeTier, setActiveTier] = useState<UniversitySnapshotTierKey | "all">("all");
   const [activeRace, setActiveRace] = useState<UniversityRaceKey | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [livePayload, setLivePayload] = useState<UniversityLivePayload | null>(null);
@@ -149,6 +152,7 @@ export function UniversityTiersPage() {
       const searchMatches =
         !normalizedSearch ||
         college.college.toLowerCase().includes(normalizedSearch) ||
+        (college.memberNames ?? []).some((name) => name.toLowerCase().includes(normalizedSearch)) ||
         livePlayers.some((player) => {
           return (
             player.college === college.college &&
@@ -241,9 +245,9 @@ export function UniversityTiersPage() {
             </label>
             <label>
               <span>티어</span>
-              <select value={activeTier} onChange={(event) => setActiveTier(event.target.value as UniversityTierKey | "all")}>
+              <select value={activeTier} onChange={(event) => setActiveTier(event.target.value as UniversitySnapshotTierKey | "all")}>
                 {tierFilters.map((tier) => (
-                  <option key={tier} value={tier}>{tier === "all" ? "전체" : universityTierLabels[tier]}</option>
+                  <option key={tier} value={tier}>{tier === "all" ? "전체" : tier === "Unknown" ? "티어 확인" : universityTierLabels[tier]}</option>
                 ))}
               </select>
             </label>
@@ -304,7 +308,7 @@ function UniversityLiveBoard({ players, updatedAt }: { players: UniversityLivePl
           {groupedPlayers.map((group) => (
             <section key={group.tier} className={`university-live-tier-row tier-card-${group.tier.toLowerCase()}`} aria-label={`${group.tier === "Unknown" ? "티어 확인" : universityTierLabels[group.tier]} 라이브 선수`}>
               <div className="university-live-tier-rank">
-                <em>{group.tier === "Unknown" ? "?" : tierCardSuits[group.tier]}</em>
+                <em>{tierCardSuits[group.tier]}</em>
                 <strong>{group.tier === "Unknown" ? "티어 확인" : universityTierLabels[group.tier]}</strong>
                 <span>{group.players.length} LIVE</span>
               </div>
@@ -334,7 +338,7 @@ function UniversityLiveBoard({ players, updatedAt }: { players: UniversityLivePl
 function UniversityTierCard({ college, liveCount }: { college: UniversityTierSnapshot; liveCount: number }) {
   const strongestRace = mainRace(college);
   const topCount = topTierCount(college);
-  const sortedTiers = universityTierOrder.filter((tier) => (college.tiers[tier] ?? 0) > 0);
+  const sortedTiers = universitySnapshotTierOrder.filter((tier) => (college.tiers[tier] ?? 0) > 0);
   const eyebrow = college.college === "무소속" ? "FREE AGENT" : college.featured ? "THE HM" : "UNIVERSITY";
   const displayTotal = college.college === "무소속" && liveCount > 0 ? liveCount : college.total;
 
@@ -380,7 +384,7 @@ function UniversityTierCard({ college, liveCount }: { college: UniversityTierSna
         {sortedTiers.map((tier) => (
           <span key={tier} className={`university-tier-playing-card tier-card-${tier.toLowerCase()}`}>
             <em>{tierCardSuits[tier]}</em>
-            <span>{universityTierLabels[tier]}</span>
+            <span>{tier === "Unknown" ? "티어 확인" : universityTierLabels[tier]}</span>
             <strong>{college.tiers[tier]}</strong>
           </span>
         ))}
