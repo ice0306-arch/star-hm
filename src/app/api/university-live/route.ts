@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 const UNIVERSITY_TIER_SOURCE_URL = "https://onek-soop.com/tier";
 const CACHE_TTL_MS = 45_000;
 const FETCH_TIMEOUT_MS = 4_000;
-const EXCLUDED_LIVE_SOOP_IDS = new Set(["bangsong12", "yeom1020"]);
+const EXCLUDED_LIVE_SOOP_IDS = new Set(["bangsong12", "yeom1020", "jjyjeh5454"]);
 const LIVE_PLAYER_OVERRIDES = new Map<string, Partial<Pick<UniversityLivePlayer, "college" | "name">>>([
   ["2ahgo1203", { college: "뉴캣슬", name: "이아깽" }],
   ["jk890202", { college: "리셋느" }],
