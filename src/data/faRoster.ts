@@ -37,7 +37,6 @@ export const faRoster: FaRosterEntry[] = [
   { name: "진영화", tier: "Jack", race: "Protoss", soopId: "jyh8610", url: "https://www.sooplive.com/station/jyh8610", profileImage: "https://profile.img.sooplive.com/LOGO/jy/jyh8610/jyh8610.jpg", sourceCrew: "수술대" },
   { name: "이인극", tier: "Joker", race: "Terran", soopId: "toozi0317", url: "https://www.sooplive.com/station/toozi0317", profileImage: "https://profile.img.sooplive.com/LOGO/to/toozi0317/toozi0317.jpg", sourceCrew: "FA" },
   { name: "짭호", tier: "Joker", race: "Terran", soopId: "wjddlf4695", url: "https://www.sooplive.com/station/wjddlf4695", profileImage: "https://profile.img.sooplive.com/LOGO/wj/wjddlf4695/wjddlf4695.jpg", sourceCrew: "FA" },
-  { name: "김기덕", tier: "Joker", race: "Zerg", soopId: "qndnd12", url: "https://www.sooplive.com/station/qndnd12", profileImage: "https://profile.img.sooplive.com/LOGO/qn/qndnd12/qndnd12.jpg", sourceCrew: "FA" },
   { name: "인치호", tier: "Joker", race: "Zerg", soopId: "spark123", url: "https://www.sooplive.com/station/spark123", profileImage: "https://profile.img.sooplive.com/LOGO/sp/spark123/spark123.jpg", sourceCrew: "FA" },
   { name: "져지현", tier: "Joker", race: "Zerg", soopId: "quaestor1", url: "https://www.sooplive.com/station/quaestor1", profileImage: "https://profile.img.sooplive.com/LOGO/qu/quaestor1/quaestor1.jpg", sourceCrew: "FA" },
   { name: "철구", tier: "Joker", race: "Zerg", soopId: "y1026", url: "https://www.sooplive.com/station/y1026", profileImage: "https://profile.img.sooplive.com/LOGO/y1/y1026/y1026.jpg", sourceCrew: "FA" },
