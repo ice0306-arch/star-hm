@@ -69,7 +69,6 @@ export const faRoster: FaRosterEntry[] = [
   { name: "애공", tier: "1", race: "Protoss", soopId: "byebye22", url: "https://www.sooplive.com/station/byebye22", profileImage: "https://profile.img.sooplive.com/LOGO/by/byebye22/byebye22.jpg", sourceCrew: "수술대" },
   { name: "나무늘봉순", tier: "2", race: "Zerg", soopId: "yjk011599", url: "https://www.sooplive.com/station/yjk011599", profileImage: "https://profile.img.sooplive.com/LOGO/yj/yjk011599/yjk011599.jpg", sourceCrew: "FA" },
   { name: "이유란", tier: "3", race: "Zerg", soopId: "forweourus", url: "https://www.sooplive.com/station/forweourus", profileImage: "https://profile.img.sooplive.com/LOGO/fo/forweourus/forweourus.jpg", sourceCrew: "FA" },
-  { name: "상어녀", tier: "3", race: "Zerg", soopId: "595935", url: "https://www.sooplive.com/station/595935", profileImage: "https://profile.img.sooplive.com/LOGO/59/595935/595935.jpg", sourceCrew: "FA" },
   { name: "디임", tier: "3", race: "Protoss", soopId: "qpqpro", url: "https://www.sooplive.com/station/qpqpro", profileImage: "https://profile.img.sooplive.com/LOGO/qp/qpqpro/qpqpro.jpg", sourceCrew: "FA" },
   { name: "쥬나", tier: "4", race: "Zerg", soopId: "haru1207", url: "https://www.sooplive.com/station/haru1207", profileImage: "https://profile.img.sooplive.com/LOGO/ha/haru1207/haru1207.jpg", sourceCrew: "FA" },
   { name: "렘레미", tier: "4", race: "Zerg", soopId: "yyh3397", url: "https://www.sooplive.com/station/yyh3397", profileImage: "https://profile.img.sooplive.com/LOGO/yy/yyh3397/yyh3397.jpg", sourceCrew: "FA" },
