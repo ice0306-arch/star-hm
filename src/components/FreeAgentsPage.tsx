@@ -22,6 +22,7 @@ const raceLabels: Record<UniversityRaceKey, string> = {
 };
 
 const visibleRaceOrder: Array<Exclude<UniversityRaceKey, "Unknown">> = ["Terran", "Zerg", "Protoss"];
+const liveRaceOrder: UniversityRaceKey[] = ["Terran", "Zerg", "Protoss", "Unknown"];
 const tierFilters: Array<UniversityTierKey | "all"> = ["all", ...universityTierOrder];
 const liveTierOrder: Array<UniversityTierKey | "Unknown"> = [...universityTierOrder, "Unknown"];
 const tierCardSuits: Record<UniversityTierKey, string> = {
@@ -83,6 +84,22 @@ function mainRosterRace(players: readonly FaRosterEntry[]) {
   );
 
   return visibleRaceOrder.reduce((current, race) => (totals[race] > totals[current] ? race : current), "Terran" as Exclude<UniversityRaceKey, "Unknown">);
+}
+
+function sortLivePlayers(players: UniversityLivePlayer[]) {
+  return [...players].sort((a, b) => {
+    const raceOrderDiff = liveRaceOrder.indexOf(a.race) - liveRaceOrder.indexOf(b.race);
+    if (raceOrderDiff !== 0) {
+      return raceOrderDiff;
+    }
+
+    const viewerDiff = (b.viewers ?? 0) - (a.viewers ?? 0);
+    if (viewerDiff !== 0) {
+      return viewerDiff;
+    }
+
+    return a.name.localeCompare(b.name, "ko");
+  });
 }
 
 export function FreeAgentsPage() {
@@ -311,7 +328,7 @@ function FreeAgentLiveBoard({ players, updatedAt }: { players: UniversityLivePla
   const groupedPlayers = liveTierOrder
     .map((tier) => ({
       tier,
-      players: players.filter((player) => player.tier === tier),
+      players: sortLivePlayers(players.filter((player) => player.tier === tier)),
     }))
     .filter((group) => group.players.length > 0);
 

@@ -23,6 +23,7 @@ const raceLabels: Record<UniversityRaceKey, string> = {
 
 const allRaceOrder: UniversityRaceKey[] = ["Terran", "Zerg", "Protoss", "Unknown"];
 const visibleRaceOrder: UniversityRaceKey[] = ["Terran", "Zerg", "Protoss"];
+const liveRaceOrder: UniversityRaceKey[] = ["Terran", "Zerg", "Protoss", "Unknown"];
 const tierFilters: Array<UniversitySnapshotTierKey | "all"> = ["all", ...universitySnapshotTierOrder];
 const tierCardSuits: Record<UniversitySnapshotTierKey, string> = {
   God: "G",
@@ -103,6 +104,22 @@ function shareClass(value: number, total: number) {
 
 function getUniversityIcon(college: string) {
   return universityIcons[college] ?? { label: college.slice(0, 2) || "?", className: "icon-free" };
+}
+
+function sortLivePlayers(players: UniversityLivePlayer[]) {
+  return [...players].sort((a, b) => {
+    const raceOrderDiff = liveRaceOrder.indexOf(a.race) - liveRaceOrder.indexOf(b.race);
+    if (raceOrderDiff !== 0) {
+      return raceOrderDiff;
+    }
+
+    const viewerDiff = (b.viewers ?? 0) - (a.viewers ?? 0);
+    if (viewerDiff !== 0) {
+      return viewerDiff;
+    }
+
+    return a.name.localeCompare(b.name, "ko");
+  });
 }
 
 export function UniversityTiersPage() {
@@ -289,7 +306,7 @@ function UniversityLiveBoard({ players, updatedAt }: { players: UniversityLivePl
   const groupedPlayers = liveTierOrder
     .map((tier) => ({
       tier,
-      players: players.filter((player) => player.tier === tier),
+      players: sortLivePlayers(players.filter((player) => player.tier === tier)),
     }))
     .filter((group) => group.players.length > 0);
 
