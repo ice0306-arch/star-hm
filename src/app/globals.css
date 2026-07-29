@@ -3439,18 +3439,19 @@ footer {
 
 .live-thumbnail-preview {
   position: absolute;
-  right: 0.65rem;
-  bottom: calc(100% + 0.55rem);
+  right: 0;
+  bottom: calc(100% + 0.7rem);
   z-index: 30;
   display: block;
-  width: min(230px, calc(100% - 1.3rem));
+  width: clamp(360px, 42vw, 640px);
+  max-width: calc(100vw - 2rem);
   aspect-ratio: 16 / 9;
   overflow: hidden;
   visibility: hidden;
   border: 1px solid rgba(202, 163, 91, 0.42);
   border-radius: 7px;
   background: #07090d;
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.38);
+  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.46);
   opacity: 0;
   pointer-events: none;
   transform: translateY(8px) scale(0.98);
