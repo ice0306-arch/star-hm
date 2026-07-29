@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const UNIVERSITY_LIVE_URL = "https://ssustar.iwinv.net/live";
+const ONEK_TIER_URL = "https://onek-soop.com/tier";
 const CACHE_TTL_MS = 45_000;
 const FETCH_TIMEOUT_MS = 4_000;
 
@@ -102,10 +103,20 @@ function numberFrom(value: unknown) {
 
 function normalizeCollege(value: string) {
   const college = decodeHtml(value) || "무소속";
-  if (college === "씨나인" || college.toUpperCase() === "C9") {
+  if (college === "FA" || college === "씨나인" || college.toUpperCase() === "C9") {
     return "무소속";
   }
   return college;
+}
+
+function toTier(value: string): UniversityLivePlayer["tier"] {
+  if (value === "God" || value === "King" || value === "Jack" || value === "Joker" || value === "Spade" || value === "Baby") {
+    return value;
+  }
+  if (/^[0-8]$/.test(value)) {
+    return value as UniversityTierKey;
+  }
+  return "Unknown";
 }
 
 function parseLiveStatuses(html: string) {
@@ -157,24 +168,81 @@ function parseLivePlayers(html: string): UniversityLivePlayer[] {
   return players;
 }
 
-async function buildLivePayload() {
-  let response: Response;
-  try {
-    response = await fetch(UNIVERSITY_LIVE_URL, {
-      headers: { "user-agent": "Mozilla/5.0" },
-      cache: "no-store",
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+function parseOneKString(value: string, key: string) {
+  const pattern = new RegExp(`\\\\\\\"${key}\\\\\\\":\\\\\\\"([^]*?)\\\\\\\"`);
+  return decodeHtml(pattern.exec(value)?.[1] ?? "");
+}
+
+function parseOneKNumber(value: string, key: string) {
+  const pattern = new RegExp(`\\\\\\\"${key}\\\\\\\":(\\d+)`);
+  return numberFrom(pattern.exec(value)?.[1]);
+}
+
+function parseOneKLivePlayers(html: string): UniversityLivePlayer[] {
+  const players: UniversityLivePlayer[] = [];
+  const itemPattern =
+    /\\\"name\\\":\\\"([^\\"]+)\\\",\\\"crew\\\":\\\"([^\\"]+)\\\"[\s\S]*?\\\"race\\\":\\\"([^\\"]+)\\\",\\\"tier\\\":(?:\\\"([^\\"]*)\\\"|null),\\\"soopId\\\":\\\"([^\\"]+)\\\",\\\"image\\\":\\\"([^\\"]*)\\\"[\s\S]*?\\\"live\\\":\{\\\"isLive\\\":(true|false)([\s\S]*?)\}\}/g;
+
+  for (const item of html.matchAll(itemPattern)) {
+    if (item[7] !== "true") {
+      continue;
+    }
+
+    const livePart = item[8];
+    const soopId = decodeHtml(item[5]);
+    const broadNo = String(parseOneKNumber(livePart, "broadNo") || "").trim();
+
+    players.push({
+      id: soopId,
+      race: toRace(item[3].toLowerCase()),
+      name: decodeHtml(item[1]),
+      college: normalizeCollege(item[2]),
+      tier: toTier(item[4] ?? ""),
+      url: broadNo
+        ? `https://play.sooplive.com/${encodeURIComponent(soopId)}/${encodeURIComponent(broadNo)}`
+        : `https://play.sooplive.com/${encodeURIComponent(soopId)}`,
+      title: parseOneKString(livePart, "title"),
+      viewers: parseOneKNumber(livePart, "viewers"),
+      startedAt: "",
+      thumbnail: parseOneKString(livePart, "thumbnail"),
     });
-  } catch {
-    return { players: [], liveCount: 0, updatedAt: Date.now() };
   }
+
+  return players;
+}
+
+async function fetchText(url: string) {
+  const response = await fetch(url, {
+    headers: { "user-agent": "Mozilla/5.0" },
+    cache: "no-store",
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
 
   if (!response.ok) {
-    return { players: [], liveCount: 0, updatedAt: Date.now() };
+    return "";
   }
 
-  const html = await response.text();
-  const players = parseLivePlayers(html);
+  return response.text();
+}
+
+async function buildLivePayload() {
+  let html = "";
+  try {
+    html = await fetchText(UNIVERSITY_LIVE_URL);
+  } catch {
+    html = "";
+  }
+
+  let players = html ? parseLivePlayers(html) : [];
+  if (players.length === 0) {
+    try {
+      const fallbackHtml = await fetchText(ONEK_TIER_URL);
+      players = fallbackHtml ? parseOneKLivePlayers(fallbackHtml) : [];
+    } catch {
+      players = [];
+    }
+  }
+
   return {
     players,
     liveCount: players.length,
