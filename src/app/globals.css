@@ -3503,18 +3503,16 @@ footer {
 }
 
 .free-agent-roster-card:hover .live-thumbnail-preview,
-.free-agent-roster-card:focus .live-thumbnail-preview,
-.university-live-card:hover .live-thumbnail-preview,
-.university-live-card:focus .live-thumbnail-preview {
+.university-live-card:hover .live-thumbnail-preview {
   visibility: visible;
   opacity: 1;
   transform: translate(-50%, 0) scale(1);
 }
 
 .free-agent-roster-card:hover,
-.free-agent-roster-card:focus,
+.free-agent-roster-card:focus-visible,
 .university-live-card:hover,
-.university-live-card:focus {
+.university-live-card:focus-visible {
   outline: 2px solid rgba(226, 182, 102, 0.72);
   outline-offset: 4px;
 }
