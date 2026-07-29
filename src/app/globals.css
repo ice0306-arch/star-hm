@@ -3448,10 +3448,12 @@ footer {
   aspect-ratio: 16 / 9;
   overflow: visible;
   visibility: hidden;
-  border: 1px solid rgba(202, 163, 91, 0.42);
+  border: 2px solid rgba(226, 182, 102, 0.82);
   border-radius: 7px;
   background: #07090d;
-  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.46);
+  box-shadow:
+    0 0 0 1px rgba(255, 223, 150, 0.18),
+    0 22px 54px rgba(0, 0, 0, 0.48);
   opacity: 0;
   pointer-events: none;
   transform: translateY(8px) scale(0.98);
@@ -3463,12 +3465,12 @@ footer {
 
 .live-thumbnail-preview::before {
   position: absolute;
-  right: 2.2rem;
-  bottom: -0.48rem;
-  width: 0.9rem;
-  height: 0.9rem;
-  border-right: 1px solid rgba(202, 163, 91, 0.42);
-  border-bottom: 1px solid rgba(202, 163, 91, 0.42);
+  right: 2.45rem;
+  bottom: -0.85rem;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-right: 2px solid rgba(226, 182, 102, 0.82);
+  border-bottom: 2px solid rgba(226, 182, 102, 0.82);
   background: #07090d;
   content: "";
   transform: rotate(45deg);
@@ -3506,6 +3508,14 @@ footer {
   visibility: visible;
   opacity: 1;
   transform: translateY(0) scale(1);
+}
+
+.free-agent-roster-card:hover,
+.free-agent-roster-card:focus,
+.university-live-card:hover,
+.university-live-card:focus {
+  outline: 2px solid rgba(226, 182, 102, 0.72);
+  outline-offset: 4px;
 }
 
 .free-agent-roster-avatar {
