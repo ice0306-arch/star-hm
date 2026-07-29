@@ -3440,13 +3440,13 @@ footer {
 .live-thumbnail-preview {
   position: absolute;
   right: 0;
-  bottom: calc(100% + 0.7rem);
+  bottom: calc(100% + 0.95rem);
   z-index: 30;
   display: block;
   width: clamp(360px, 42vw, 640px);
   max-width: calc(100vw - 2rem);
   aspect-ratio: 16 / 9;
-  overflow: hidden;
+  overflow: visible;
   visibility: hidden;
   border: 1px solid rgba(202, 163, 91, 0.42);
   border-radius: 7px;
@@ -3461,10 +3461,25 @@ footer {
     visibility 0.16s ease;
 }
 
+.live-thumbnail-preview::before {
+  position: absolute;
+  right: 2.2rem;
+  bottom: -0.48rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-right: 1px solid rgba(202, 163, 91, 0.42);
+  border-bottom: 1px solid rgba(202, 163, 91, 0.42);
+  background: #07090d;
+  content: "";
+  transform: rotate(45deg);
+}
+
 .live-thumbnail-preview img {
   display: block;
   width: 100%;
   height: 100%;
+  overflow: hidden;
+  border-radius: 6px;
   object-fit: cover;
 }
 
