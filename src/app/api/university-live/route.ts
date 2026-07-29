@@ -7,6 +7,7 @@ export const runtime = "nodejs";
 const UNIVERSITY_TIER_SOURCE_URL = "https://onek-soop.com/tier";
 const CACHE_TTL_MS = 45_000;
 const FETCH_TIMEOUT_MS = 4_000;
+const EXCLUDED_LIVE_SOOP_IDS = new Set(["bangsong12"]);
 
 type UniversityLivePlayer = {
   id: string;
@@ -113,6 +114,10 @@ function parseOneKLivePlayers(html: string): UniversityLivePlayer[] {
 
     const livePart = item[8];
     const soopId = decodeHtml(item[5]);
+    if (EXCLUDED_LIVE_SOOP_IDS.has(soopId)) {
+      continue;
+    }
+
     const broadNo = String(parseOneKNumber(livePart, "broadNo") || "").trim();
 
     players.push({
