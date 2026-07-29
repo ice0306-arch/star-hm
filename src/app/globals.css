@@ -4094,6 +4094,37 @@ footer {
   font-weight: 950;
 }
 
+.university-role-mark-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.university-role-mark-list span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.36rem;
+  min-height: 28px;
+  border: 1px solid rgba(202, 163, 91, 0.32);
+  border-radius: 7px;
+  padding: 0.28rem 0.48rem;
+  background: color-mix(in srgb, var(--gold) 9%, var(--theme-panel-soft));
+  color: var(--theme-strong);
+}
+
+.university-role-mark-list em {
+  color: var(--gold);
+  font-size: 0.64rem;
+  font-style: normal;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+}
+
+.university-role-mark-list strong {
+  font-size: 0.76rem;
+  font-weight: 950;
+}
+
 .university-race-bars {
   display: grid;
   gap: 0.55rem;

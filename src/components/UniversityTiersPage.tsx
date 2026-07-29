@@ -153,6 +153,7 @@ export function UniversityTiersPage() {
         !normalizedSearch ||
         college.college.toLowerCase().includes(normalizedSearch) ||
         (college.memberNames ?? []).some((name) => name.toLowerCase().includes(normalizedSearch)) ||
+        (college.memberMarkers ?? []).some((marker) => [marker.name, marker.label].some((value) => value.toLowerCase().includes(normalizedSearch))) ||
         livePlayers.some((player) => {
           return (
             player.college === college.college &&
@@ -369,6 +370,17 @@ function UniversityTierCard({ college, liveCount }: { college: UniversityTierSna
           <strong>{liveCount}</strong>
         </div>
       </div>
+
+      {college.memberMarkers?.length ? (
+        <div className="university-role-mark-list" aria-label={`${college.college} 주요 직책`}>
+          {college.memberMarkers.map((marker) => (
+            <span key={`${marker.label}-${marker.name}`}>
+              <em>{marker.label}</em>
+              <strong>{marker.name}</strong>
+            </span>
+          ))}
+        </div>
+      ) : null}
 
       <div className="university-race-bars">
         {visibleRaceOrder.filter((race) => college.race[race] > 0).map((race) => (
