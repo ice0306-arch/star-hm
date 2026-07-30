@@ -8,8 +8,9 @@ const UNIVERSITY_TIER_SOURCE_URL = "https://onek-soop.com/tier";
 const CACHE_TTL_MS = 45_000;
 const FETCH_TIMEOUT_MS = 4_000;
 const EXCLUDED_LIVE_SOOP_IDS = new Set(["bangsong12", "yeom1020", "jjyjeh5454", "595935"]);
-const LIVE_PLAYER_OVERRIDES = new Map<string, Partial<Pick<UniversityLivePlayer, "college" | "name">>>([
+const LIVE_PLAYER_OVERRIDES = new Map<string, Partial<Pick<UniversityLivePlayer, "college" | "name" | "race" | "tier">>>([
   ["2ahgo1203", { college: "뉴캣슬", name: "이아깽" }],
+  ["sulstyle00", { college: "신세계", name: "설영욱", race: "Protoss", tier: "Baby" }],
   ["jk890202", { college: "리셋느" }],
   ["djdbstn", { college: "리셋느" }],
   ["dbsdydx", { college: "리셋느" }],
@@ -139,10 +140,10 @@ function parseOneKLivePlayers(html: string): UniversityLivePlayer[] {
 
     players.push({
       id: soopId,
-      race: toRace(item[3].toLowerCase()),
+      race: override?.race ?? toRace(item[3].toLowerCase()),
       name: override?.name ?? decodeHtml(item[1]),
       college: override?.college ?? normalizeCollege(item[2]),
-      tier: toTier(item[4] ?? ""),
+      tier: override?.tier ?? toTier(item[4] ?? ""),
       url: broadNo
         ? `https://play.sooplive.com/${encodeURIComponent(soopId)}/${encodeURIComponent(broadNo)}`
         : `https://play.sooplive.com/${encodeURIComponent(soopId)}`,
