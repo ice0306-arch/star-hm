@@ -11,6 +11,7 @@ const EXCLUDED_LIVE_SOOP_IDS = new Set(["bangsong12", "yeom1020", "jjyjeh5454", 
 const LIVE_PLAYER_OVERRIDES = new Map<string, Partial<Pick<UniversityLivePlayer, "college" | "name" | "race" | "tier">>>([
   ["2ahgo1203", { college: "뉴캣슬", name: "이아깽" }],
   ["sulstyle00", { college: "신세계", name: "설영욱", race: "Protoss", tier: "Baby" }],
+  ["jmc06170", { college: "캄몬스타즈", name: "왜냐맨", race: "Protoss", tier: "Jack" }],
   ["jk890202", { college: "리셋느" }],
   ["djdbstn", { college: "리셋느" }],
   ["dbsdydx", { college: "리셋느" }],
