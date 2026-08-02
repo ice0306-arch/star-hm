@@ -86,15 +86,10 @@
         background: linear-gradient(90deg, var(--blue), var(--gold));
         transition: width .28s ease;
       }
-      .progressBox.running .progressBar {
-        width: 62%;
-        animation: pulseWidth 1.4s ease-in-out infinite alternate;
-      }
       .progressBox.done { border-color: rgba(88,214,141,.45); background: rgba(88,214,141,.08); }
       .progressBox.failed { border-color: rgba(255,107,107,.5); background: rgba(255,107,107,.08); }
       .progressBox.done .progressBar { width: 100%; background: var(--green); }
       .progressBox.failed .progressBar { width: 100%; background: var(--red); }
-      @keyframes pulseWidth { from { width: 38%; } to { width: 76%; } }
       .status { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; color: var(--muted); font-weight: 800; }
       .dot { width: 10px; height: 10px; border-radius: 999px; background: var(--red); }
       .dot.ok { background: var(--green); }
@@ -388,6 +383,7 @@
         $("analysisProgressTitle").textContent = detail.title || "분석 중";
         $("analysisProgressCount").textContent = detail.count || "";
         $("analysisProgressMeta").textContent = detail.meta || "";
+        $("analysisProgressBar").style.width = detail.percent == null ? "" : `${Math.max(0, Math.min(100, detail.percent))}%`;
       }
 
       function elapsedSeconds() {
@@ -518,13 +514,20 @@
           const data = await res.json();
           if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
           const job = data.job;
+          const progress = job.progress || {};
+          const total = Number(progress.total ?? limit);
+          const analyzedNow = Number(progress.analyzed ?? 0);
+          const failedNow = Number(progress.failed ?? 0);
+          const doneNow = Number(progress.done ?? analyzedNow + failedNow);
+          const percent = total > 0 ? (doneNow / total) * 100 : 100;
           if (job.status === "completed") {
             const result = job.result || {};
             const analyzed = result.analyzed ?? 0;
             const failed = result.failed ?? 0;
             renderAnalysisProgress("done", {
               title: "분석 완료",
-              count: `${analyzed}개 완료 / ${failed}개 실패`,
+              count: `${analyzed + failed} / ${result.candidates ?? total}`,
+              percent: 100,
               meta: `검수 대기 후보 ${sumResultField(result, "samples")}개, 승리 패턴 후보 ${sumResultField(result, "victoryPatterns")}개, 코칭 초안 ${sumResultField(result, "findings")}개를 만들었습니다. 아직 학습 승인 상태는 아닙니다.`,
             });
             setAnalysisButtonsDisabled(false);
@@ -545,8 +548,9 @@
           }
           renderAnalysisProgress("running", {
             title: job.phase || "REP 분석 중",
-            count: `최대 ${limit}개`,
-            meta: `${elapsedSeconds()}초째 분석 중입니다. 큰 REP는 원격 파서 응답까지 시간이 걸릴 수 있습니다.`,
+            count: `${doneNow} / ${total}`,
+            percent,
+            meta: `${analyzedNow}개 완료, ${failedNow}개 실패, ${Math.max(total - doneNow, 0)}개 남았습니다.${progress.currentFile ? ` 지금 분석 중: ${progress.currentFile}` : ""} (${elapsedSeconds()}초 경과)`,
           });
           analysisPollTimer = setTimeout(() => pollAnalysisJob(jobId, limit), 1000);
         } catch (error) {

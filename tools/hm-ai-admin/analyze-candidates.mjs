@@ -28,11 +28,34 @@ const summary = {
   results: [],
 };
 
+emitProgress({
+  phase: rows.length ? "분석할 REP를 찾았습니다" : "분석할 REP가 없습니다",
+  total: rows.length,
+  analyzed: 0,
+  failed: 0,
+  currentFile: rows[0]?.file_name ?? null,
+});
+
 for (const row of rows) {
+  emitProgress({
+    phase: "REP 분석 중",
+    total: rows.length,
+    analyzed: summary.analyzed,
+    failed: summary.failed,
+    currentFile: row.file_name,
+  });
+
   if (!existsSync(row.file_path)) {
     await markReplayFailed(row.id, `파일을 찾을 수 없습니다: ${row.file_path}`);
     summary.failed += 1;
     summary.results.push({ replayId: row.id, fileName: row.file_name, ok: false, error: "file_missing" });
+    emitProgress({
+      phase: "REP 분석 중",
+      total: rows.length,
+      analyzed: summary.analyzed,
+      failed: summary.failed,
+      currentFile: row.file_name,
+    });
     continue;
   }
 
@@ -50,15 +73,41 @@ for (const row of rows) {
       facts: analysis.result.coaching?.facts?.length ?? 0,
       samples: analysis.result.players?.filter((player) => !player.observer).length ?? 0,
     });
+    emitProgress({
+      phase: "REP 분석 중",
+      total: rows.length,
+      analyzed: summary.analyzed,
+      failed: summary.failed,
+      currentFile: row.file_name,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     await markReplayFailed(row.id, message);
     summary.failed += 1;
     summary.results.push({ replayId: row.id, fileName: row.file_name, ok: false, error: message });
+    emitProgress({
+      phase: "REP 분석 중",
+      total: rows.length,
+      analyzed: summary.analyzed,
+      failed: summary.failed,
+      currentFile: row.file_name,
+    });
   }
 }
 
+emitProgress({
+  phase: "분석 완료",
+  total: rows.length,
+  analyzed: summary.analyzed,
+  failed: summary.failed,
+  currentFile: null,
+});
+
 console.log(JSON.stringify(summary, null, 2));
+
+function emitProgress(progress) {
+  console.error(`HM_AI_PROGRESS ${JSON.stringify(progress)}`);
+}
 
 async function persistAnalysis(row, result) {
   const analysisId = randomUUID();

@@ -200,6 +200,14 @@ async function startAnalyzeCandidates(req) {
     status: "running",
     phase: "분석 준비 중",
     limit,
+    progress: {
+      total: limit,
+      analyzed: 0,
+      failed: 0,
+      done: 0,
+      remaining: limit,
+      currentFile: null,
+    },
     startedAt,
     updatedAt: startedAt,
     result: null,
@@ -207,7 +215,23 @@ async function startAnalyzeCandidates(req) {
   };
   analysisJobs.set(id, job);
 
-  runScript("tools/hm-ai-admin/analyze-candidates.mjs", { HM_AI_ANALYZE_LIMIT: String(limit) })
+  runScriptWithProgress("tools/hm-ai-admin/analyze-candidates.mjs", { HM_AI_ANALYZE_LIMIT: String(limit) }, (progress) => {
+    const total = Number(progress.total ?? job.progress.total ?? limit);
+    const analyzed = Number(progress.analyzed ?? 0);
+    const failed = Number(progress.failed ?? 0);
+    Object.assign(job, {
+      phase: String(progress.phase || job.phase),
+      updatedAt: new Date().toISOString(),
+      progress: {
+        total,
+        analyzed,
+        failed,
+        done: analyzed + failed,
+        remaining: Math.max(total - analyzed - failed, 0),
+        currentFile: progress.currentFile ?? null,
+      },
+    });
+  })
     .then((result) => {
       let payload = result;
       try {
@@ -219,6 +243,14 @@ async function startAnalyzeCandidates(req) {
         status: "completed",
         phase: "분석 완료",
         result: payload,
+        progress: {
+          total: Number(payload.candidates ?? payload.requestedLimit ?? limit),
+          analyzed: Number(payload.analyzed ?? 0),
+          failed: Number(payload.failed ?? 0),
+          done: Number(payload.analyzed ?? 0) + Number(payload.failed ?? 0),
+          remaining: 0,
+          currentFile: null,
+        },
         updatedAt: new Date().toISOString(),
       });
     })
@@ -614,6 +646,48 @@ function runScript(scriptPath, extraEnv = {}) {
       else reject(new Error(stderr.trim() || `${basename(scriptPath)} exited with ${code}`));
     });
   });
+}
+
+function runScriptWithProgress(scriptPath, extraEnv = {}, onProgress = () => {}) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [scriptPath], { cwd: process.cwd(), env: { ...process.env, ...extraEnv }, stdio: ["ignore", "pipe", "pipe"] });
+    let stdout = "";
+    let stderr = "";
+    let stderrLineBuffer = "";
+    child.stdout.on("data", (chunk) => (stdout += chunk));
+    child.stderr.on("data", (chunk) => {
+      const text = chunk.toString("utf8");
+      stderr += text;
+      stderrLineBuffer += text;
+      const lines = stderrLineBuffer.split(/\r?\n/);
+      stderrLineBuffer = lines.pop() ?? "";
+      for (const line of lines) {
+        handleProgressLine(line, onProgress);
+      }
+    });
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (stderrLineBuffer) handleProgressLine(stderrLineBuffer, onProgress);
+      if (code === 0) resolve({ ok: true, output: stdout.trim() });
+      else reject(new Error(stripProgressLines(stderr).trim() || `${basename(scriptPath)} exited with ${code}`));
+    });
+  });
+}
+
+function handleProgressLine(line, onProgress) {
+  if (!line.startsWith("HM_AI_PROGRESS ")) return;
+  try {
+    onProgress(JSON.parse(line.slice("HM_AI_PROGRESS ".length)));
+  } catch {
+    // Ignore malformed progress lines; the final process result still decides success/failure.
+  }
+}
+
+function stripProgressLines(text) {
+  return text
+    .split(/\r?\n/)
+    .filter((line) => !line.startsWith("HM_AI_PROGRESS "))
+    .join("\n");
 }
 
 function sanitizeFileName(fileName) {
