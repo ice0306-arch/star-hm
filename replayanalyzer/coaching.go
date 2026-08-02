@@ -628,9 +628,9 @@ func buildVictoryPatterns(players []PlayerInfo, buildOrder []BuildEvent, timelin
 			continue
 		}
 		playerID := fmt.Sprint(player.ID)
-		commandReport := commandEfficiencyForPlayer(semantic.CommandEfficiency, player.ID)
-		productionReport := productionReportForPlayer(semantic.ProductionReports, player.ID)
-		hotkeyReport := hotkeyReportForPlayer(semantic.HotkeyReports, player.ID)
+		commandReport := findCommandEfficiencyReport(semantic.CommandEfficiency, player.ID)
+		productionReport := findProductionReport(semantic.ProductionReports, player.ID)
+		hotkeyReport := findHotkeyReport(semantic.HotkeyReports, player.ID)
 		buildClass := buildClassificationForPlayer(semantic.BuildClassifications, player.ID)
 
 		if buildClass != nil && buildClass.Confidence >= 0.45 {
@@ -737,7 +737,7 @@ func buildVictoryPatterns(players []PlayerInfo, buildOrder []BuildEvent, timelin
 	return patterns
 }
 
-func commandEfficiencyForPlayer(reports []CommandEfficiencyReport, playerID int) *CommandEfficiencyReport {
+func findCommandEfficiencyReport(reports []CommandEfficiencyReport, playerID int) *CommandEfficiencyReport {
 	for index := range reports {
 		if reports[index].PlayerID == playerID {
 			return &reports[index]
@@ -746,7 +746,7 @@ func commandEfficiencyForPlayer(reports []CommandEfficiencyReport, playerID int)
 	return nil
 }
 
-func productionReportForPlayer(reports []ProductionReport, playerID int) *ProductionReport {
+func findProductionReport(reports []ProductionReport, playerID int) *ProductionReport {
 	for index := range reports {
 		if reports[index].PlayerID == playerID {
 			return &reports[index]
@@ -755,7 +755,7 @@ func productionReportForPlayer(reports []ProductionReport, playerID int) *Produc
 	return nil
 }
 
-func hotkeyReportForPlayer(reports []HotkeyReport, playerID int) *HotkeyReport {
+func findHotkeyReport(reports []HotkeyReport, playerID int) *HotkeyReport {
 	for index := range reports {
 		if reports[index].PlayerID == playerID {
 			return &reports[index]
@@ -837,9 +837,9 @@ func buildWinReadiness(players []PlayerInfo, issues []DetectedIssue, semantic Se
 		winningCases := []string{}
 		missingCases := []string{}
 
-		commandReport := commandEfficiencyForPlayer(semantic.CommandEfficiency, player.ID)
-		productionReport := productionReportForPlayer(semantic.ProductionReports, player.ID)
-		hotkeyReport := hotkeyReportForPlayer(semantic.HotkeyReports, player.ID)
+		commandReport := findCommandEfficiencyReport(semantic.CommandEfficiency, player.ID)
+		productionReport := findProductionReport(semantic.ProductionReports, player.ID)
+		hotkeyReport := findHotkeyReport(semantic.HotkeyReports, player.ID)
 		buildClass := buildClassificationForPlayer(semantic.BuildClassifications, player.ID)
 		playerIssues := issuesForPlayer(issues, fmt.Sprint(player.ID))
 
