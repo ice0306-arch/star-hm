@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "hm-ai-public-rules/2026-08-03",
+  "rules": [
+    {
+      "id": "rule-production-gap-ge-35s",
+      "category": "production",
+      "trigger": "seconds_between_production_events >= 35",
+      "severity": "minor",
+      "requiresEvidence": true
+    },
+    {
+      "id": "rule-production-gap-ge-60s",
+      "category": "production",
+      "trigger": "seconds_between_production_events >= 60",
+      "severity": "major",
+      "requiresEvidence": true
+    },
+    {
+      "id": "rule-effective-command-rate-low",
+      "category": "control",
+      "trigger": "effective_command_rate_percent < 62",
+      "severity": "minor",
+      "requiresEvidence": true
+    }
+  ]
+}

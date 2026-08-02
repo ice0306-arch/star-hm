@@ -1,0 +1,34 @@
+[
+  {
+    "id": "knowledge-control-effective-commands",
+    "title": "클릭 수보다 경기 도움 명령을 남긴다",
+    "matchup": [],
+    "maps": [],
+    "builds": [],
+    "phases": ["early"],
+    "categories": ["control", "scouting"],
+    "triggerConditions": ["effective_command_rate_low"],
+    "recommendation": "입력은 생산, 공격, 후퇴, 정찰 중 하나로 설명될 수 있어야 한다.",
+    "exceptions": ["현재 시야와 유닛 생존 상태는 공개 앱에서 확정하지 않는다."],
+    "sourceIds": ["hm-seed-manual"],
+    "status": "approved",
+    "confidence": 0.7,
+    "version": 1
+  },
+  {
+    "id": "knowledge-production-cadence",
+    "title": "생산 공백은 다음 교전 병력 수로 이어진다",
+    "matchup": [],
+    "maps": [],
+    "builds": [],
+    "phases": ["early", "mid"],
+    "categories": ["production", "build"],
+    "triggerConditions": ["production_gap_ge_35s"],
+    "recommendation": "교전이나 정찰 화면을 보기 전에 생산 건물 단축키를 먼저 눌러 예약을 넣는다.",
+    "exceptions": ["의도적인 올인, 생산 시설 부족, 파서 누락 가능성은 별도 검토한다."],
+    "sourceIds": ["hm-seed-manual"],
+    "status": "approved",
+    "confidence": 0.68,
+    "version": 1
+  }
+]

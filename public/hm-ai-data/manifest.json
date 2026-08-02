@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "hm-ai-public-pack-manifest/2026-08-03",
+  "version": "2026.08.02",
+  "generatedAt": "2026-08-02T19:37:36.332Z",
+  "minimumAppVersion": "hm-ai-rule-engine/0.2.0",
+  "approvedItemCount": 2,
+  "supportedMatchups": [],
+  "supportedMaps": [],
+  "supportedBuilds": [],
+  "files": {
+    "knowledge.json": {
+      "sha256": "a37d21bb49b7421fd74a7d43b5010d94ea443872a2e77b59c2dc2688a0ab8861",
+      "bytes": 1281
+    },
+    "rules.json": {
+      "sha256": "d847190c58c6763479ef718671276a980cfcae70c39f0a27961811639a3381a4",
+      "bytes": 685
+    },
+    "coverage.json": {
+      "sha256": "62db819668d349842af8c0986bad71dcf178394426f78b62eaa9f5a1affa66da",
+      "bytes": 540
+    },
+    "pro-reference-stats.json": {
+      "sha256": "eb667da0f68dd3f95fe1f124c0946ca60aa152c5c09ea91dbeb6c993630534e5",
+      "bytes": 212
+    }
+  }
+}

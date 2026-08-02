@@ -6,7 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "admin:local": "node tools/hm-ai-admin/server.mjs",
+    "admin:db:migrate": "node tools/hm-ai-admin/db.mjs migrate",
+    "admin:backup": "node tools/hm-ai-admin/db.mjs backup",
+    "admin:db:check": "node tools/hm-ai-admin/db.mjs check",
+    "public-pack:build": "node scripts/public-pack-build.mjs",
+    "public-pack:verify": "node scripts/public-pack-verify.mjs",
+    "test": "node scripts/hm-ai-smoke-test.mjs"
   },
   "dependencies": {
     "@dada78641/bwmapgfx": "0.0.1",

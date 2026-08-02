@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "hm-ai-coverage/2026-08-03",
+  "coverage": [
+    {
+      "scope": "public_user_replay",
+      "status": "available",
+      "data": ["commands", "build_order", "hotkeys", "positioned_commands", "2d_map_image"],
+      "limitations": ["visibility_not_reconstructed", "resources_unknown", "supply_unknown", "unit_life_state_unknown"]
+    },
+    {
+      "scope": "korean_pro_reference",
+      "status": "needs_local_admin_approval",
+      "data": [],
+      "limitations": ["no_approved_pro_corpus_exported_yet"]
+    }
+  ]
+}
