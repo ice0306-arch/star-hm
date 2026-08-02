@@ -5,27 +5,233 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>HM AI Local Admin</title>
     <style>
-      body { margin: 0; background: #080d12; color: #f1f0eb; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-      main { max-width: 1120px; margin: 0 auto; padding: 40px 20px; }
-      h1 { font-size: clamp(34px, 6vw, 72px); line-height: 0.95; margin: 0 0 18px; }
-      p { color: #aab2bd; line-height: 1.7; }
-      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 24px; }
-      section { border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: 18px; background: rgba(255,255,255,.04); }
-      b { color: #d5ad5f; display: block; margin-bottom: 8px; letter-spacing: .08em; }
+      :root {
+        color-scheme: dark;
+        --bg: #080d12;
+        --panel: #111820;
+        --panel2: #151d27;
+        --line: rgba(255, 255, 255, 0.12);
+        --text: #f1f0eb;
+        --muted: #aab2bd;
+        --gold: #d5ad5f;
+        --blue: #58a6ff;
+        --green: #58d68d;
+        --red: #ff6b6b;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: radial-gradient(circle at 20% 0%, rgba(213, 173, 95, 0.1), transparent 28%), var(--bg);
+        color: var(--text);
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      main { max-width: 1240px; margin: 0 auto; padding: 36px 20px 80px; }
+      header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--line); padding-bottom: 24px; }
+      h1 { font-size: clamp(36px, 6vw, 76px); line-height: 0.95; margin: 10px 0 18px; letter-spacing: 0; }
+      h2 { font-size: 24px; margin: 0 0 14px; }
+      p { color: var(--muted); line-height: 1.65; margin: 0; }
+      .eyebrow, b.label { color: var(--gold); display: block; margin-bottom: 8px; letter-spacing: 0.12em; font-weight: 800; text-transform: uppercase; }
+      .layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr); gap: 16px; margin-top: 18px; align-items: start; }
+      .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+      .panel { border: 1px solid var(--line); border-radius: 8px; padding: 18px; background: rgba(17, 24, 32, 0.88); box-shadow: 0 16px 60px rgba(0,0,0,.24); }
+      .panel.soft { background: rgba(21, 29, 39, 0.72); }
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+      button, .fileButton {
+        appearance: none;
+        border: 1px solid rgba(213,173,95,.5);
+        background: rgba(213,173,95,.14);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 12px 14px;
+        font: inherit;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      button.secondary { border-color: var(--line); background: rgba(255,255,255,.05); }
+      button:disabled { opacity: 0.5; cursor: wait; }
+      input, textarea {
+        width: 100%;
+        border: 1px solid var(--line);
+        background: #0b1118;
+        color: var(--text);
+        border-radius: 8px;
+        padding: 12px;
+        font: inherit;
+      }
+      textarea { min-height: 82px; resize: vertical; }
+      input[type="file"] { padding: 10px; }
+      label { display: block; color: var(--muted); font-weight: 700; margin: 12px 0 6px; }
       code { background: rgba(213,173,95,.14); color: #ffd479; padding: 2px 6px; border-radius: 5px; }
+      .metric { border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: rgba(255,255,255,.04); }
+      .metric strong { display: block; font-size: 28px; margin-top: 8px; }
+      .status { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; color: var(--muted); font-weight: 800; }
+      .dot { width: 10px; height: 10px; border-radius: 999px; background: var(--red); }
+      .dot.ok { background: var(--green); }
+      table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+      th, td { border-bottom: 1px solid var(--line); padding: 11px 8px; text-align: left; color: var(--muted); vertical-align: top; }
+      th { color: var(--gold); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+      .log { min-height: 170px; max-height: 300px; overflow: auto; background: #06090d; border: 1px solid var(--line); border-radius: 8px; padding: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; color: #d7dde6; }
+      .help { margin-top: 16px; display: grid; gap: 8px; }
+      .help p { border-left: 3px solid rgba(88,166,255,.7); padding-left: 10px; }
+      @media (max-width: 920px) {
+        header, .layout { grid-template-columns: 1fr; display: grid; }
+        .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+      @media (max-width: 620px) {
+        .grid { grid-template-columns: 1fr; }
+      }
     </style>
   </head>
   <body>
     <main>
-      <b>LOCAL ONLY · 127.0.0.1</b>
-      <h1>HM AI 로컬 관리자</h1>
-      <p>이 화면은 공개 Vercel 사이트가 아니라 사용자 컴퓨터에서만 실행되는 REP 수집·검수·데이터팩 준비용 관리자입니다. 원본 REP, SQLite DB, 관리자 메모는 공개 사이트로 배포하지 않습니다.</p>
-      <div class="grid">
-        <section><b>DB 초기화</b><p><code>npm run admin:db:migrate</code> 로 SQLite 스키마를 생성합니다.</p></section>
-        <section><b>보안</b><p>서버는 127.0.0.1에만 바인딩하고 외부 Host와 Origin 요청을 거부합니다.</p></section>
-        <section><b>공개 데이터팩</b><p>승인된 파생 데이터만 <code>public/hm-ai-data</code>로 내보냅니다.</p></section>
-        <section><b>상태 API</b><p><code>/api/dashboard</code> 에서 로컬 테이블 상태를 확인합니다.</p></section>
-      </div>
+      <header>
+        <div>
+          <span class="eyebrow">Local Only · 127.0.0.1</span>
+          <h1>HM AI 로컬 관리자</h1>
+          <p>원본 REP를 내 컴퓨터에 보관하고, 검수된 파생 데이터만 공개 HM AI 데이터팩으로 내보내는 작업실입니다.</p>
+        </div>
+        <div class="status"><span id="statusDot" class="dot"></span><span id="statusText">확인 중</span></div>
+      </header>
+
+      <section class="layout">
+        <div class="panel">
+          <h2>오늘 할 수 있는 작업</h2>
+          <div class="grid">
+            <div class="metric"><span>등록된 REP</span><strong id="countReplays">-</strong></div>
+            <div class="metric"><span>출처 후보</span><strong id="countSources">-</strong></div>
+            <div class="metric"><span>코칭 근거</span><strong id="countFindings">-</strong></div>
+          </div>
+          <div class="actions">
+            <button id="refreshBtn" type="button">상태 새로고침</button>
+            <button id="migrateBtn" type="button" class="secondary">DB 초기화/갱신</button>
+            <button id="checkBtn" type="button" class="secondary">DB 무결성 확인</button>
+            <button id="backupBtn" type="button" class="secondary">DB 백업</button>
+            <button id="packBuildBtn" type="button">공개 데이터팩 생성</button>
+            <button id="packVerifyBtn" type="button" class="secondary">데이터팩 검증</button>
+          </div>
+          <div class="help">
+            <p>원본 REP와 SQLite DB는 <code>data/hm-ai-admin</code> 아래에만 저장됩니다.</p>
+            <p>공개 사이트에는 <code>public/hm-ai-data</code>의 승인 데이터만 올라갑니다.</p>
+          </div>
+        </div>
+
+        <form id="uploadForm" class="panel soft">
+          <span class="label">Replay Intake</span>
+          <h2>REP 파일 등록</h2>
+          <p>한국 프로 REP나 검수할 리플레이를 후보로 넣습니다. 여기서 등록해도 바로 공개 기준에 반영되지는 않습니다.</p>
+          <label for="repFile">REP 파일</label>
+          <input id="repFile" name="file" type="file" accept=".rep" required />
+          <label for="sourceUrl">출처 URL</label>
+          <input id="sourceUrl" name="sourceUrl" type="url" placeholder="예: Liquipedia, TL, 공식 경기 페이지" />
+          <label for="notes">검수 메모</label>
+          <textarea id="notes" name="notes" placeholder="선수명, 경기명, 검증해야 할 내용 등을 적어두세요."></textarea>
+          <div class="actions"><button type="submit">후보 REP 등록</button></div>
+        </form>
+      </section>
+
+      <section class="layout">
+        <div class="panel">
+          <h2>최근 등록 REP</h2>
+          <table>
+            <thead><tr><th>등록 시간</th><th>파일명</th><th>상태</th><th>크기</th></tr></thead>
+            <tbody id="recentReplays"><tr><td colspan="4">불러오는 중입니다.</td></tr></tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <h2>작업 로그</h2>
+          <div id="log" class="log">관리자 화면을 준비합니다...</div>
+        </div>
+      </section>
     </main>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const logEl = $("log");
+      const buttons = [...document.querySelectorAll("button")];
+
+      function log(message, detail) {
+        const time = new Date().toLocaleTimeString();
+        const text = detail ? `${message}\n${typeof detail === "string" ? detail : JSON.stringify(detail, null, 2)}` : message;
+        logEl.textContent = `[${time}] ${text}\n\n${logEl.textContent}`.trim();
+      }
+
+      async function api(path, options = {}) {
+        setBusy(true);
+        try {
+          const res = await fetch(path, options);
+          const data = await res.json();
+          if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
+          return data;
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      function setBusy(busy) {
+        buttons.forEach((button) => (button.disabled = busy));
+      }
+
+      function bytes(n) {
+        if (!n) return "0 B";
+        if (n < 1024) return `${n} B`;
+        if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+        return `${(n / 1024 / 1024).toFixed(1)} MB`;
+      }
+
+      async function refresh() {
+        try {
+          const data = await api("/api/dashboard");
+          $("statusDot").classList.toggle("ok", Boolean(data.initialized));
+          $("statusText").textContent = data.initialized ? "DB 준비됨" : "DB 초기화 필요";
+          $("countReplays").textContent = data.counts?.replays ?? 0;
+          $("countSources").textContent = data.counts?.replay_sources ?? 0;
+          $("countFindings").textContent = data.counts?.coach_findings ?? 0;
+          const rows = data.recentReplays ?? [];
+          $("recentReplays").innerHTML = rows.length
+            ? rows.map((row) => `<tr><td>${row.createdAt}</td><td>${row.fileName}</td><td>${row.status}</td><td>${bytes(row.fileSize)}</td></tr>`).join("")
+            : `<tr><td colspan="4">아직 등록된 REP가 없습니다.</td></tr>`;
+          log("상태를 갱신했습니다.", { dataDir: data.dataDir, tables: data.tables?.length ?? 0 });
+        } catch (error) {
+          $("statusDot").classList.remove("ok");
+          $("statusText").textContent = "오류";
+          log("상태 갱신 실패", error.message);
+        }
+      }
+
+      async function postAction(path, successMessage) {
+        try {
+          const data = await api(path, { method: "POST" });
+          log(successMessage, data);
+          await refresh();
+        } catch (error) {
+          log(`${successMessage} 실패`, error.message);
+        }
+      }
+
+      $("refreshBtn").addEventListener("click", refresh);
+      $("migrateBtn").addEventListener("click", () => postAction("/api/migrate", "DB를 초기화/갱신했습니다."));
+      $("checkBtn").addEventListener("click", () => postAction("/api/db/check", "DB 무결성을 확인했습니다."));
+      $("backupBtn").addEventListener("click", () => postAction("/api/db/backup", "DB 백업을 만들었습니다."));
+      $("packBuildBtn").addEventListener("click", () => postAction("/api/public-pack/build", "공개 데이터팩을 생성했습니다."));
+      $("packVerifyBtn").addEventListener("click", () => postAction("/api/public-pack/verify", "공개 데이터팩을 검증했습니다."));
+
+      $("uploadForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const file = $("repFile").files?.[0];
+        if (!file) return log("REP 파일을 먼저 선택하세요.");
+        const formData = new FormData(event.currentTarget);
+        try {
+          const data = await api("/api/replays/upload", { method: "POST", body: formData });
+          log("REP 후보를 등록했습니다.", data);
+          event.currentTarget.reset();
+          await refresh();
+        } catch (error) {
+          log("REP 등록 실패", error.message);
+        }
+      });
+
+      refresh();
+    </script>
   </body>
 </html>
