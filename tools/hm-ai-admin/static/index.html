@@ -66,6 +66,34 @@
       code { background: rgba(213,173,95,.14); color: #ffd479; padding: 2px 6px; border-radius: 5px; }
       .metric { border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: rgba(255,255,255,.04); }
       .metric strong { display: block; font-size: 28px; margin-top: 8px; }
+      .progressBox {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+        border: 1px solid rgba(88,166,255,.35);
+        border-radius: 8px;
+        padding: 14px;
+        background: rgba(88,166,255,.08);
+      }
+      .progressHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--text); font-weight: 900; }
+      .progressMeta { color: var(--muted); font-size: 14px; line-height: 1.5; }
+      .progressTrack { height: 9px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.1); }
+      .progressBar {
+        width: 0%;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--blue), var(--gold));
+        transition: width .28s ease;
+      }
+      .progressBox.running .progressBar {
+        width: 62%;
+        animation: pulseWidth 1.4s ease-in-out infinite alternate;
+      }
+      .progressBox.done { border-color: rgba(88,214,141,.45); background: rgba(88,214,141,.08); }
+      .progressBox.failed { border-color: rgba(255,107,107,.5); background: rgba(255,107,107,.08); }
+      .progressBox.done .progressBar { width: 100%; background: var(--green); }
+      .progressBox.failed .progressBar { width: 100%; background: var(--red); }
+      @keyframes pulseWidth { from { width: 38%; } to { width: 76%; } }
       .status { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; color: var(--muted); font-weight: 800; }
       .dot { width: 10px; height: 10px; border-radius: 999px; background: var(--red); }
       .dot.ok { background: var(--green); }
@@ -224,6 +252,14 @@
         <div class="actions">
           <button id="analyzeCandidatesBtn2" type="button">후보 REP 분석 시작</button>
         </div>
+        <div id="analysisProgress" class="progressBox" hidden>
+          <div class="progressHead">
+            <span id="analysisProgressTitle">분석 대기 중</span>
+            <span id="analysisProgressCount">0 / 0</span>
+          </div>
+          <div class="progressTrack"><div id="analysisProgressBar" class="progressBar"></div></div>
+          <div id="analysisProgressMeta" class="progressMeta">버튼을 누르면 다운로드된 REP 후보를 분석합니다.</div>
+        </div>
       </section>
 
       <section class="layout">
@@ -268,6 +304,8 @@
       const $ = (id) => document.getElementById(id);
       const logEl = $("log");
       const buttons = [...document.querySelectorAll("button")];
+      let analysisPollTimer = null;
+      let analysisStartedAt = 0;
       const aslPlayers = [
         "Flash", "Bisu", "Rain", "Snow", "Soulkey", "Soma", "Best", "Sharp",
         "Light", "Mini", "hero", "Shuttle", "BarrackS", "Rush", "Action", "EffOrt",
@@ -317,6 +355,25 @@
 
       function setBusy(busy) {
         buttons.forEach((button) => (button.disabled = busy));
+      }
+
+      function setAnalysisButtonsDisabled(disabled) {
+        $("analyzeCandidatesBtn").disabled = disabled;
+        $("analyzeCandidatesBtn2").disabled = disabled;
+      }
+
+      function renderAnalysisProgress(state, detail = {}) {
+        const box = $("analysisProgress");
+        box.hidden = false;
+        box.classList.remove("running", "done", "failed");
+        if (state) box.classList.add(state);
+        $("analysisProgressTitle").textContent = detail.title || "분석 중";
+        $("analysisProgressCount").textContent = detail.count || "";
+        $("analysisProgressMeta").textContent = detail.meta || "";
+      }
+
+      function elapsedSeconds() {
+        return analysisStartedAt ? Math.max(1, Math.round((Date.now() - analysisStartedAt) / 1000)) : 0;
       }
 
       function bytes(n) {
@@ -404,16 +461,84 @@
       $("packVerifyBtn").addEventListener("click", () => postAction("/api/public-pack/verify", "공개 데이터팩을 검증했습니다."));
       async function analyzeCandidates() {
         try {
-          const data = await api("/api/replays/analyze-candidates", {
+          const limit = Number($("analysisLimit").value || 5);
+          analysisStartedAt = Date.now();
+          renderAnalysisProgress("running", {
+            title: "REP 분석을 시작했습니다",
+            count: `0 / ${limit}`,
+            meta: "분석기가 REP를 읽고 선수, 맵, 명령 수, 코칭 근거, 학습 후보를 만들고 있습니다.",
+          });
+          setAnalysisButtonsDisabled(true);
+          const data = await api("/api/replays/analyze-candidates/start", {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({ limit: Number($("analysisLimit").value || 5) }),
+            body: JSON.stringify({ limit }),
           });
-          log("후보 REP 분석을 완료했습니다.", data);
-          await refresh();
+          setAnalysisButtonsDisabled(true);
+          log("후보 REP 분석 작업을 시작했습니다.", data.job);
+          pollAnalysisJob(data.job.id, limit);
         } catch (error) {
+          setAnalysisButtonsDisabled(false);
+          renderAnalysisProgress("failed", {
+            title: "분석 시작 실패",
+            count: "",
+            meta: error.message,
+          });
           log("후보 REP 분석 실패", error.message);
         }
+      }
+
+      async function pollAnalysisJob(jobId, limit) {
+        if (analysisPollTimer) clearTimeout(analysisPollTimer);
+        try {
+          const res = await fetch(`/api/replays/analyze-candidates/status?id=${encodeURIComponent(jobId)}`);
+          const data = await res.json();
+          if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
+          const job = data.job;
+          if (job.status === "completed") {
+            const result = job.result || {};
+            const analyzed = result.analyzed ?? 0;
+            const failed = result.failed ?? 0;
+            renderAnalysisProgress("done", {
+              title: "분석 완료",
+              count: `${analyzed}개 완료 / ${failed}개 실패`,
+              meta: `학습 후보 ${sumResultField(result, "samples")}개, 코칭 근거 ${sumResultField(result, "findings")}개를 만들었습니다.`,
+            });
+            setAnalysisButtonsDisabled(false);
+            log("후보 REP 분석을 완료했습니다.", result);
+            await refresh();
+            return;
+          }
+          if (job.status === "failed") {
+            renderAnalysisProgress("failed", {
+              title: "분석 실패",
+              count: "",
+              meta: job.error || "분석 중 오류가 발생했습니다.",
+            });
+            setAnalysisButtonsDisabled(false);
+            log("후보 REP 분석 실패", job.error || job);
+            await refresh();
+            return;
+          }
+          renderAnalysisProgress("running", {
+            title: job.phase || "REP 분석 중",
+            count: `최대 ${limit}개`,
+            meta: `${elapsedSeconds()}초째 분석 중입니다. 큰 REP는 원격 파서 응답까지 시간이 걸릴 수 있습니다.`,
+          });
+          analysisPollTimer = setTimeout(() => pollAnalysisJob(jobId, limit), 1000);
+        } catch (error) {
+          renderAnalysisProgress("failed", {
+            title: "진행 상태 확인 실패",
+            count: "",
+            meta: error.message,
+          });
+          setAnalysisButtonsDisabled(false);
+          log("분석 진행 상태 확인 실패", error.message);
+        }
+      }
+
+      function sumResultField(result, key) {
+        return (result.results || []).reduce((sum, item) => sum + Number(item[key] || 0), 0);
       }
       $("analyzeCandidatesBtn").addEventListener("click", analyzeCandidates);
       $("analyzeCandidatesBtn2").addEventListener("click", analyzeCandidates);

@@ -49,6 +49,8 @@ const ASL_PLAYER_PRESETS = [
 
 await ensureAdminDirs();
 
+const analysisJobs = new Map();
+
 const server = createServer(async (req, res) => {
   const host = req.headers.host ?? "";
   const origin = req.headers.origin;
@@ -75,6 +77,8 @@ const server = createServer(async (req, res) => {
     if (url.pathname === "/api/replays/collect" && req.method === "POST") return sendJson(res, 200, await collectReplays(req));
     if (url.pathname === "/api/replays/collect-asl" && req.method === "POST") return sendJson(res, 200, await collectAslReplays(req));
     if (url.pathname === "/api/replays/analyze-candidates" && req.method === "POST") return sendJson(res, 200, await analyzeCandidates(req));
+    if (url.pathname === "/api/replays/analyze-candidates/start" && req.method === "POST") return sendJson(res, 200, await startAnalyzeCandidates(req));
+    if (url.pathname === "/api/replays/analyze-candidates/status" && req.method === "GET") return sendJson(res, 200, analysisJobStatus(url));
     if (url.pathname === "/api/replays/upload" && req.method === "POST") return sendJson(res, 200, await uploadReplay(req));
     if (url.pathname === "/api/public-pack/build" && req.method === "POST") return sendJson(res, 200, await runScript("scripts/public-pack-build.mjs"));
     if (url.pathname === "/api/public-pack/verify" && req.method === "POST") return sendJson(res, 200, await runScript("scripts/public-pack-verify.mjs"));
@@ -170,6 +174,57 @@ async function analyzeCandidates(req) {
   } catch {
     return result;
   }
+}
+
+async function startAnalyzeCandidates(req) {
+  const body = await readJsonRequest(req);
+  const limit = Math.min(Math.max(Number(body.limit ?? 5), 1), 50);
+  const id = randomUUID();
+  const startedAt = new Date().toISOString();
+  const job = {
+    id,
+    status: "running",
+    phase: "분석 준비 중",
+    limit,
+    startedAt,
+    updatedAt: startedAt,
+    result: null,
+    error: null,
+  };
+  analysisJobs.set(id, job);
+
+  runScript("tools/hm-ai-admin/analyze-candidates.mjs", { HM_AI_ANALYZE_LIMIT: String(limit) })
+    .then((result) => {
+      let payload = result;
+      try {
+        payload = JSON.parse(result.output || "{}");
+      } catch {
+        payload = result;
+      }
+      Object.assign(job, {
+        status: "completed",
+        phase: "분석 완료",
+        result: payload,
+        updatedAt: new Date().toISOString(),
+      });
+    })
+    .catch((error) => {
+      Object.assign(job, {
+        status: "failed",
+        phase: "분석 실패",
+        error: error instanceof Error ? error.message : String(error),
+        updatedAt: new Date().toISOString(),
+      });
+    });
+
+  return { ok: true, job };
+}
+
+function analysisJobStatus(url) {
+  const id = url.searchParams.get("id");
+  const job = id ? analysisJobs.get(id) : null;
+  if (!job) return { ok: false, error: "분석 작업을 찾을 수 없습니다." };
+  return { ok: true, job };
 }
 
 async function collectAslReplays(req) {
