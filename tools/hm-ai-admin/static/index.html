@@ -69,6 +69,28 @@
       .status { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; color: var(--muted); font-weight: 800; }
       .dot { width: 10px; height: 10px; border-radius: 999px; background: var(--red); }
       .dot.ok { background: var(--green); }
+      .sourceList { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+      .sourceCard {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 12px;
+        background: rgba(255,255,255,.04);
+      }
+      .sourceCard strong { display: block; margin-bottom: 6px; }
+      .sourceCard p { font-size: 14px; line-height: 1.5; min-height: 42px; }
+      .sourceCard .actions { margin-top: 10px; gap: 8px; }
+      .sourceCard button, .sourceCard a {
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 8px 10px;
+        color: var(--text);
+        background: rgba(255,255,255,.05);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 800;
+      }
       table { width: 100%; border-collapse: collapse; margin-top: 10px; }
       th, td { border-bottom: 1px solid var(--line); padding: 11px 8px; text-align: left; color: var(--muted); vertical-align: top; }
       th { color: var(--gold); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
@@ -80,7 +102,7 @@
         .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       }
       @media (max-width: 620px) {
-        .grid { grid-template-columns: 1fr; }
+        .grid, .sourceList { grid-template-columns: 1fr; }
       }
     </style>
   </head>
@@ -114,6 +136,7 @@
           <div class="help">
             <p>원본 REP와 SQLite DB는 <code>data/hm-ai-admin</code> 아래에만 저장됩니다.</p>
             <p>공개 사이트에는 <code>public/hm-ai-data</code>의 승인 데이터만 올라갑니다.</p>
+            <p>ASL 공식 경기의 전체 REP 저장소는 공개로 운영되는 형태가 아니라서, 공개 리플레이 DB에서 후보를 수집한 뒤 검수하는 방식으로 관리합니다.</p>
           </div>
         </div>
 
@@ -130,6 +153,13 @@
           <div class="actions"><button type="submit">URL에서 REP 자동 가져오기</button></div>
           <small>직접 파일을 고르는 방식은 예외 상황용입니다. 기본 흐름은 URL 수집 → 후보 등록 → 검수 → 공개 데이터팩 생성입니다.</small>
         </form>
+      </section>
+
+      <section class="panel" style="margin-top: 18px;">
+        <span class="label">Replay Sources</span>
+        <h2>추천 REP 출처</h2>
+        <p>아래 출처는 공개 리플레이 후보를 찾기 위한 시작점입니다. “수집 URL로 넣기”를 누르면 위 자동 수집 칸에 바로 들어갑니다.</p>
+        <div id="sourceList" class="sourceList"></div>
       </section>
 
       <section class="layout">
@@ -174,6 +204,28 @@
       const $ = (id) => document.getElementById(id);
       const logEl = $("log");
       const buttons = [...document.querySelectorAll("button")];
+      const replaySources = [
+        {
+          name: "RepMastered",
+          url: "https://repmastered.icza.net/",
+          note: "브루드워 공개 리플레이 DB입니다. 선수명, 맵, 매치업 기준으로 후보를 찾기 좋습니다.",
+        },
+        {
+          name: "TeamLiquid Replays",
+          url: "https://tl.net/replay/",
+          note: "오래된 프로/고수 경기 리플레이가 섞여 있는 커뮤니티 DB입니다.",
+        },
+        {
+          name: "Red Clan Replays",
+          url: "https://redclan.de/replays/",
+          note: "StarCraft: Remastered 리플레이 팩과 단일 리플레이를 제공하는 공개 페이지입니다.",
+        },
+        {
+          name: "Liquipedia Replay Guide",
+          url: "https://liquipedia.net/starcraft/Portal:Beginners/Replays",
+          note: "리플레이를 어디서 찾을지 정리된 안내 페이지입니다. 직접 수집보다 출처 탐색용입니다.",
+        },
+      ];
 
       function log(message, detail) {
         const time = new Date().toLocaleTimeString();
@@ -202,6 +254,27 @@
         if (n < 1024) return `${n} B`;
         if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
         return `${(n / 1024 / 1024).toFixed(1)} MB`;
+      }
+
+      function renderSources() {
+        $("sourceList").innerHTML = replaySources.map((source) => `
+          <article class="sourceCard">
+            <strong>${source.name}</strong>
+            <p>${source.note}</p>
+            <div class="actions">
+              <button type="button" data-source-url="${source.url}" data-source-name="${source.name}">수집 URL로 넣기</button>
+              <a href="${source.url}" target="_blank" rel="noreferrer">사이트 열기</a>
+            </div>
+          </article>
+        `).join("");
+        document.querySelectorAll("[data-source-url]").forEach((button) => {
+          button.addEventListener("click", () => {
+            $("collectUrl").value = button.dataset.sourceUrl;
+            $("collectNotes").value = `${button.dataset.sourceName} 공개 리플레이 후보 수집`;
+            $("collectUrl").focus();
+            log(`${button.dataset.sourceName} 출처를 자동 수집 URL에 넣었습니다. 바로 수집을 누르거나 사이트에서 더 정확한 .rep 링크를 찾아 넣으세요.`);
+          });
+        });
       }
 
       async function refresh() {
@@ -281,6 +354,7 @@
         }
       });
 
+      renderSources();
       refresh();
     </script>
   </body>
