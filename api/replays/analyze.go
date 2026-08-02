@@ -103,6 +103,20 @@ func compactAnalysisResult(result *replayanalyzer.SuccessResponse) {
 	}
 	result.Commands = nil
 	result.Chat = nil
+	result.BuildOrder = nil
+	result.Hotkeys = nil
+	result.Semantic.SemanticEvents = nil
+	result.Semantic.MapEvents = nil
+	result.Coaching.KnowledgeMatches = nil
+	if len(result.Coaching.Facts) > 80 {
+		result.Coaching.Facts = result.Coaching.Facts[:80]
+	}
+	if len(result.Coaching.Issues) > 20 {
+		result.Coaching.Issues = result.Coaching.Issues[:20]
+	}
+	if len(result.Coaching.Findings) > 20 {
+		result.Coaching.Findings = result.Coaching.Findings[:20]
+	}
 	if len(result.Timeline) > 80 {
 		step := (len(result.Timeline) + 79) / 80
 		timeline := make([]replayanalyzer.TimelinePoint, 0, 80)
