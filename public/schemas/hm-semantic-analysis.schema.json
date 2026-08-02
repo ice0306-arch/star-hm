@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://star-hm.vercel.app/schemas/hm-semantic-analysis.schema.json",
+  "title": "HM AI Semantic Analysis Result",
+  "type": "object",
+  "required": ["engine", "rulesetVersion", "status", "buildClassifications", "semanticEvents", "skillMetrics", "warnings"],
+  "properties": {
+    "engine": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "commitSha": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "rulesetVersion": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": ["COMPLETED", "PARTIALLY_COMPLETED", "FAILED"]
+    },
+    "buildClassifications": { "type": "array", "items": { "$ref": "#/$defs/classification" } },
+    "semanticEvents": { "type": "array", "items": { "$ref": "#/$defs/event" } },
+    "skillMetrics": { "type": "array", "items": { "$ref": "#/$defs/metric" } },
+    "commandEfficiency": { "type": "array", "items": { "type": "object" } },
+    "productionReports": { "type": "array", "items": { "type": "object" } },
+    "hotkeyReports": { "type": "array", "items": { "type": "object" } },
+    "multitaskingReports": { "type": "array", "items": { "type": "object" } },
+    "mapEvents": { "type": "array", "items": { "type": "object" } },
+    "warnings": { "type": "array", "items": { "type": "object" } }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "required": ["confidence", "reasonCodes", "explanation"],
+      "properties": {
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "commandIds": { "type": "array", "items": { "type": "string" } },
+        "frames": { "type": "array", "items": { "type": "number" } },
+        "seconds": { "type": "array", "items": { "type": "number" } },
+        "unitTypes": { "type": "array", "items": { "type": "string" } },
+        "positions": { "type": "array", "items": { "type": "object" } },
+        "reasonCodes": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "explanation": { "type": "string" },
+        "benchmark": { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+    "classification": {
+      "type": "object",
+      "required": ["playerId", "playerName", "buildCode", "buildName", "confidence", "status", "evidence"],
+      "properties": {
+        "playerId": { "type": "number" },
+        "playerName": { "type": "string" },
+        "matchup": { "type": "string" },
+        "buildCode": { "type": "string" },
+        "buildName": { "type": "string" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "status": { "type": "string" },
+        "alternativeBuilds": { "type": "array", "items": { "type": "object" } },
+        "evidence": { "$ref": "#/$defs/evidence" },
+        "classifierVersion": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "event": {
+      "type": "object",
+      "required": ["id", "eventType", "startFrame", "startSecond", "confidence", "evidence"],
+      "properties": {
+        "id": { "type": "string" },
+        "eventType": { "type": "string" },
+        "subtype": { "type": "string" },
+        "playerId": { "type": "number" },
+        "playerName": { "type": "string" },
+        "startFrame": { "type": "number" },
+        "startSecond": { "type": "number" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "evidence": { "$ref": "#/$defs/evidence" }
+      },
+      "additionalProperties": true
+    },
+    "metric": {
+      "type": "object",
+      "required": ["playerId", "metricType", "rawValue", "normalizedScore", "confidence", "evidence"],
+      "properties": {
+        "playerId": { "type": "number" },
+        "playerName": { "type": "string" },
+        "metricType": { "type": "string" },
+        "label": { "type": "string" },
+        "rawValue": { "type": "number" },
+        "unit": { "type": "string" },
+        "normalizedScore": { "type": "number" },
+        "percentile": { "type": ["number", "null"] },
+        "sampleSize": { "type": "number" },
+        "benchmarkGroup": { "type": "string" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "evidence": { "$ref": "#/$defs/evidence" },
+        "metricVersion": { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

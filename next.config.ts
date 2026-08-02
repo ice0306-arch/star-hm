@@ -48,6 +48,17 @@ const publicAssetHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  serverExternalPackages: [
+    "@dada78641/bwmapimage",
+    "@dada78641/bwmapgfx",
+    "bw-chk",
+    "jssuh",
+    "scm-extractor",
+    "sharp",
+  ],
+  outputFileTracingIncludes: {
+    "/*": ["./server-assets/bwmapgfx/resources/**/*"],
+  },
   async headers() {
     return [
       {

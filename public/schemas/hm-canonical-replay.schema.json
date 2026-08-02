@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://star-hm.vercel.app/schemas/hm-canonical-replay.schema.json",
+  "title": "HM AI Canonical Replay",
+  "type": "object",
+  "required": ["replayId", "parser", "header", "map", "players", "commands", "rawMetadata"],
+  "properties": {
+    "replayId": { "type": "string" },
+    "parser": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "commitSha": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "header": { "type": "object" },
+    "map": { "type": "object" },
+    "players": { "type": "array", "items": { "type": "object" } },
+    "commands": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "playerId", "frame", "second", "type"],
+        "properties": {
+          "id": { "type": "string" },
+          "playerId": { "type": "string" },
+          "frame": { "type": "number" },
+          "second": { "type": "number" },
+          "type": { "type": "string" },
+          "subtype": { "type": "string" },
+          "unitIds": { "type": "array", "items": { "type": "string" } },
+          "unitType": { "type": "string" },
+          "targetUnitId": { "type": "string" },
+          "position": {
+            "type": "object",
+            "required": ["x", "y"],
+            "properties": {
+              "x": { "type": "number" },
+              "y": { "type": "number" }
+            },
+            "additionalProperties": false
+          },
+          "hotkey": { "type": "number" },
+          "payload": { "type": "object" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "alliances": { "type": "array", "items": { "type": "object" } },
+    "chats": { "type": "array", "items": { "type": "object" } },
+    "exits": { "type": "array", "items": { "type": "object" } },
+    "rawMetadata": { "type": "object" }
+  },
+  "additionalProperties": false
+}

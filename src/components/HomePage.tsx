@@ -65,6 +65,7 @@ const groupMeta: Record<MemberGroup, { title: string; description: string }> = {
 };
 
 const navItems = [
+  { label: "AI분석툴", href: "/ai-tools" },
   { label: "TEAM", href: "#team" },
   { label: "ACTIVITY", href: "#activity" },
   { label: "ROSTER", href: "#roster" },
@@ -443,6 +444,24 @@ export function HomePage() {
               <IntelMemberList members={filteredIntelMembers} liveStatuses={liveStatuses} />
             </div>
           </div>
+        </div>
+      </section>
+
+      <section id="ai-tools" className="section-band px-5 py-20 sm:px-8 lg:px-10">
+        <div className="mx-auto max-w-7xl">
+          <SectionHeader
+            eyebrow="AI ANALYSIS TOOL"
+            title="HM AI 분석툴"
+            description="리플레이는 기록이 아니라 증거다. 경기 기록과 플레이 명령을 분석해 전략, 빌드, 생산, 단축키와 플레이 습관을 근거 기반으로 보여줍니다."
+          />
+          <a className="ai-tool-feature mt-8" href="/ai-tools">
+            <div>
+              <span className="panel-kicker">STARCRAFT MATCH INTELLIGENCE</span>
+              <h3>HM AI 분석툴</h3>
+              <p>공개되거나 HM AI 분석툴에 수집된 리플레이를 기준으로 빌드, 생산, 명령 효율과 분석 근거를 확인합니다.</p>
+            </div>
+            <span className="ai-tool-feature-action">도구 열기</span>
+          </a>
         </div>
       </section>
 
