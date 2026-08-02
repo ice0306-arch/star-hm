@@ -11,6 +11,7 @@ type CoachingAnalysis struct {
 	Scope            CoachingScope       `json:"scope"`
 	Facts            []ReplayFact        `json:"facts"`
 	Issues           []DetectedIssue     `json:"issues"`
+	VictoryPatterns  []VictoryPattern    `json:"victoryPatterns"`
 	Findings         []CoachFinding      `json:"findings"`
 	KnowledgeMatches []KnowledgeMatch    `json:"knowledgeMatches"`
 	Review           CoachingReviewState `json:"review"`
@@ -98,6 +99,7 @@ type KnowledgeMatch struct {
 
 type CoachFinding struct {
 	ID           string   `json:"id"`
+	PlayerID     string   `json:"playerId,omitempty"`
 	Severity     string   `json:"severity"`
 	Category     string   `json:"category"`
 	Title        string   `json:"title"`
@@ -110,6 +112,22 @@ type CoachFinding struct {
 	KnowledgeIDs []string `json:"knowledgeIds"`
 	Confidence   float64  `json:"confidence"`
 	Limitations  []string `json:"limitations,omitempty"`
+}
+
+type VictoryPattern struct {
+	ID          string         `json:"id"`
+	WinnerID    string         `json:"winnerId"`
+	WinnerName  string         `json:"winnerName"`
+	Race        string         `json:"race"`
+	Category    string         `json:"category"`
+	Title       string         `json:"title"`
+	Summary     string         `json:"summary"`
+	WhyItWon    string         `json:"whyItWon"`
+	CoachingUse string         `json:"coachingUse"`
+	StartTimeMs int64          `json:"startTimeMs"`
+	EvidenceIDs []string       `json:"evidenceIds"`
+	Metrics     map[string]any `json:"metrics,omitempty"`
+	Confidence  float64        `json:"confidence"`
 }
 
 type CoachingReviewState struct {
@@ -135,10 +153,12 @@ func generateCoachingAnalysis(players []PlayerInfo, commands []CommandInfo, buil
 	categories := issueCategories(issues)
 	knowledge := repository.Search(scope.Matchup, scope.Phase, scope.MapName, categories)
 	findings := buildCoachFindings(issues, knowledge, factIDSet(facts))
+	victoryPatterns := buildVictoryPatterns(players, buildOrder, timeline, semantic, factIDSet(facts))
 	return CoachingAnalysis{
 		Scope:            scope,
 		Facts:            facts,
 		Issues:           issues,
+		VictoryPatterns:  victoryPatterns,
 		Findings:         findings,
 		KnowledgeMatches: knowledge,
 		Review: CoachingReviewState{
@@ -564,6 +584,7 @@ func buildCoachFindings(issues []DetectedIssue, knowledge []KnowledgeMatch, vali
 		}
 		findings = append(findings, CoachFinding{
 			ID:           stableID("finding", issue.ID),
+			PlayerID:     issue.PlayerID,
 			Severity:     findingSeverity(issue.Severity),
 			Category:     issue.Category,
 			Title:        findingTitle(issue),
@@ -582,6 +603,212 @@ func buildCoachFindings(issues []DetectedIssue, knowledge []KnowledgeMatch, vali
 		}
 	}
 	return findings
+}
+
+func buildVictoryPatterns(players []PlayerInfo, buildOrder []BuildEvent, timeline []TimelinePoint, semantic SemanticAnalysisResult, validFacts map[string]bool) []VictoryPattern {
+	patterns := []VictoryPattern{}
+	for _, player := range players {
+		if player.Observer || !strings.EqualFold(player.Result.Outcome, "WIN") {
+			continue
+		}
+		playerID := fmt.Sprint(player.ID)
+		commandReport := commandEfficiencyForPlayer(semantic.CommandEfficiency, player.ID)
+		productionReport := productionReportForPlayer(semantic.ProductionReports, player.ID)
+		hotkeyReport := hotkeyReportForPlayer(semantic.HotkeyReports, player.ID)
+		buildClass := buildClassificationForPlayer(semantic.BuildClassifications, player.ID)
+
+		if buildClass != nil && buildClass.Confidence >= 0.45 {
+			evidence := buildEvidenceIDs(buildClass.Evidence.CommandIDs, validFacts)
+			if len(evidence) == 0 {
+				evidence = firstPlayerBuildEvidence(player.ID, buildOrder, validFacts, 3)
+			}
+			patterns = append(patterns, VictoryPattern{
+				ID:          stableID("victory", playerID, "build", buildClass.BuildCode),
+				WinnerID:    playerID,
+				WinnerName:  player.Name,
+				Race:        player.Race,
+				Category:    "build",
+				Title:       fmt.Sprintf("%s는 초반 계획이 비교적 선명했습니다", player.Name),
+				Summary:     fmt.Sprintf("리플레이 초반 명령을 보면 %s 쪽으로 경기 계획이 잡혀 있습니다. 완벽하다는 뜻은 아니지만, 초반에 무엇을 먼저 준비할지 흐름이 있었습니다.", buildClass.BuildName),
+				WhyItWon:    "스타크래프트는 초반 몇 분의 선택이 이후 병력 수, 업그레이드, 진출 타이밍을 계속 밀어줍니다. 승자는 손이 바쁜 와중에도 방향을 잃지 않았고, 그 덕분에 중반 판단을 더 쉽게 가져갈 수 있었습니다.",
+				CoachingUse: "비슷한 상황을 연습할 때는 첫 건물, 첫 생산, 첫 정찰 명령이 서로 같은 목적을 향하는지 확인하세요. 초반 명령이 따로 놀면 뒤에서 아무리 빨리 눌러도 복구가 어렵습니다.",
+				StartTimeMs: secondsToMs(buildClass.StartSecond()),
+				EvidenceIDs: evidence,
+				Metrics: map[string]any{
+					"buildName":  buildClass.BuildName,
+					"confidence": buildClass.Confidence,
+				},
+				Confidence: clampConfidence(buildClass.Confidence),
+			})
+		}
+
+		if productionReport != nil && productionReport.StabilityScore >= 55 {
+			evidence := buildEvidenceIDs(productionReport.Evidence.CommandIDs, validFacts)
+			patterns = append(patterns, VictoryPattern{
+				ID:          stableID("victory", playerID, "production"),
+				WinnerID:    playerID,
+				WinnerName:  player.Name,
+				Race:        player.Race,
+				Category:    "production",
+				Title:       fmt.Sprintf("%s는 생산 흐름을 계속 이어갔습니다", player.Name),
+				Summary:     fmt.Sprintf("생산 관련 명령이 %d회 확인됐고, 생산 안정도는 %d점입니다. 큰 교전이나 이동이 있어도 병력과 테크 입력이 완전히 멈추지 않았다는 신호입니다.", productionReport.ProductionEvents, productionReport.StabilityScore),
+				WhyItWon:    "상대와 같은 전투를 해도 생산이 끊긴 쪽은 다음 병력이 늦게 도착합니다. 승자는 화면을 보거나 병력을 움직이는 동안에도 다음 유닛과 건물을 준비해, 시간이 지날수록 선택지가 더 많아졌습니다.",
+				CoachingUse: "전투 화면을 보기 전에 생산 건물을 한 번 찍고, 전투가 끝난 직후 다시 생산을 확인하는 루틴을 만드세요. 이 습관이 쌓이면 '싸움은 비슷했는데 병력이 부족한' 장면이 줄어듭니다.",
+				StartTimeMs: 0,
+				EvidenceIDs: evidence,
+				Metrics: map[string]any{
+					"productionEvents": productionReport.ProductionEvents,
+					"stabilityScore":   productionReport.StabilityScore,
+				},
+				Confidence: 0.72,
+			})
+		}
+
+		if commandReport != nil && commandReport.EffectiveRate != nil && *commandReport.EffectiveRate >= 70 {
+			evidence := buildEvidenceIDs(commandReport.Evidence.CommandIDs, validFacts)
+			patterns = append(patterns, VictoryPattern{
+				ID:          stableID("victory", playerID, "effective-commands"),
+				WinnerID:    playerID,
+				WinnerName:  player.Name,
+				Race:        player.Race,
+				Category:    "control",
+				Title:       fmt.Sprintf("%s는 클릭보다 도움 되는 명령 비중이 높았습니다", player.Name),
+				Summary:     fmt.Sprintf("분당 속도 명령은 %s, 분당 실효성 있는 유효 명령은 %s이고, 유효 명령률은 %.1f%%입니다.", intText(commandReport.APM), intText(commandReport.EAPM), *commandReport.EffectiveRate),
+				WhyItWon:    "마우스 클릭 수가 많은 것보다 중요한 것은 그 클릭이 생산, 공격, 후퇴, 정찰처럼 경기 상태를 바꾸는가입니다. 승자는 불필요한 반복 입력보다 결과를 만드는 명령을 더 많이 남겼습니다.",
+				CoachingUse: "연습할 때는 APM 숫자만 올리려 하지 말고, 한 번 누른 명령이 어떤 목적을 갖는지 말로 설명해 보세요. 설명할 수 없는 클릭이 많으면 실제 경기에는 도움이 덜 됩니다.",
+				StartTimeMs: firstStrongTimelineSecond(player.ID, timeline, true),
+				EvidenceIDs: evidence,
+				Metrics: map[string]any{
+					"apm":           commandReport.APM,
+					"eapm":          commandReport.EAPM,
+					"effectiveRate": commandReport.EffectiveRate,
+				},
+				Confidence: 0.7,
+			})
+		}
+
+		if hotkeyReport != nil && hotkeyReport.BreadthScore >= 45 {
+			evidence := buildEvidenceIDs(hotkeyReport.Evidence.CommandIDs, validFacts)
+			patterns = append(patterns, VictoryPattern{
+				ID:          stableID("victory", playerID, "hotkeys"),
+				WinnerID:    playerID,
+				WinnerName:  player.Name,
+				Race:        player.Race,
+				Category:    "hotkey",
+				Title:       fmt.Sprintf("%s는 화면 전환과 부대지정을 함께 사용했습니다", player.Name),
+				Summary:     fmt.Sprintf("확인된 부대지정 그룹은 %d개이고, 부대지정 폭 점수는 %d점입니다. 한 화면만 오래 보는 대신 여러 역할을 나눠 관리한 흔적입니다.", len(hotkeyReport.UsedGroups), hotkeyReport.BreadthScore),
+				WhyItWon:    "생산 건물, 주 병력, 정찰 유닛을 따로 찾느라 시간이 새면 교전 판단이 늦어집니다. 승자는 필요한 대상을 더 빨리 다시 불러올 수 있었고, 그래서 같은 시간 안에 더 많은 일을 처리했습니다.",
+				CoachingUse: "처음에는 1번 주 병력, 2번 보조 병력, 3번 생산 확인처럼 단순하게 나누세요. 번호의 개수보다 중요한 것은 매번 같은 역할로 쓰는 일관성입니다.",
+				StartTimeMs: 0,
+				EvidenceIDs: evidence,
+				Metrics: map[string]any{
+					"usedGroups":   hotkeyReport.UsedGroups,
+					"breadthScore": hotkeyReport.BreadthScore,
+				},
+				Confidence: 0.66,
+			})
+		}
+	}
+	sort.SliceStable(patterns, func(i, j int) bool {
+		if patterns[i].WinnerName == patterns[j].WinnerName {
+			return patterns[i].Confidence > patterns[j].Confidence
+		}
+		return patterns[i].WinnerName < patterns[j].WinnerName
+	})
+	if len(patterns) > 8 {
+		patterns = patterns[:8]
+	}
+	return patterns
+}
+
+func commandEfficiencyForPlayer(reports []CommandEfficiencyReport, playerID int) *CommandEfficiencyReport {
+	for index := range reports {
+		if reports[index].PlayerID == playerID {
+			return &reports[index]
+		}
+	}
+	return nil
+}
+
+func productionReportForPlayer(reports []ProductionReport, playerID int) *ProductionReport {
+	for index := range reports {
+		if reports[index].PlayerID == playerID {
+			return &reports[index]
+		}
+	}
+	return nil
+}
+
+func hotkeyReportForPlayer(reports []HotkeyReport, playerID int) *HotkeyReport {
+	for index := range reports {
+		if reports[index].PlayerID == playerID {
+			return &reports[index]
+		}
+	}
+	return nil
+}
+
+func buildClassificationForPlayer(reports []BuildClassification, playerID int) *BuildClassification {
+	for index := range reports {
+		if reports[index].PlayerID == playerID {
+			return &reports[index]
+		}
+	}
+	return nil
+}
+
+func buildEvidenceIDs(commandIDs []string, validFacts map[string]bool) []string {
+	evidence := []string{}
+	for _, id := range commandIDs {
+		candidates := []string{id, buildFactID(id)}
+		for _, candidate := range candidates {
+			if validFacts[candidate] && !containsExact(evidence, candidate) {
+				evidence = append(evidence, candidate)
+			}
+		}
+	}
+	return evidence
+}
+
+func containsExact(items []string, target string) bool {
+	for _, item := range items {
+		if item == target {
+			return true
+		}
+	}
+	return false
+}
+
+func firstPlayerBuildEvidence(playerID int, buildOrder []BuildEvent, validFacts map[string]bool, limit int) []string {
+	evidence := []string{}
+	for _, event := range buildOrder {
+		if event.PlayerID != playerID {
+			continue
+		}
+		id := buildFactID(event.ID)
+		if validFacts[id] {
+			evidence = append(evidence, id)
+		}
+		if len(evidence) >= limit {
+			break
+		}
+	}
+	return evidence
+}
+
+func firstStrongTimelineSecond(playerID int, timeline []TimelinePoint, preferGood bool) int64 {
+	for _, point := range timeline {
+		if point.PlayerID != playerID {
+			continue
+		}
+		if preferGood && point.EAPM >= 100 {
+			return int64(point.StartSeconds) * 1000
+		}
+		if !preferGood {
+			return int64(point.StartSeconds) * 1000
+		}
+	}
+	return 0
 }
 
 func (classification BuildClassification) StartSecond() float64 {

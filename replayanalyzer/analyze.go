@@ -1156,6 +1156,7 @@ func mapEventsFromBuildOrder(buildOrder []BuildEvent) []MapSemanticEvent {
 func generateAnalysis(result *SuccessResponse) AnalysisReport {
 	sections := []AnalysisSection{
 		{Title: "경기 요약", Items: []AnalysisItem{}},
+		{Title: "승리 이유", Items: []AnalysisItem{}},
 		{Title: "오프닝 판정", Items: []AnalysisItem{}},
 		{Title: "개선 후보", Items: []AnalysisItem{}},
 	}
@@ -1172,27 +1173,36 @@ func generateAnalysis(result *SuccessResponse) AnalysisReport {
 			Evidence: strPtr(fmt.Sprintf("총 명령 %d개, 유효 명령 %d개", player.TotalCommands, player.EffectiveCommands)),
 		})
 		if player.EffectiveRate != nil && *player.EffectiveRate < 65 {
-			sections[2].Items = append(sections[2].Items, AnalysisItem{
-				Text:     fmt.Sprintf("%s는 APM과 EAPM의 차이가 커 반복 또는 비효율 명령을 줄일 여지가 있습니다.", player.Name),
+			sections[3].Items = append(sections[3].Items, AnalysisItem{
+				Text:     fmt.Sprintf("%s는 마우스 클릭 수에 비해 경기에 도움 된 명령이 적었습니다. 반복 클릭보다 생산, 공격, 후퇴, 정찰처럼 결과를 바꾸는 명령을 남기는 연습이 필요합니다.", player.Name),
 				Evidence: strPtr(fmt.Sprintf("비효율 명령 %d개", player.IneffectiveCommands)),
 			})
+		}
+	}
+	for _, pattern := range result.Coaching.VictoryPatterns {
+		sections[1].Items = append(sections[1].Items, AnalysisItem{
+			Text:     fmt.Sprintf("%s: %s %s", pattern.WinnerName, pattern.Title, pattern.WhyItWon),
+			Evidence: strPtr(pattern.CoachingUse),
+		})
+		if len(sections[1].Items) >= 5 {
+			break
 		}
 	}
 	for _, item := range result.Semantic.BuildClassifications {
 		if item.Confidence < confidencePolicy().HideBelow {
 			continue
 		}
-		sections[1].Items = append(sections[1].Items, AnalysisItem{
+		sections[2].Items = append(sections[2].Items, AnalysisItem{
 			Text:     fmt.Sprintf("%s: %s", item.PlayerName, item.BuildName),
 			Evidence: strPtr(fmt.Sprintf("신뢰도 %.0f%% · 근거 %s", item.Confidence*100, strings.Join(item.Evidence.ReasonCodes, ", "))),
 		})
 	}
 	for _, event := range result.BuildOrder {
-		if len(sections[2].Items) >= 8 {
+		if len(sections[3].Items) >= 8 {
 			break
 		}
 		if event.Category == "building" || event.Category == "tech" || event.Category == "upgrade" {
-			sections[2].Items = append(sections[2].Items, AnalysisItem{
+			sections[3].Items = append(sections[3].Items, AnalysisItem{
 				Text:     fmt.Sprintf("%s: %s에 %s", event.PlayerName, event.TimeLabel, event.Label),
 				Evidence: strPtr(fmt.Sprintf("프레임 %d", event.Frame)),
 			})

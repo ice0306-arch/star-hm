@@ -246,7 +246,7 @@
       <section class="panel" style="margin-top: 18px;">
         <span class="label">Analysis & Learning</span>
         <h2>분석은 학습이 아니라 검수 후보 생성입니다</h2>
-        <p>버튼을 누르면 REP에서 숫자와 장면 근거를 뽑아 후보로 저장합니다. 이 단계의 코칭은 “AI가 제안한 초안”이고, 사람이 리플레이와 맞는지 확인해서 승인해야 실제 학습 데이터로 봅니다.</p>
+        <p>버튼을 누르면 REP에서 승리한 쪽의 좋은 흐름과 패배한 쪽의 흔들린 장면을 함께 뽑아 후보로 저장합니다. 이 단계의 코칭은 “AI가 제안한 초안”이고, 사람이 리플레이와 맞는지 확인해서 승인해야 실제 학습 데이터로 봅니다.</p>
         <div class="qualityGrid">
           <div class="qualityCard pending"><span>코칭 검수 대기</span><strong id="qualityFindingPending">-</strong></div>
           <div class="qualityCard approved"><span>코칭 승인</span><strong id="qualityFindingApproved">-</strong></div>
@@ -254,7 +254,7 @@
           <div class="qualityCard approved"><span>학습 승인</span><strong id="qualitySampleApproved">-</strong></div>
         </div>
         <div class="help">
-          <p>정확한 코칭 학습으로 인정하려면 근거 시간대, 선수명, 맵, APM/분당 실효성 있는 유효 명령, 생산 공백 설명이 리플레이와 맞아야 합니다.</p>
+          <p>정확한 코칭 학습으로 인정하려면 승자가 왜 이겼는지, 그 근거 시간대와 선수명, 맵, 분당 속도 명령, 분당 실효성 있는 유효 명령, 생산 공백 설명이 리플레이와 맞아야 합니다.</p>
           <p>검수 전 후보는 공개 데이터팩에 반영하지 않습니다. 숫자가 늘어나는 것은 “분석할 재료가 늘었다”는 뜻이지 “정답 학습이 끝났다”는 뜻이 아닙니다.</p>
         </div>
         <div class="yearGrid">
@@ -489,7 +489,7 @@
           renderAnalysisProgress("running", {
             title: "REP 분석을 시작했습니다",
             count: `0 / ${limit}`,
-            meta: "분석기가 REP를 읽고 선수, 맵, 명령 수, 코칭 근거, 학습 후보를 만들고 있습니다.",
+            meta: "분석기가 REP를 읽고 승리 이유, 흔들린 장면, 코칭 근거, 검수용 학습 후보를 만들고 있습니다.",
           });
           setAnalysisButtonsDisabled(true);
           const data = await api("/api/replays/analyze-candidates/start", {
@@ -525,7 +525,7 @@
             renderAnalysisProgress("done", {
               title: "분석 완료",
               count: `${analyzed}개 완료 / ${failed}개 실패`,
-              meta: `검수 대기 후보 ${sumResultField(result, "samples")}개, 코칭 초안 ${sumResultField(result, "findings")}개를 만들었습니다. 아직 학습 승인 상태는 아닙니다.`,
+              meta: `검수 대기 후보 ${sumResultField(result, "samples")}개, 승리 패턴 후보 ${sumResultField(result, "victoryPatterns")}개, 코칭 초안 ${sumResultField(result, "findings")}개를 만들었습니다. 아직 학습 승인 상태는 아닙니다.`,
             });
             setAnalysisButtonsDisabled(false);
             log("후보 REP 분석을 완료했습니다.", result);
