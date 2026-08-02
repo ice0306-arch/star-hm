@@ -7,7 +7,8 @@ import { ensureAdminDirs, runSqlite } from "./db.mjs";
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const HOST = "127.0.0.1";
 const PORT = Number(process.env.HM_AI_ADMIN_PORT ?? 43821);
-const ALLOWED_ORIGINS = new Set([`http://${HOST}:${PORT}`]);
+const ALLOWED_HOSTS = new Set([`${HOST}:${PORT}`, `localhost:${PORT}`]);
+const ALLOWED_ORIGINS = new Set([`http://${HOST}:${PORT}`, `http://localhost:${PORT}`]);
 
 await ensureAdminDirs();
 
@@ -15,7 +16,7 @@ const server = createServer(async (req, res) => {
   const host = req.headers.host ?? "";
   const origin = req.headers.origin;
 
-  if (host !== `${HOST}:${PORT}`) {
+  if (!ALLOWED_HOSTS.has(host)) {
     return sendJson(res, 403, { error: "외부 Host는 허용하지 않습니다." });
   }
   if (origin && !ALLOWED_ORIGINS.has(origin)) {
@@ -45,6 +46,7 @@ server.on("error", (error) => {
 
 server.listen(PORT, HOST, () => {
   console.log(`HM AI local admin: http://${HOST}:${PORT}`);
+  console.log(`You can also open: http://localhost:${PORT}`);
 });
 
 async function dashboard() {
