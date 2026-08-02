@@ -28,6 +28,17 @@ if ! pnpm admin:db:migrate; then
   exit 1
 fi
 
+if /usr/bin/curl -fsS "$URL/api/health" >/dev/null 2>&1; then
+  echo "HM AI Local Admin이 이미 실행 중입니다."
+  echo "브라우저에서 $URL 를 엽니다."
+  if ! /usr/bin/open "$URL"; then
+    echo "브라우저 자동 실행에 실패했습니다. Safari 또는 Chrome 주소창에 아래 주소를 직접 입력하세요."
+    echo "$URL"
+  fi
+  echo "기존 서버를 사용합니다. 이 창은 닫아도 됩니다."
+  exit 0
+fi
+
 echo "HM AI Local Admin 서버를 시작합니다."
 pnpm admin:local &
 SERVER_PID=$!
