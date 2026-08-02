@@ -12,6 +12,7 @@ type CoachingAnalysis struct {
 	Facts            []ReplayFact        `json:"facts"`
 	Issues           []DetectedIssue     `json:"issues"`
 	VictoryPatterns  []VictoryPattern    `json:"victoryPatterns"`
+	WinReadiness     []WinReadiness      `json:"winReadiness"`
 	Findings         []CoachFinding      `json:"findings"`
 	KnowledgeMatches []KnowledgeMatch    `json:"knowledgeMatches"`
 	Review           CoachingReviewState `json:"review"`
@@ -130,6 +131,19 @@ type VictoryPattern struct {
 	Confidence  float64        `json:"confidence"`
 }
 
+type WinReadiness struct {
+	PlayerID       string   `json:"playerId"`
+	PlayerName     string   `json:"playerName"`
+	Race           string   `json:"race"`
+	Outcome        string   `json:"outcome"`
+	Score          int      `json:"score"`
+	Verdict        string   `json:"verdict"`
+	WinningCases   []string `json:"winningCases"`
+	MissingCases   []string `json:"missingCases"`
+	CoachingAdvice string   `json:"coachingAdvice"`
+	Confidence     float64  `json:"confidence"`
+}
+
 type CoachingReviewState struct {
 	Status       string `json:"status"`
 	Badge        string `json:"badge"`
@@ -154,11 +168,13 @@ func generateCoachingAnalysis(players []PlayerInfo, commands []CommandInfo, buil
 	knowledge := repository.Search(scope.Matchup, scope.Phase, scope.MapName, categories)
 	findings := buildCoachFindings(issues, knowledge, factIDSet(facts))
 	victoryPatterns := buildVictoryPatterns(players, buildOrder, timeline, semantic, factIDSet(facts))
+	winReadiness := buildWinReadiness(players, issues, semantic)
 	return CoachingAnalysis{
 		Scope:            scope,
 		Facts:            facts,
 		Issues:           issues,
 		VictoryPatterns:  victoryPatterns,
+		WinReadiness:     winReadiness,
 		Findings:         findings,
 		KnowledgeMatches: knowledge,
 		Review: CoachingReviewState{
@@ -809,6 +825,166 @@ func firstStrongTimelineSecond(playerID int, timeline []TimelinePoint, preferGoo
 		}
 	}
 	return 0
+}
+
+func buildWinReadiness(players []PlayerInfo, issues []DetectedIssue, semantic SemanticAnalysisResult) []WinReadiness {
+	readiness := []WinReadiness{}
+	for _, player := range players {
+		if player.Observer {
+			continue
+		}
+		score := 20
+		winningCases := []string{}
+		missingCases := []string{}
+
+		commandReport := commandEfficiencyForPlayer(semantic.CommandEfficiency, player.ID)
+		productionReport := productionReportForPlayer(semantic.ProductionReports, player.ID)
+		hotkeyReport := hotkeyReportForPlayer(semantic.HotkeyReports, player.ID)
+		buildClass := buildClassificationForPlayer(semantic.BuildClassifications, player.ID)
+		playerIssues := issuesForPlayer(issues, fmt.Sprint(player.ID))
+
+		if commandReport != nil && commandReport.EffectiveRate != nil {
+			switch {
+			case *commandReport.EffectiveRate >= 75:
+				score += 22
+				winningCases = append(winningCases, "마우스 클릭 수보다 경기에 도움 되는 명령 비중이 높았습니다.")
+			case *commandReport.EffectiveRate >= 62:
+				score += 14
+				winningCases = append(winningCases, "명령 효율은 버틸 수 있는 수준이었습니다.")
+			default:
+				score += 4
+				missingCases = append(missingCases, "클릭은 많았지만 생산, 공격, 후퇴, 정찰처럼 결과를 바꾸는 명령이 부족했습니다.")
+			}
+		} else {
+			missingCases = append(missingCases, "분당 속도 명령과 분당 실효성 있는 유효 명령을 비교할 데이터가 부족합니다.")
+		}
+
+		if productionReport != nil {
+			longGap := longestProductionGap(productionReport.ProductionGaps)
+			switch {
+			case productionReport.StabilityScore >= 70 && longGap < 45:
+				score += 24
+				winningCases = append(winningCases, "전투나 이동 중에도 생산 흐름이 크게 끊기지 않았습니다.")
+			case productionReport.StabilityScore >= 50 && longGap < 70:
+				score += 14
+				winningCases = append(winningCases, "생산 흐름은 유지됐지만 한두 번 빈 시간이 보입니다.")
+			default:
+				score += 3
+				missingCases = append(missingCases, "생산이 빈 시간이 길어서 다음 병력과 테크가 늦어질 가능성이 큽니다.")
+			}
+		} else {
+			missingCases = append(missingCases, "생산 흐름을 판단할 건물/유닛 명령 데이터가 부족합니다.")
+		}
+
+		if hotkeyReport != nil {
+			if hotkeyReport.BreadthScore >= 55 {
+				score += 16
+				winningCases = append(winningCases, "부대지정과 화면 전환을 나눠 쓰는 흔적이 있어 운영이 안정적입니다.")
+			} else if hotkeyReport.BreadthScore >= 30 {
+				score += 9
+				winningCases = append(winningCases, "기본 부대지정은 사용했지만 역할 분리는 더 필요합니다.")
+			} else {
+				score += 2
+				missingCases = append(missingCases, "부대지정 근거가 약해서 전투와 생산을 동시에 보기 어려운 흐름입니다.")
+			}
+		}
+
+		if buildClass != nil && buildClass.Confidence >= 0.5 {
+			score += 12
+			winningCases = append(winningCases, fmt.Sprintf("초반 빌드가 %s 방향으로 비교적 분명하게 잡혔습니다.", buildClass.BuildName))
+		} else {
+			missingCases = append(missingCases, "초반 빌드 방향이 명확하지 않아 중반 선택지가 흔들릴 수 있습니다.")
+		}
+
+		for _, issue := range playerIssues {
+			if issue.Severity == "major" {
+				score -= 12
+			} else if issue.Severity == "minor" {
+				score -= 6
+			}
+		}
+
+		score = clampInt(score, 0, 100)
+		if len(winningCases) == 0 {
+			winningCases = append(winningCases, "확실한 승리 조건은 아직 부족합니다.")
+		}
+		if len(missingCases) == 0 {
+			missingCases = append(missingCases, "큰 결격 조건은 적고, 같은 흐름을 더 오래 유지하는 것이 중요합니다.")
+		}
+
+		readiness = append(readiness, WinReadiness{
+			PlayerID:       fmt.Sprint(player.ID),
+			PlayerName:     player.Name,
+			Race:           player.Race,
+			Outcome:        player.Result.Outcome,
+			Score:          score,
+			Verdict:        winReadinessVerdict(score, player.Result.Outcome),
+			WinningCases:   winningCases,
+			MissingCases:   missingCases,
+			CoachingAdvice: winReadinessAdvice(score),
+			Confidence:     0.68,
+		})
+	}
+	sort.SliceStable(readiness, func(i, j int) bool {
+		return readiness[i].Score > readiness[j].Score
+	})
+	return readiness
+}
+
+func issuesForPlayer(issues []DetectedIssue, playerID string) []DetectedIssue {
+	filtered := []DetectedIssue{}
+	for _, issue := range issues {
+		if issue.PlayerID == playerID {
+			filtered = append(filtered, issue)
+		}
+	}
+	return filtered
+}
+
+func longestProductionGap(gaps []ProductionGap) float64 {
+	longest := 0.0
+	for _, gap := range gaps {
+		if gap.Duration > longest {
+			longest = gap.Duration
+		}
+	}
+	return longest
+}
+
+func winReadinessVerdict(score int, outcome string) string {
+	if strings.EqualFold(outcome, "WIN") {
+		if score >= 70 {
+			return "이긴 이유가 데이터로도 확인됩니다."
+		}
+		return "승리는 했지만 재현 가능한 조건은 아직 약합니다."
+	}
+	if score >= 70 {
+		return "이길 조건은 있었지만 결정적인 장면에서 연결이 끊겼습니다."
+	}
+	if score >= 50 {
+		return "몇 가지 조건은 갖췄지만 승리까지 가기엔 빈틈이 컸습니다."
+	}
+	return "현재 흐름으로는 이기기 어려운 조건이 많았습니다."
+}
+
+func winReadinessAdvice(score int) string {
+	if score >= 70 {
+		return "다음 REP에서도 같은 초반 계획, 생산 유지, 도움 되는 명령 비중이 반복되는지 확인하세요."
+	}
+	if score >= 50 {
+		return "먼저 생산 공백과 불필요한 클릭을 줄이세요. 한두 조건만 올라가도 경기 흐름이 달라질 수 있습니다."
+	}
+	return "속도를 올리기보다 생산, 공격, 후퇴, 정찰 중 하나로 설명되는 명령만 남기는 연습부터 하는 편이 좋습니다."
+}
+
+func clampInt(value int, min int, max int) int {
+	if value < min {
+		return min
+	}
+	if value > max {
+		return max
+	}
+	return value
 }
 
 func (classification BuildClassification) StartSecond() float64 {

@@ -70,6 +70,7 @@ for (const row of rows) {
       players: analysis.result.players?.map((player) => player.name) ?? [],
       findings: analysis.result.coaching?.findings?.length ?? 0,
       victoryPatterns: analysis.result.coaching?.victoryPatterns?.length ?? 0,
+      winReadiness: analysis.result.coaching?.winReadiness?.length ?? 0,
       facts: analysis.result.coaching?.facts?.length ?? 0,
       samples: analysis.result.players?.filter((player) => !player.observer).length ?? 0,
     });
@@ -170,6 +171,7 @@ function buildTrainingSample(result, player) {
       effectiveRate: player.effectiveRate,
     },
     victoryPatterns: (result.coaching?.victoryPatterns ?? []).filter((item) => String(item.winnerId) === String(player.id)),
+    winReadiness: (result.coaching?.winReadiness ?? []).find((item) => String(item.playerId) === String(player.id)) ?? null,
     buildClassifications: (result.semantic?.buildClassifications ?? []).filter((item) => item.playerId === player.id),
     productionReport: (result.semantic?.productionReports ?? []).find((item) => item.playerId === player.id) ?? null,
     commandEfficiency: (result.semantic?.commandEfficiency ?? []).find((item) => item.playerId === player.id) ?? null,

@@ -116,6 +116,7 @@ async function dashboard() {
       counts.training_samples_candidate = await countWhere("training_samples", "status='candidate'");
       counts.training_samples_approved = await countWhere("training_samples", "status='approved'");
       counts.training_samples_rejected = await countWhere("training_samples", "status='rejected'");
+      counts.win_condition_candidates = await countWhere("training_samples", "sample_json like '%\"winnerPerspective\":true%'");
     }
     const recentReplayRows = tables.includes("replays")
       ? await runSqlite(

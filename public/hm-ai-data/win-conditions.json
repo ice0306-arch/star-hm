@@ -1,0 +1,214 @@
+{
+  "schemaVersion": "hm-ai-win-conditions/2026-08-03",
+  "generatedAt": "2026-08-02T22:18:07.787Z",
+  "modelType": "winner-replay-derived-thresholds",
+  "description": "승리한 REP에서 반복된 빌드, 생산 유지, 도움 되는 명령 비중, 부대지정 흐름을 기준값으로 만든 자동 승리 조건 모델입니다.",
+  "limitations": [
+    "실제 스타크래프트 엔진 시뮬레이션이 아니라 REP 명령 로그 기반 판정입니다.",
+    "자원, 서플라이, 유닛 생존 상태는 현재 파서 데이터만으로 완전 복원하지 않습니다.",
+    "새 REP 평가는 승패 예언이 아니라 승리 조건 충족도 점수입니다."
+  ],
+  "totalWinnerSamples": 10,
+  "conditions": [
+    {
+      "id": "win-protoss-pvz-destination-1-1-opening-unknown",
+      "race": "Protoss",
+      "matchup": "PvZ",
+      "map": "Destination 1.1",
+      "buildCode": "OPENING_UNKNOWN",
+      "buildName": "오프닝 후보 부족",
+      "sampleCount": 1,
+      "thresholds": {
+        "minimumEapm": 221,
+        "minimumEffectiveRate": 85,
+        "minimumProductionStability": 49,
+        "maximumProductionGapSeconds": 50.7,
+        "minimumHotkeyBreadth": 100,
+        "minimumWinReadinessScore": null
+      },
+      "repeatedWinningCases": [],
+      "coachingUse": "새 REP가 이 기준보다 낮으면 해당 항목이 패배 가능성을 키운 원인 후보입니다. 기준보다 높으면 승리 조건을 갖춘 장면으로 보고 다음 교전·운영 판단을 확인합니다.",
+      "confidence": 0.52
+    },
+    {
+      "id": "win-protoss-pvz-iccup-destination-1-1-opening-unknown",
+      "race": "Protoss",
+      "matchup": "PvZ",
+      "map": "| iCCup | Destination 1.1",
+      "buildCode": "OPENING_UNKNOWN",
+      "buildName": "오프닝 후보 부족",
+      "sampleCount": 1,
+      "thresholds": {
+        "minimumEapm": 187,
+        "minimumEffectiveRate": 84.4,
+        "minimumProductionStability": 40,
+        "maximumProductionGapSeconds": 187.2,
+        "minimumHotkeyBreadth": 80,
+        "minimumWinReadinessScore": null
+      },
+      "repeatedWinningCases": [],
+      "coachingUse": "새 REP가 이 기준보다 낮으면 해당 항목이 패배 가능성을 키운 원인 후보입니다. 기준보다 높으면 승리 조건을 갖춘 장면으로 보고 다음 교전·운영 판단을 확인합니다.",
+      "confidence": 0.52
+    },
+    {
+      "id": "win-protoss-pvt-destination-1-1-opening-unknown",
+      "race": "Protoss",
+      "matchup": "PvT",
+      "map": "Destination 1.1",
+      "buildCode": "OPENING_UNKNOWN",
+      "buildName": "오프닝 후보 부족",
+      "sampleCount": 1,
+      "thresholds": {
+        "minimumEapm": 204,
+        "minimumEffectiveRate": 78.1,
+        "minimumProductionStability": 100,
+        "maximumProductionGapSeconds": 0,
+        "minimumHotkeyBreadth": 100,
+        "minimumWinReadinessScore": null
+      },
+      "repeatedWinningCases": [],
+      "coachingUse": "새 REP가 이 기준보다 낮으면 해당 항목이 패배 가능성을 키운 원인 후보입니다. 기준보다 높으면 승리 조건을 갖춘 장면으로 보고 다음 교전·운영 판단을 확인합니다.",
+      "confidence": 0.52
+    },
+    {
+      "id": "win-protoss-pvt-r-point-opening-unknown",
+      "race": "Protoss",
+      "matchup": "PvT",
+      "map": "R - Point",
+      "buildCode": "OPENING_UNKNOWN",
+      "buildName": "오프닝 후보 부족",
+      "sampleCount": 1,
+      "thresholds": {
+        "minimumEapm": 187,
+        "minimumEffectiveRate": 70.2,
+        "minimumProductionStability": 48,
+        "maximumProductionGapSeconds": 51.8,
+        "minimumHotkeyBreadth": 100,
+        "minimumWinReadinessScore": null
+      },
+      "repeatedWinningCases": [],
+      "coachingUse": "새 REP가 이 기준보다 낮으면 해당 항목이 패배 가능성을 키운 원인 후보입니다. 기준보다 높으면 승리 조건을 갖춘 장면으로 보고 다음 교전·운영 판단을 확인합니다.",
+      "confidence": 0.52
+    },
+    {
+      "id": "win-protoss-pvpvt-blue-storm-1-2-opening-unknown",
+      "race": "Protoss",
+      "matchup": "PvPvT",
+      "map": "Blue Storm 1.2",
+      "buildCode": "OPENING_UNKNOWN",
+      "buildName": "오프닝 후보 부족",
+      "sampleCount": 1,
+      "thresholds": {
+        "minimumEapm": 203,
+        "minimumEffectiveRate": 72.1,
+        "minimumProductionStability": 64,
+        "maximumProductionGapSeconds": 36.1,
+        "minimumHotkeyBreadth": 90,
+        "minimumWinReadinessScore": null
+      },
+      "repeatedWinningCases": [],
+      "coachingUse": "새 REP가 이 기준보다 낮으면 해당 항목이 패배 가능성을 키운 원인 후보입니다. 기준보다 높으면 승리 조건을 갖춘 장면으로 보고 다음 교전·운영 판단을 확인합니다.",
+      "confidence": 0.52
+    },
+    {
+      "id": "win-terran-pvt-andromeda-1-0-opening-unknown",
+      "race": "Terran",
+      "matchup": "PvT",
+      "map": "Andromeda 1.0",
+      "buildCode": "OPENING_UNKNOWN",
+      "buildName": "오프닝 후보 부족",
+      "sampleCount": 1,
+      "thresholds": {
+        "minimumEapm": 211,
+        "minimumEffectiveRate": 84.1,
+        "minimumProductionStability": 60,
+        "maximumProductionGapSeconds": 39.6,
+        "minimumHotkeyBreadth": 100,
+        "minimumWinReadinessScore": null
+      },
+      "repeatedWinningCases": [],
+      "coachingUse": "새 REP가 이 기준보다 낮으면 해당 항목이 패배 가능성을 키운 원인 후보입니다. 기준보다 높으면 승리 조건을 갖춘 장면으로 보고 다음 교전·운영 판단을 확인합니다.",
+      "confidence": 0.52
+    },
+    {
+      "id": "win-terran-tvz-destination-1-1-opening-unknown",
+      "race": "Terran",
+      "matchup": "TvZ",
+      "map": "Destination 1.1",
+      "buildCode": "OPENING_UNKNOWN",
+      "buildName": "오프닝 후보 부족",
+      "sampleCount": 1,
+      "thresholds": {
+        "minimumEapm": 224,
+        "minimumEffectiveRate": 83.1,
+        "minimumProductionStability": 65,
+        "maximumProductionGapSeconds": 35.2,
+        "minimumHotkeyBreadth": 100,
+        "minimumWinReadinessScore": null
+      },
+      "repeatedWinningCases": [],
+      "coachingUse": "새 REP가 이 기준보다 낮으면 해당 항목이 패배 가능성을 키운 원인 후보입니다. 기준보다 높으면 승리 조건을 갖춘 장면으로 보고 다음 교전·운영 판단을 확인합니다.",
+      "confidence": 0.52
+    },
+    {
+      "id": "win-terran-pvpvt-blue-storm-1-2-opening-unknown",
+      "race": "Terran",
+      "matchup": "PvPvT",
+      "map": "Blue Storm 1.2",
+      "buildCode": "OPENING_UNKNOWN",
+      "buildName": "오프닝 후보 부족",
+      "sampleCount": 1,
+      "thresholds": {
+        "minimumEapm": 202,
+        "minimumEffectiveRate": 83.2,
+        "minimumProductionStability": 60,
+        "maximumProductionGapSeconds": 39.6,
+        "minimumHotkeyBreadth": 100,
+        "minimumWinReadinessScore": null
+      },
+      "repeatedWinningCases": [],
+      "coachingUse": "새 REP가 이 기준보다 낮으면 해당 항목이 패배 가능성을 키운 원인 후보입니다. 기준보다 높으면 승리 조건을 갖춘 장면으로 보고 다음 교전·운영 판단을 확인합니다.",
+      "confidence": 0.52
+    },
+    {
+      "id": "win-zerg-tvz-dtr-x-destination-sasin-opening-unknown",
+      "race": "Zerg",
+      "matchup": "TvZ",
+      "map": "DTR.X[DestinatioN]SaSin",
+      "buildCode": "OPENING_UNKNOWN",
+      "buildName": "오프닝 후보 부족",
+      "sampleCount": 1,
+      "thresholds": {
+        "minimumEapm": 213,
+        "minimumEffectiveRate": 77.3,
+        "minimumProductionStability": 61,
+        "maximumProductionGapSeconds": 39.5,
+        "minimumHotkeyBreadth": 70,
+        "minimumWinReadinessScore": null
+      },
+      "repeatedWinningCases": [],
+      "coachingUse": "새 REP가 이 기준보다 낮으면 해당 항목이 패배 가능성을 키운 원인 후보입니다. 기준보다 높으면 승리 조건을 갖춘 장면으로 보고 다음 교전·운영 판단을 확인합니다.",
+      "confidence": 0.52
+    },
+    {
+      "id": "win-zerg-pvz-iccup-destination-1-1-opening-unknown",
+      "race": "Zerg",
+      "matchup": "PvZ",
+      "map": "| iCCup | Destination 1.1",
+      "buildCode": "OPENING_UNKNOWN",
+      "buildName": "오프닝 후보 부족",
+      "sampleCount": 1,
+      "thresholds": {
+        "minimumEapm": 188,
+        "minimumEffectiveRate": 85.3,
+        "minimumProductionStability": 52,
+        "maximumProductionGapSeconds": 48.2,
+        "minimumHotkeyBreadth": 100,
+        "minimumWinReadinessScore": null
+      },
+      "repeatedWinningCases": [],
+      "coachingUse": "새 REP가 이 기준보다 낮으면 해당 항목이 패배 가능성을 키운 원인 후보입니다. 기준보다 높으면 승리 조건을 갖춘 장면으로 보고 다음 교전·운영 판단을 확인합니다.",
+      "confidence": 0.52
+    }
+  ]
+}

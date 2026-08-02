@@ -157,7 +157,7 @@
         <div>
           <span class="eyebrow">Local Only · 127.0.0.1</span>
           <h1>HM AI 로컬 관리자</h1>
-          <p>원본 REP를 내 컴퓨터에 보관하고, 검수된 파생 데이터만 공개 HM AI 데이터팩으로 내보내는 작업실입니다.</p>
+          <p>원본 REP를 내 컴퓨터에 보관하고, 승리한 경기에서 반복된 조건을 계산해 새 REP의 승리 가능성을 판단하는 작업실입니다.</p>
         </div>
         <div class="status"><span id="statusDot" class="dot"></span><span id="statusText">확인 중</span></div>
       </header>
@@ -168,10 +168,10 @@
           <div class="grid">
             <div class="metric"><span>등록된 REP</span><strong id="countReplays">-</strong></div>
             <div class="metric"><span>출처 후보</span><strong id="countSources">-</strong></div>
-            <div class="metric"><span>검수 대기 코칭</span><strong id="countFindingsPending">-</strong><small>아직 정답으로 쓰지 않음</small></div>
+            <div class="metric"><span>승리 조건 후보</span><strong id="countWinConditions">-</strong><small>승리 REP에서 자동 계산</small></div>
             <div class="metric"><span>분석 완료</span><strong id="countAnalyses">-</strong></div>
-            <div class="metric"><span>학습 후보</span><strong id="countSamplesPending">-</strong><small>승인 전 대기 상태</small></div>
-            <div class="metric"><span>학습 승인</span><strong id="countSamplesApproved">-</strong><small>데이터팩 반영 가능</small></div>
+            <div class="metric"><span>분석 샘플</span><strong id="countSamplesPending">-</strong><small>승패 비교 재료</small></div>
+            <div class="metric"><span>데이터팩 반영</span><strong id="countSamplesApproved">-</strong><small>공개 모델 기준</small></div>
           </div>
           <div class="actions">
             <button id="refreshBtn" type="button">상태 새로고침</button>
@@ -184,8 +184,8 @@
           </div>
           <div class="help">
             <p>원본 REP와 SQLite DB는 <code>data/hm-ai-admin</code> 아래에만 저장됩니다.</p>
-            <p>공개 사이트에는 <code>public/hm-ai-data</code>의 승인 데이터만 올라갑니다.</p>
-            <p>ASL 공식 경기의 전체 REP 저장소는 공개로 운영되는 형태가 아니라서, 공개 리플레이 DB에서 후보를 수집한 뒤 검수하는 방식으로 관리합니다.</p>
+            <p>공개 사이트에는 <code>public/hm-ai-data</code>에 생성된 승리 조건 모델과 공개 가능한 파생 데이터만 올라갑니다.</p>
+            <p>ASL 공식 경기의 전체 REP 저장소는 공개로 운영되는 형태가 아니라서, 공개 리플레이 DB에서 가져온 REP를 분석해 승리 조건 기준값을 계산합니다.</p>
           </div>
         </div>
 
@@ -240,17 +240,17 @@
 
       <section class="panel" style="margin-top: 18px;">
         <span class="label">Analysis & Learning</span>
-        <h2>분석은 학습이 아니라 검수 후보 생성입니다</h2>
-        <p>버튼을 누르면 REP에서 승리한 쪽의 좋은 흐름과 패배한 쪽의 흔들린 장면을 함께 뽑아 후보로 저장합니다. 이 단계의 코칭은 “AI가 제안한 초안”이고, 사람이 리플레이와 맞는지 확인해서 승인해야 실제 학습 데이터로 봅니다.</p>
+        <h2>승리 조건을 계산해 새 REP와 비교합니다</h2>
+        <p>버튼을 누르면 REP에서 승리한 쪽의 빌드, 생산 유지, 도움 되는 명령 비중, 부대지정 흐름을 계산합니다. 새 REP는 이 기준에 얼마나 가까운지 점수화해서 “이길 조건이 있었는지”를 판단합니다.</p>
         <div class="qualityGrid">
-          <div class="qualityCard pending"><span>코칭 검수 대기</span><strong id="qualityFindingPending">-</strong></div>
-          <div class="qualityCard approved"><span>코칭 승인</span><strong id="qualityFindingApproved">-</strong></div>
-          <div class="qualityCard pending"><span>학습 후보</span><strong id="qualitySamplePending">-</strong></div>
-          <div class="qualityCard approved"><span>학습 승인</span><strong id="qualitySampleApproved">-</strong></div>
+          <div class="qualityCard pending"><span>자동 코칭 초안</span><strong id="qualityFindingPending">-</strong></div>
+          <div class="qualityCard approved"><span>승리 조건 후보</span><strong id="qualityWinConditions">-</strong></div>
+          <div class="qualityCard pending"><span>분석 샘플</span><strong id="qualitySamplePending">-</strong></div>
+          <div class="qualityCard approved"><span>공개 반영 샘플</span><strong id="qualitySampleApproved">-</strong></div>
         </div>
         <div class="help">
-          <p>정확한 코칭 학습으로 인정하려면 승자가 왜 이겼는지, 그 근거 시간대와 선수명, 맵, 분당 속도 명령, 분당 실효성 있는 유효 명령, 생산 공백 설명이 리플레이와 맞아야 합니다.</p>
-          <p>검수 전 후보는 공개 데이터팩에 반영하지 않습니다. 숫자가 늘어나는 것은 “분석할 재료가 늘었다”는 뜻이지 “정답 학습이 끝났다”는 뜻이 아닙니다.</p>
+          <p>승리 조건은 실제 게임 엔진을 돌린 예언이 아니라, 이긴 REP에서 반복된 기준값입니다. 기준값보다 낮은 항목은 패배 가능성을 키운 원인 후보로 봅니다.</p>
+          <p>현재 파서는 자원, 서플라이, 유닛 생존 상태를 완전히 복원하지 못하므로 승률 숫자보다 “무엇이 부족했는지”를 우선 보세요.</p>
         </div>
         <div class="yearGrid">
           <div>
@@ -259,7 +259,7 @@
           </div>
           <div>
             <label>권장 흐름</label>
-            <small>수집 → REP 분석 → 코칭 검수 → 학습 승인 → 공개 데이터팩 생성 → 데이터팩 검증</small>
+            <small>수집 → REP 분석 → 승리 조건 계산 → 새 REP 비교 → 공개 데이터팩 생성 → 데이터팩 검증</small>
           </div>
         </div>
         <div class="actions">
@@ -438,12 +438,12 @@
           $("statusText").textContent = data.initialized ? "DB 준비됨" : "DB 초기화 필요";
           $("countReplays").textContent = data.counts?.replays ?? 0;
           $("countSources").textContent = data.counts?.replay_sources ?? 0;
-          $("countFindingsPending").textContent = data.counts?.coach_findings_unreviewed ?? 0;
+          $("countWinConditions").textContent = data.counts?.win_condition_candidates ?? 0;
           $("countAnalyses").textContent = data.counts?.replay_analysis ?? 0;
           $("countSamplesPending").textContent = data.counts?.training_samples_candidate ?? 0;
           $("countSamplesApproved").textContent = data.counts?.training_samples_approved ?? 0;
           $("qualityFindingPending").textContent = data.counts?.coach_findings_unreviewed ?? 0;
-          $("qualityFindingApproved").textContent = data.counts?.coach_findings_approved ?? 0;
+          $("qualityWinConditions").textContent = data.counts?.win_condition_candidates ?? 0;
           $("qualitySamplePending").textContent = data.counts?.training_samples_candidate ?? 0;
           $("qualitySampleApproved").textContent = data.counts?.training_samples_approved ?? 0;
           const rows = data.recentReplays ?? [];
@@ -528,7 +528,7 @@
               title: "분석 완료",
               count: `${analyzed + failed} / ${result.candidates ?? total}`,
               percent: 100,
-              meta: `검수 대기 후보 ${sumResultField(result, "samples")}개, 승리 패턴 후보 ${sumResultField(result, "victoryPatterns")}개, 코칭 초안 ${sumResultField(result, "findings")}개를 만들었습니다. 아직 학습 승인 상태는 아닙니다.`,
+              meta: `분석 샘플 ${sumResultField(result, "samples")}개, 승리 조건 후보 ${sumResultField(result, "victoryPatterns")}개, 승리 가능성 판정 ${sumResultField(result, "winReadiness")}개, 코칭 초안 ${sumResultField(result, "findings")}개를 만들었습니다.`,
             });
             setAnalysisButtonsDisabled(false);
             log("후보 REP 분석을 완료했습니다.", result);

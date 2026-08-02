@@ -9,9 +9,9 @@
     },
     {
       "scope": "korean_pro_reference",
-      "status": "needs_local_admin_approval",
-      "data": [],
-      "limitations": ["no_approved_pro_corpus_exported_yet"]
+      "status": "machine_generated_from_local_replays",
+      "data": ["winner_replay_patterns", "win_condition_thresholds", "readiness_score_inputs"],
+      "limitations": ["not_a_game_engine_simulation", "requires_more_winner_samples_for_high_confidence"]
     }
   ]
 }
