@@ -264,6 +264,35 @@ type CoachFinding = {
   limitations?: string[];
 };
 
+type VictoryPattern = {
+  id: string;
+  winnerId: string;
+  winnerName: string;
+  race: string;
+  category: string;
+  title: string;
+  summary: string;
+  whyItWon: string;
+  coachingUse: string;
+  startTimeMs: number;
+  evidenceIds: string[];
+  metrics?: Record<string, unknown>;
+  confidence: number;
+};
+
+type WinReadiness = {
+  playerId: string;
+  playerName: string;
+  race: string;
+  outcome: "WIN" | "LOSS" | "UNKNOWN" | string;
+  score: number;
+  verdict: string;
+  winningCases: string[];
+  missingCases: string[];
+  coachingAdvice: string;
+  confidence: number;
+};
+
 type KnowledgeMatch = {
   knowledgeId: string;
   title: string;
@@ -275,6 +304,8 @@ type CoachingAnalysis = {
   scope: CoachingScope;
   facts: ReplayFact[];
   issues: DetectedIssue[];
+  victoryPatterns?: VictoryPattern[];
+  winReadiness?: WinReadiness[];
   findings: CoachFinding[];
   knowledgeMatches: KnowledgeMatch[];
   review: {
@@ -283,6 +314,46 @@ type CoachingAnalysis = {
     canPersist: boolean;
     storageState: string;
   };
+};
+
+type WinConditionThresholds = {
+  minimumEapm: number | null;
+  minimumEffectiveRate: number | null;
+  minimumProductionStability: number | null;
+  maximumProductionGapSeconds: number | null;
+  minimumHotkeyBreadth: number | null;
+  minimumWinReadinessScore: number | null;
+};
+
+type WinCondition = {
+  id: string;
+  race: string;
+  matchup: string;
+  map: string;
+  buildCode: string;
+  buildName: string;
+  sampleCount: number;
+  thresholds: WinConditionThresholds;
+  repeatedWinningCases: Array<{ title: string; count: number }>;
+  coachingUse: string;
+  confidence: number;
+};
+
+type WinConditionModel = {
+  schemaVersion: string;
+  generatedAt: string;
+  modelType: string;
+  description: string;
+  limitations: string[];
+  totalWinnerSamples: number;
+  conditions: WinCondition[];
+};
+
+type WinConditionMatch = {
+  condition: WinCondition;
+  score: number;
+  player: ReplayPlayer | null;
+  rows: Array<{ label: string; actual: string; target: string; pass: boolean | null }>;
 };
 
 type SemanticAnalysisResult = {
@@ -521,6 +592,25 @@ export function AiToolsPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [activeTab, setActiveTab] = useState<ReportTab>("COACH");
   const [activeReportId, setActiveReportId] = useState<string | null>(null);
+  const [winConditionModel, setWinConditionModel] = useState<WinConditionModel | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadWinConditions() {
+      try {
+        const response = await fetch("/hm-ai-data/win-conditions.json", { cache: "no-store" });
+        if (!response.ok) return;
+        const model = (await response.json()) as WinConditionModel;
+        if (!cancelled) setWinConditionModel(model);
+      } catch {
+        if (!cancelled) setWinConditionModel(null);
+      }
+    }
+    void loadWinConditions();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const isAnalyzing = queue.some((item) => item.status === "VALIDATING" || item.status === "PARSING");
   const selectedQueueItem = useMemo(() => {
@@ -814,8 +904,8 @@ export function AiToolsPage() {
                   ))}
                 </div>
 
-                {activeTab === "COACH" ? <CoachReport result={selectedReport} players={players} replayFile={selectedQueueItem?.file ?? null} /> : null}
-                {activeTab === "OVERVIEW" ? <OverviewReport result={selectedReport} players={players} /> : null}
+                {activeTab === "COACH" ? <CoachReport result={selectedReport} players={players} replayFile={selectedQueueItem?.file ?? null} winConditionModel={winConditionModel} /> : null}
+                {activeTab === "OVERVIEW" ? <OverviewReport result={selectedReport} players={players} winConditionModel={winConditionModel} /> : null}
                 {activeTab === "ECONOMY" ? <ProductionReportView result={selectedReport} /> : null}
                 {activeTab === "CONTROL" ? <ControlReportView result={selectedReport} players={players} /> : null}
                 {activeTab === "TIMING" ? <TimingReportView result={selectedReport} players={players} /> : null}
@@ -923,6 +1013,7 @@ function EmptyReportPreviewGraphic() {
 function ReportInsightStrip({ result, players }: { result: AnalyzeSuccess; players: ReplayPlayer[] }) {
   const coach = buildCoachInsights(result, players);
   const primaryBuild = [...result.semantic.buildClassifications].sort((a, b) => b.confidence - a.confidence)[0];
+  const bestReadiness = [...(result.coaching.winReadiness ?? [])].sort((a, b) => b.score - a.score)[0];
   const riskMoments = coach.moments.filter((moment) => moment.severity !== "INFO").length;
   const firstProblem = [...coach.moments]
     .filter((moment) => moment.severity !== "INFO")
@@ -954,11 +1045,208 @@ function ReportInsightStrip({ result, players }: { result: AnalyzeSuccess; playe
         <strong>{primaryBuild ? confidenceLabel(primaryBuild.confidence) : "대기"}</strong>
         <small>{primaryBuild ? primaryBuild.buildName : "빌드 정보가 부족합니다"}</small>
       </section>
+      <section>
+        <span>승리 조건</span>
+        <strong>{bestReadiness ? `${bestReadiness.score}점` : "계산 전"}</strong>
+        <small>{bestReadiness ? bestReadiness.playerName : "REP 분석 후 비교합니다"}</small>
+      </section>
     </div>
   );
 }
 
-function CoachReport({ result, players, replayFile }: { result: AnalyzeSuccess; players: ReplayPlayer[]; replayFile: File | null }) {
+function buildWinConditionMatches(result: AnalyzeSuccess, players: ReplayPlayer[], model: WinConditionModel | null): WinConditionMatch[] {
+  if (!model?.conditions?.length) return [];
+  const mapName = normalizedConditionText(result.replay.map.name ?? "");
+  return model.conditions
+    .map((condition) => {
+      const player = players.find((item) => normalizedRace(item.race) === normalizedRace(condition.race)) ?? players.find((item) => !item.observer) ?? null;
+      const build = player ? result.semantic.buildClassifications.find((item) => item.playerId === player.id) : null;
+      const conditionMap = normalizedConditionText(condition.map);
+      let score = 0;
+      if (player) score += 2;
+      if (conditionMap && mapName && (conditionMap.includes(mapName) || mapName.includes(conditionMap))) score += 4;
+      if (build?.matchup && normalizedConditionText(build.matchup) === normalizedConditionText(condition.matchup)) score += 3;
+      if (build?.buildCode && build.buildCode === condition.buildCode) score += 3;
+      score += Math.min(2, condition.sampleCount / 3);
+      return {
+        condition,
+        score,
+        player,
+        rows: player ? buildWinConditionRows(result, player, condition) : [],
+      };
+    })
+    .filter((match) => match.score >= 2)
+    .sort((a, b) => b.score - a.score || b.condition.confidence - a.condition.confidence)
+    .slice(0, 4);
+}
+
+function buildWinConditionRows(result: AnalyzeSuccess, player: ReplayPlayer, condition: WinCondition) {
+  const command = result.semantic.commandEfficiency.find((item) => item.playerId === player.id);
+  const production = result.semantic.productionReports.find((item) => item.playerId === player.id);
+  const hotkey = result.semantic.hotkeyReports.find((item) => item.playerId === player.id);
+  const readiness = result.coaching.winReadiness?.find((item) => item.playerId === String(player.id));
+  const longestGap = Math.max(0, ...(production?.productionGaps ?? []).map((gap) => gap.duration));
+  const thresholds = condition.thresholds;
+  return [
+    thresholdRow("분당 실효성 있는 유효 명령", command?.eapm ?? player.eapm, thresholds.minimumEapm, "higher", "회"),
+    thresholdRow("도움 된 명령 비율", command?.effectiveRate ?? player.effectiveRate, thresholds.minimumEffectiveRate, "higher", "%"),
+    thresholdRow("생산이 끊기지 않은 정도", production?.stabilityScore ?? null, thresholds.minimumProductionStability, "higher", "점"),
+    thresholdRow("가장 긴 생산 공백", longestGap || null, thresholds.maximumProductionGapSeconds, "lower", "초"),
+    thresholdRow("부대지정 활용 폭", hotkey?.breadthScore ?? null, thresholds.minimumHotkeyBreadth, "higher", "점"),
+    thresholdRow("승리 조건 점수", readiness?.score ?? null, thresholds.minimumWinReadinessScore, "higher", "점"),
+  ].filter((row) => row.target !== "기준 없음");
+}
+
+function thresholdRow(label: string, actual: number | null | undefined, target: number | null | undefined, direction: "higher" | "lower", unit: string) {
+  if (target === null || target === undefined) {
+    return { label, actual: actual === null || actual === undefined ? "확인 안 됨" : formatThresholdNumber(actual, unit), target: "기준 없음", pass: null };
+  }
+  const hasActual = actual !== null && actual !== undefined;
+  const pass = hasActual ? (direction === "higher" ? actual >= target : actual <= target) : null;
+  const targetLabel = direction === "higher" ? `${formatThresholdNumber(target, unit)} 이상` : `${formatThresholdNumber(target, unit)} 이하`;
+  return { label, actual: hasActual ? formatThresholdNumber(actual, unit) : "확인 안 됨", target: targetLabel, pass };
+}
+
+function formatThresholdNumber(value: number, unit: string) {
+  const rounded = Number.isInteger(value) ? String(value) : value.toFixed(1);
+  return `${rounded}${unit}`;
+}
+
+function normalizedRace(value: string) {
+  const lower = value.toLowerCase();
+  if (lower.startsWith("t")) return "terran";
+  if (lower.startsWith("p")) return "protoss";
+  if (lower.startsWith("z")) return "zerg";
+  return lower;
+}
+
+function normalizedConditionText(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9가-힣]+/g, "");
+}
+
+function winReadinessTone(score: number) {
+  if (score >= 72) return "strong";
+  if (score >= 52) return "medium";
+  return "weak";
+}
+
+function plainWinReadinessVerdict(value: string) {
+  return plainConditionText(value)
+    .replaceAll("승리 가능성", "이긴 경기 기준과의 근접도")
+    .replaceAll("EAPM", "분당 실효성 있는 유효 명령")
+    .replaceAll("APM", "분당 명령 수");
+}
+
+function plainConditionText(value: string) {
+  return value
+    .replaceAll("EAPM", "분당 실효성 있는 유효 명령")
+    .replaceAll("APM", "분당 명령 수")
+    .replaceAll("hotkey", "부대지정")
+    .replaceAll("Hotkey", "부대지정")
+    .replaceAll("production", "생산")
+    .replaceAll("macro", "생산·운영")
+    .replaceAll("micro", "전투·이동")
+    .replaceAll("저하이", "저하가");
+}
+
+function WinConditionPanel({ result, players, model }: { result: AnalyzeSuccess; players: ReplayPlayer[]; model: WinConditionModel | null }) {
+  const readiness = [...(result.coaching.winReadiness ?? [])].sort((a, b) => b.score - a.score);
+  const matches = useMemo(() => buildWinConditionMatches(result, players, model), [result, players, model]);
+  const topMatch = matches[0] ?? null;
+  return (
+    <section className="ai-win-condition-panel">
+      <div className="ai-section-title">
+        <span className="panel-kicker">승리 조건 비교</span>
+        <h3>새 REP가 이긴 경기의 조건에 얼마나 가까운지 봅니다</h3>
+      </div>
+      <p className="ai-win-condition-note">
+        공개 사이트에서 REP를 넣으면 관리자에서 만든 승리 조건 데이터와 바로 비교합니다. 실제 게임 엔진을 돌려 미래를 예언하는 방식은 아니고, 이긴 경기에서 반복된 기준을 기준값으로 삼아
+        생산 유지, 도움 되는 명령, 단축키 활용, 빌드 흐름이 얼마나 맞았는지 확인합니다.
+      </p>
+
+      <div className="ai-win-readiness-grid">
+        {readiness.length > 0 ? (
+          readiness.map((item) => (
+            <article className={`ai-win-readiness-card tone-${winReadinessTone(item.score)}`} key={item.playerId}>
+              <div className="ai-win-readiness-head">
+                <div>
+                  <span>{item.outcome === "WIN" ? "이긴 플레이어" : item.outcome === "LOSS" ? "진 플레이어" : "플레이어"}</span>
+                  <strong>{item.playerName}</strong>
+                  <small>{item.race}</small>
+                </div>
+                <b>{item.score}</b>
+              </div>
+              <p>{plainWinReadinessVerdict(item.verdict)}</p>
+              <div className="ai-win-case-columns">
+                <div>
+                  <span>맞은 조건</span>
+                  {(item.winningCases.length > 0 ? item.winningCases : ["아직 뚜렷한 강점 조건이 적습니다."]).slice(0, 3).map((text) => (
+                    <em key={text}>{plainConditionText(text)}</em>
+                  ))}
+                </div>
+                <div>
+                  <span>부족한 조건</span>
+                  {(item.missingCases.length > 0 ? item.missingCases : ["큰 결손은 적습니다. 세부 타이밍을 보세요."]).slice(0, 3).map((text) => (
+                    <em key={text}>{plainConditionText(text)}</em>
+                  ))}
+                </div>
+              </div>
+              <strong className="ai-win-next-action">{plainConditionText(item.coachingAdvice)}</strong>
+            </article>
+          ))
+        ) : (
+          <article className="ai-win-readiness-card tone-wait">
+            <div className="ai-win-readiness-head">
+              <div>
+                <span>승리 조건</span>
+                <strong>분석 결과 대기</strong>
+              </div>
+              <b>-</b>
+            </div>
+            <p>현재 REP에는 승리 조건 점수가 포함되지 않았습니다. 최신 분석기로 다시 돌리면 이 영역에 선수별 비교가 표시됩니다.</p>
+          </article>
+        )}
+      </div>
+
+      <div className="ai-win-condition-model">
+        <div className="ai-win-condition-model-head">
+          <div>
+            <span className="panel-kicker">비교 기준</span>
+            <h4>{model ? `${model.totalWinnerSamples.toLocaleString("ko-KR")}개 승리 샘플에서 만든 기준` : "승리 조건 데이터 로딩 중"}</h4>
+          </div>
+          <strong>{model ? `${model.conditions.length.toLocaleString("ko-KR")}개 조건` : "대기"}</strong>
+        </div>
+        {topMatch ? (
+          <div className="ai-win-condition-detail">
+            <div>
+              <span>가장 가까운 승리 패턴</span>
+              <h4>{topMatch.condition.buildName}</h4>
+              <p>
+                {topMatch.condition.race} · {topMatch.condition.matchup} · {topMatch.condition.map || "맵 제한 없음"} · 샘플 {topMatch.condition.sampleCount.toLocaleString("ko-KR")}개
+              </p>
+            </div>
+            <div className="ai-win-threshold-grid">
+              {topMatch.rows.map((row) => (
+                <div className={`ai-win-threshold-row ${row.pass === true ? "pass" : row.pass === false ? "fail" : "unknown"}`} key={row.label}>
+                  <span>{row.label}</span>
+                  <strong>{row.actual}</strong>
+                  <small>{row.target}</small>
+                </div>
+              ))}
+            </div>
+            <p className="ai-win-condition-advice">{topMatch.condition.coachingUse}</p>
+          </div>
+        ) : (
+          <p className="ai-win-condition-empty">
+            아직 이 REP와 바로 비교할 수 있는 공개 승리 조건이 부족합니다. 관리자에서 후보 REP 분석 후 공개 데이터팩을 만들면, 사이트의 AI tool이 이 기준을 자동으로 읽어 비교합니다.
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function CoachReport({ result, players, replayFile, winConditionModel }: { result: AnalyzeSuccess; players: ReplayPlayer[]; replayFile: File | null; winConditionModel: WinConditionModel | null }) {
   const coach = buildCoachInsights(result, players);
   const [viewerSeekMs, setViewerSeekMs] = useState<number | null>(null);
   const firstProblem = [...coach.moments]
@@ -989,6 +1277,8 @@ function CoachReport({ result, players, replayFile }: { result: AnalyzeSuccess; 
           <span>리포트 점수</span>
         </div>
       </section>
+
+      <WinConditionPanel result={result} players={players} model={winConditionModel} />
 
       <EvidenceBasedCoachPanel result={result} onJumpToFinding={jumpToFinding} />
 
@@ -2763,8 +3053,10 @@ function PrintableCoachReport({ result, players }: { result: AnalyzeSuccess; pla
   );
 }
 
-function OverviewReport({ result, players }: { result: AnalyzeSuccess; players: ReplayPlayer[] }) {
+function OverviewReport({ result, players, winConditionModel }: { result: AnalyzeSuccess; players: ReplayPlayer[]; winConditionModel: WinConditionModel | null }) {
   const primaryBuilds = result.semantic.buildClassifications.filter((item) => item.confidence >= result.confidencePolicy.hideBelow);
+  const readiness = [...(result.coaching.winReadiness ?? [])].sort((a, b) => b.score - a.score);
+  const matches = buildWinConditionMatches(result, players, winConditionModel);
   return (
     <div className="ai-report-section">
       <div className="ai-verdict-line">
@@ -2794,6 +3086,18 @@ function OverviewReport({ result, players }: { result: AnalyzeSuccess; players: 
         ))}
       </div>
       <ApmEapmGuide />
+      <section className="ai-overview-win-card">
+        <div>
+          <span className="panel-kicker">승리 조건</span>
+          <h3>이긴 경기 기준과 비교</h3>
+          <p>
+            {readiness[0]
+              ? `${readiness[0].playerName} 기준 ${readiness[0].score}점입니다. ${plainWinReadinessVerdict(readiness[0].verdict)}`
+              : "최신 분석기로 다시 돌리면 이긴 경기 기준과의 비교가 표시됩니다."}
+          </p>
+        </div>
+        <strong>{matches[0] ? `${matches[0].condition.sampleCount}개 샘플 기준` : winConditionModel ? "비교 기준 부족" : "데이터 로딩"}</strong>
+      </section>
       <div className="ai-metric-grid">
         <Metric label="소스" value={sourceLabel(result.replay.source)} />
         <Metric label="분석 상태" value={statusLabel(result.analysisRun.status)} />
