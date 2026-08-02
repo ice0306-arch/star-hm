@@ -1,6 +1,6 @@
 tools/hm-ai-admin/
 start-hm-ai-admin.cmd
-data/
+/data/
 *.rep
 *.scx
 *.scm
