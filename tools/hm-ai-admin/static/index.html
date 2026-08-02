@@ -91,6 +91,21 @@
         font-size: 13px;
         font-weight: 800;
       }
+      .playerTools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+      .playerGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+      .playerChip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 9px 10px;
+        color: var(--text);
+        background: rgba(255,255,255,.04);
+        margin: 0;
+      }
+      .playerChip input { width: auto; }
+      .yearGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
       table { width: 100%; border-collapse: collapse; margin-top: 10px; }
       th, td { border-bottom: 1px solid var(--line); padding: 11px 8px; text-align: left; color: var(--muted); vertical-align: top; }
       th { color: var(--gold); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
@@ -99,10 +114,10 @@
       .help p { border-left: 3px solid rgba(88,166,255,.7); padding-left: 10px; }
       @media (max-width: 920px) {
         header, .layout { grid-template-columns: 1fr; display: grid; }
-        .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .grid, .playerGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       }
       @media (max-width: 620px) {
-        .grid, .sourceList { grid-template-columns: 1fr; }
+        .grid, .sourceList, .playerGrid, .yearGrid { grid-template-columns: 1fr; }
       }
     </style>
   </head>
@@ -162,6 +177,33 @@
         <div id="sourceList" class="sourceList"></div>
       </section>
 
+      <section class="panel" style="margin-top: 18px;">
+        <span class="label">ASL Player Preset</span>
+        <h2>ASL 선수 기준 자동 수집</h2>
+        <p>최근 ASL/SSL에 자주 보이는 한국 선수 ID를 기준으로 공개 리플레이 DB에서 후보 REP를 찾습니다. 기본 기간은 2024년부터 2026년까지입니다.</p>
+        <div class="yearGrid">
+          <div>
+            <label for="aslFromYear">시작 연도</label>
+            <input id="aslFromYear" type="number" min="2010" max="2026" value="2024" />
+          </div>
+          <div>
+            <label for="aslToYear">종료 연도</label>
+            <input id="aslToYear" type="number" min="2010" max="2026" value="2026" />
+          </div>
+          <div>
+            <label for="aslMaxPerPlayer">선수당 최대 다운로드</label>
+            <input id="aslMaxPerPlayer" type="number" min="1" max="10" value="3" />
+          </div>
+        </div>
+        <div class="playerTools">
+          <button id="selectAllPlayersBtn" type="button" class="secondary">전체 선택</button>
+          <button id="clearPlayersBtn" type="button" class="secondary">전체 해제</button>
+          <button id="collectAslBtn" type="button">선택 선수 REP 후보 수집</button>
+        </div>
+        <div id="aslPlayerGrid" class="playerGrid"></div>
+        <small>자동 수집은 공개 DB에서 확인 가능한 후보만 가져옵니다. 선수 ID가 동명이인이거나 오래된 리플레이일 수 있으므로 분석 반영 전 검수 단계가 필요합니다.</small>
+      </section>
+
       <section class="layout">
         <form id="uploadForm" class="panel soft">
           <span class="label">Manual Fallback</span>
@@ -204,6 +246,12 @@
       const $ = (id) => document.getElementById(id);
       const logEl = $("log");
       const buttons = [...document.querySelectorAll("button")];
+      const aslPlayers = [
+        "Flash", "Bisu", "Rain", "Snow", "Soulkey", "Soma", "Best", "Sharp",
+        "Light", "Mini", "hero", "Shuttle", "BarrackS", "Rush", "Action", "EffOrt",
+        "Queen", "Larva", "Stork", "Jaedong", "Scan", "Mong", "sSak", "Speed",
+        "RoyaL", "Calm"
+      ];
       const replaySources = [
         {
           name: "RepMastered",
@@ -277,6 +325,19 @@
         });
       }
 
+      function renderAslPlayers() {
+        $("aslPlayerGrid").innerHTML = aslPlayers.map((player, index) => `
+          <label class="playerChip">
+            <input type="checkbox" name="aslPlayer" value="${player}" ${index < 12 ? "checked" : ""} />
+            <span>${player}</span>
+          </label>
+        `).join("");
+      }
+
+      function selectedAslPlayers() {
+        return [...document.querySelectorAll('input[name="aslPlayer"]:checked')].map((input) => input.value);
+      }
+
       async function refresh() {
         try {
           const data = await api("/api/dashboard");
@@ -317,6 +378,32 @@
       $("backupBtn").addEventListener("click", () => postAction("/api/db/backup", "DB 백업을 만들었습니다."));
       $("packBuildBtn").addEventListener("click", () => postAction("/api/public-pack/build", "공개 데이터팩을 생성했습니다."));
       $("packVerifyBtn").addEventListener("click", () => postAction("/api/public-pack/verify", "공개 데이터팩을 검증했습니다."));
+      $("selectAllPlayersBtn").addEventListener("click", () => {
+        document.querySelectorAll('input[name="aslPlayer"]').forEach((input) => (input.checked = true));
+      });
+      $("clearPlayersBtn").addEventListener("click", () => {
+        document.querySelectorAll('input[name="aslPlayer"]').forEach((input) => (input.checked = false));
+      });
+      $("collectAslBtn").addEventListener("click", async () => {
+        const players = selectedAslPlayers();
+        if (!players.length) return log("수집할 ASL 선수 ID를 하나 이상 선택하세요.");
+        try {
+          const data = await api("/api/replays/collect-asl", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              players,
+              fromYear: Number($("aslFromYear").value || 2024),
+              toYear: Number($("aslToYear").value || 2026),
+              maxPerPlayer: Number($("aslMaxPerPlayer").value || 3),
+            }),
+          });
+          log("ASL 선수 기준 공개 REP 후보 수집을 실행했습니다.", data);
+          await refresh();
+        } catch (error) {
+          log("ASL 선수 기준 수집 실패", error.message);
+        }
+      });
 
       $("collectForm").addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -355,6 +442,7 @@
       });
 
       renderSources();
+      renderAslPlayers();
       refresh();
     </script>
   </body>

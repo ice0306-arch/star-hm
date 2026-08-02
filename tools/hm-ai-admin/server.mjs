@@ -14,6 +14,38 @@ const ALLOWED_ORIGINS = new Set([`http://${HOST}:${PORT}`, `http://localhost:${P
 const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
 const MAX_DOWNLOAD_BYTES = 50 * 1024 * 1024;
 const DOWNLOAD_TIMEOUT_MS = 45_000;
+const FETCH_HEADERS = {
+  "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36 HM-AI-Local-Admin/1.0",
+  accept: "text/html,application/xhtml+xml,application/xml;q=0.9,application/octet-stream,*/*;q=0.8",
+};
+const ASL_PLAYER_PRESETS = [
+  "Flash",
+  "Bisu",
+  "Rain",
+  "Snow",
+  "Soulkey",
+  "Soma",
+  "Best",
+  "Sharp",
+  "Light",
+  "Mini",
+  "hero",
+  "Shuttle",
+  "BarrackS",
+  "Rush",
+  "Action",
+  "EffOrt",
+  "Queen",
+  "Larva",
+  "Stork",
+  "Jaedong",
+  "Scan",
+  "Mong",
+  "sSak",
+  "Speed",
+  "RoyaL",
+  "Calm",
+];
 
 await ensureAdminDirs();
 
@@ -33,6 +65,7 @@ const server = createServer(async (req, res) => {
     if (url.pathname === "/") return sendHtml(res, await readFile(join(__dirname, "static", "index.html"), "utf8"));
     if (url.pathname === "/api/health") return sendJson(res, 200, { ok: true, bind: HOST, storage: "local-sqlite" });
     if (url.pathname === "/api/dashboard") return sendJson(res, 200, await dashboard());
+    if (url.pathname === "/api/replays/asl-presets") return sendJson(res, 200, { ok: true, players: ASL_PLAYER_PRESETS });
     if (url.pathname === "/api/migrate" && req.method === "POST") {
       await runSqlite(["tools/hm-ai-admin/migrations/001_init.sql"]);
       return sendJson(res, 200, { ok: true });
@@ -40,6 +73,7 @@ const server = createServer(async (req, res) => {
     if (url.pathname === "/api/db/check" && req.method === "POST") return sendJson(res, 200, { ok: true, result: await check() });
     if (url.pathname === "/api/db/backup" && req.method === "POST") return sendJson(res, 200, { ok: true, path: await backup() });
     if (url.pathname === "/api/replays/collect" && req.method === "POST") return sendJson(res, 200, await collectReplays(req));
+    if (url.pathname === "/api/replays/collect-asl" && req.method === "POST") return sendJson(res, 200, await collectAslReplays(req));
     if (url.pathname === "/api/replays/upload" && req.method === "POST") return sendJson(res, 200, await uploadReplay(req));
     if (url.pathname === "/api/public-pack/build" && req.method === "POST") return sendJson(res, 200, await runScript("scripts/public-pack-build.mjs"));
     if (url.pathname === "/api/public-pack/verify" && req.method === "POST") return sendJson(res, 200, await runScript("scripts/public-pack-verify.mjs"));
@@ -118,8 +152,62 @@ async function collectReplays(req) {
   const sourceUrl = String(body.sourceUrl ?? "").trim();
   const notes = String(body.notes ?? "").trim();
   const maxFiles = Math.min(Math.max(Number(body.maxFiles ?? 12), 1), 30);
+  const fromYear = Number(body.fromYear || 0) || null;
+  const toYear = Number(body.toYear || 0) || null;
 
   if (!sourceUrl) throw new Error("수집할 URL을 입력하세요.");
+
+  return collectSourceUrl({ sourceUrl, notes, maxFiles, fromYear, toYear, sourceType: "auto_download" });
+}
+
+async function collectAslReplays(req) {
+  const body = await readJsonRequest(req);
+  const selectedPlayers = Array.isArray(body.players) && body.players.length ? body.players : ASL_PLAYER_PRESETS;
+  const players = selectedPlayers.map((player) => String(player).trim()).filter(Boolean).slice(0, 40);
+  const fromYear = Number(body.fromYear || 2024);
+  const toYear = Number(body.toYear || new Date().getFullYear());
+  const maxPerPlayer = Math.min(Math.max(Number(body.maxPerPlayer ?? 3), 1), 10);
+
+  if (!players.length) throw new Error("수집할 선수 ID가 없습니다.");
+  if (fromYear > toYear) throw new Error("시작 연도는 종료 연도보다 클 수 없습니다.");
+
+  const results = [];
+  const seenHashes = new Set();
+  for (const player of players) {
+    const urls = [
+      `https://tl.net/replay/index.php?player1=${encodeURIComponent(player)}&search=1`,
+      `https://tl.net/replay/index.php?player2=${encodeURIComponent(player)}&search=1`,
+    ];
+    const playerResult = { player, searched: urls, downloaded: [], skipped: [], errors: [] };
+    for (const sourceUrl of urls) {
+      try {
+        const result = await collectSourceUrl({
+          sourceUrl,
+          notes: `ASL 선수 후보 ${player} / ${fromYear}-${toYear} 공개 REP 자동 수집`,
+          maxFiles: maxPerPlayer,
+          fromYear,
+          toYear,
+          sourceType: "asl_player_auto",
+        });
+        for (const replay of result.downloaded) {
+          if (seenHashes.has(replay.sha256)) continue;
+          seenHashes.add(replay.sha256);
+          playerResult.downloaded.push(replay);
+        }
+        playerResult.skipped.push(...result.skipped);
+      } catch (error) {
+        playerResult.errors.push({ sourceUrl, error: error instanceof Error ? error.message : String(error) });
+      }
+    }
+    results.push(playerResult);
+  }
+
+  const downloaded = results.reduce((sum, item) => sum + item.downloaded.length, 0);
+  const errors = results.reduce((sum, item) => sum + item.errors.length, 0);
+  return { ok: downloaded > 0, fromYear, toYear, players: players.length, downloaded, errors, results };
+}
+
+async function collectSourceUrl({ sourceUrl, notes, maxFiles, fromYear = null, toYear = null, sourceType = "auto_download" }) {
   const normalizedUrl = normalizeHttpUrl(sourceUrl);
 
   await ensureAdminDirs();
@@ -131,14 +219,14 @@ async function collectReplays(req) {
     [],
     [
       "begin;",
-      `insert into replay_sources(id, source_type, source_grade, source_url, page_url, status, notes) values (${sql(sourceId)}, 'auto_download', 'collector_candidate', ${sql(normalizedUrl)}, ${sql(normalizedUrl)}, 'candidate', ${sql(notes || null)});`,
+      `insert into replay_sources(id, source_type, source_grade, source_url, page_url, status, notes) values (${sql(sourceId)}, ${sql(sourceType)}, 'collector_candidate', ${sql(normalizedUrl)}, ${sql(normalizedUrl)}, 'candidate', ${sql(notes || null)});`,
       `insert into download_jobs(id, source_url, source_id, status, attempts) values (${sql(jobId)}, ${sql(normalizedUrl)}, ${sql(sourceId)}, 'running', 1);`,
       "commit;",
     ].join("\n"),
   );
 
   try {
-    const targets = await findReplayTargets(normalizedUrl, maxFiles);
+    const targets = await findReplayTargets(normalizedUrl, maxFiles, { fromYear, toYear });
     if (!targets.length) throw new Error("이 URL에서 .rep 다운로드 링크를 찾지 못했습니다.");
 
     const downloaded = [];
@@ -197,25 +285,28 @@ async function uploadReplay(req) {
   return { ok: true, ...saved };
 }
 
-async function findReplayTargets(sourceUrl, maxFiles) {
+async function findReplayTargets(sourceUrl, maxFiles, filters = {}) {
   const url = new URL(sourceUrl);
   if (url.pathname.toLowerCase().endsWith(".rep")) return [{ url: sourceUrl }];
 
-  const response = await fetchWithTimeout(sourceUrl, { headers: { accept: "text/html,application/xhtml+xml" } });
+  const response = await fetchResource(sourceUrl, { text: true });
   if (!response.ok) throw new Error(`페이지를 열 수 없습니다. HTTP ${response.status}`);
 
-  const contentType = response.headers.get("content-type") ?? "";
+  const contentType = response.contentType;
   if (!contentType.includes("text/html") && !contentType.includes("text/plain")) {
     if (contentType.includes("application/octet-stream")) return [{ url: sourceUrl }];
     throw new Error(`HTML 페이지나 REP 파일이 아닙니다. content-type: ${contentType || "unknown"}`);
   }
 
-  const html = await response.text();
+  const html = response.body.toString("utf8");
+  const tlTargets = extractTeamLiquidReplayTargets(html, sourceUrl, filters);
+  if (tlTargets.length) return tlTargets.slice(0, maxFiles);
+
   const links = new Set();
   const hrefPattern = /href\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s>]+))/gi;
   for (const match of html.matchAll(hrefPattern)) {
     const href = match[1] ?? match[2] ?? match[3] ?? "";
-    if (!/\.rep(?:$|[?#])/i.test(href)) continue;
+    if (!/\.rep(?:$|[?#])/i.test(href) && !/download\.php\?replay=\d+/i.test(href)) continue;
     links.add(new URL(href, sourceUrl).toString());
     if (links.size >= maxFiles) break;
   }
@@ -223,18 +314,41 @@ async function findReplayTargets(sourceUrl, maxFiles) {
   return [...links].map((link) => ({ url: link }));
 }
 
+function extractTeamLiquidReplayTargets(html, sourceUrl, filters = {}) {
+  if (!new URL(sourceUrl).hostname.endsWith("tl.net")) return [];
+  const rowPattern = /<tr\b[\s\S]*?<\/tr>/gi;
+  const rows = html.match(rowPattern) ?? [];
+  const targets = [];
+
+  for (const row of rows) {
+    const downloadMatch = row.match(/href=["']([^"']*download\.php\?replay=\d+[^"']*)["']/i);
+    if (!downloadMatch) continue;
+    const dateMatch = stripHtml(row).match(/\b([A-Z][a-z]{2})\s+(\d{1,2})\s+(\d{2})\b/);
+    const year = dateMatch ? 2000 + Number(dateMatch[3]) : null;
+    if (filters.fromYear && year && year < filters.fromYear) continue;
+    if (filters.toYear && year && year > filters.toYear) continue;
+    targets.push({ url: new URL(downloadMatch[1], sourceUrl).toString(), year });
+  }
+
+  return targets;
+}
+
+function stripHtml(value) {
+  return value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
 async function downloadReplayTarget(target, sourceId) {
-  const response = await fetchWithTimeout(target.url, { headers: { accept: "application/octet-stream,*/*" } });
+  const response = await fetchResource(target.url, { text: false });
   if (!response.ok) throw new Error(`REP 다운로드 실패: HTTP ${response.status}`);
 
-  const length = Number(response.headers.get("content-length") || 0);
+  const length = Number(response.contentLength || 0);
   if (length > MAX_DOWNLOAD_BYTES) throw new Error("REP 파일이 50MB를 넘습니다.");
 
-  const data = Buffer.from(await response.arrayBuffer());
+  const data = response.body;
   if (data.length > MAX_DOWNLOAD_BYTES) throw new Error("REP 파일이 50MB를 넘습니다.");
   if (data.length < 100) throw new Error("다운로드한 파일이 REP 파일로 보이지 않습니다.");
 
-  const fileName = getDownloadFileName(target.url, response.headers.get("content-disposition"));
+  const fileName = getDownloadFileName(target.url, response.contentDisposition);
   if (!fileName.toLowerCase().endsWith(".rep")) throw new Error("다운로드 파일명이 .rep가 아닙니다.");
 
   return saveReplayCandidate({ data, fileName, sourceId, status: "candidate" });
@@ -258,10 +372,77 @@ async function saveReplayCandidate({ data, fileName, sourceId, status }) {
   return { fileName: safeName, sha256: hash, bytes: data.length, storedPath };
 }
 
+async function fetchResource(url, { text }) {
+  try {
+    const response = await fetchWithTimeout(url, { headers: FETCH_HEADERS });
+    if (response.ok) {
+      const body = Buffer.from(await response.arrayBuffer());
+      return {
+        ok: true,
+        status: response.status,
+        body,
+        contentType: response.headers.get("content-type") ?? "",
+        contentLength: response.headers.get("content-length") ?? "",
+        contentDisposition: response.headers.get("content-disposition") ?? "",
+      };
+    }
+    if (!new URL(url).hostname.endsWith("tl.net")) {
+      return { ok: false, status: response.status, body: Buffer.alloc(0), contentType: "", contentLength: "", contentDisposition: "" };
+    }
+  } catch (error) {
+    if (!new URL(url).hostname.endsWith("tl.net")) throw error;
+  }
+  return fetchWithCurl(url, { text });
+}
+
 function fetchWithTimeout(url, options = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), DOWNLOAD_TIMEOUT_MS);
   return fetch(url, { ...options, redirect: "follow", signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
+function fetchWithCurl(url, { text }) {
+  return new Promise((resolve, reject) => {
+    const args = [
+      "-L",
+      "--silent",
+      "--show-error",
+      "--max-time",
+      String(Math.ceil(DOWNLOAD_TIMEOUT_MS / 1000)),
+      "--max-filesize",
+      String(MAX_DOWNLOAD_BYTES),
+      "-A",
+      FETCH_HEADERS["user-agent"],
+      "-H",
+      `Accept: ${text ? "text/html,application/xhtml+xml" : "application/octet-stream,*/*"}`,
+      "-w",
+      "\\n__HM_STATUS__:%{http_code}\\n__HM_TYPE__:%{content_type}\\n",
+      url,
+    ];
+    const child = spawn("curl", args, { stdio: ["ignore", "pipe", "pipe"] });
+    const chunks = [];
+    let stderr = "";
+    child.stdout.on("data", (chunk) => chunks.push(chunk));
+    child.stderr.on("data", (chunk) => (stderr += chunk));
+    child.on("error", reject);
+    child.on("close", (code) => {
+      const raw = Buffer.concat(chunks);
+      const marker = raw.lastIndexOf(Buffer.from("\n__HM_STATUS__:"));
+      if (marker === -1) {
+        reject(new Error(stderr.trim() || `curl exited with ${code}`));
+        return;
+      }
+      const body = raw.slice(0, marker);
+      const meta = raw.slice(marker).toString("utf8");
+      const status = Number(meta.match(/__HM_STATUS__:(\d+)/)?.[1] ?? 0);
+      const contentType = meta.match(/__HM_TYPE__:(.*)/)?.[1]?.trim() ?? "";
+      if (code !== 0 || status >= 400) {
+        reject(new Error(stderr.trim() || `curl HTTP ${status || code}`));
+        return;
+      }
+      resolve({ ok: true, status, body, contentType, contentLength: String(body.length), contentDisposition: "" });
+    });
+  });
 }
 
 async function readJsonRequest(req) {
@@ -282,6 +463,8 @@ function normalizeHttpUrl(value) {
 }
 
 function getDownloadFileName(urlValue, contentDisposition) {
+  const replayId = new URL(urlValue).searchParams.get("replay");
+  if (/\/replay\/download\.php$/i.test(new URL(urlValue).pathname) && replayId) return `teamliquid-${replayId}.rep`;
   const headerName = contentDisposition?.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
   const fromHeader = headerName ? decodeURIComponent(headerName[1] ?? headerName[2] ?? "") : "";
   const fromUrl = basename(new URL(urlValue).pathname);
