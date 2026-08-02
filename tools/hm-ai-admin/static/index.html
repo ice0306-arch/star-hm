@@ -66,6 +66,7 @@
       code { background: rgba(213,173,95,.14); color: #ffd479; padding: 2px 6px; border-radius: 5px; }
       .metric { border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: rgba(255,255,255,.04); }
       .metric strong { display: block; font-size: 28px; margin-top: 8px; }
+      .metric small { margin-top: 4px; }
       .progressBox {
         display: grid;
         gap: 10px;
@@ -140,6 +141,12 @@
       .log { min-height: 170px; max-height: 300px; overflow: auto; background: #06090d; border: 1px solid var(--line); border-radius: 8px; padding: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; color: #d7dde6; }
       .help { margin-top: 16px; display: grid; gap: 8px; }
       .help p { border-left: 3px solid rgba(88,166,255,.7); padding-left: 10px; }
+      .qualityGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+      .qualityCard { border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: rgba(255,255,255,.04); }
+      .qualityCard strong { display: block; font-size: 24px; margin-top: 6px; }
+      .qualityCard.approved { border-color: rgba(88,214,141,.45); background: rgba(88,214,141,.08); }
+      .qualityCard.pending { border-color: rgba(213,173,95,.45); background: rgba(213,173,95,.08); }
+      .qualityCard.blocked { border-color: rgba(255,107,107,.45); background: rgba(255,107,107,.08); }
       @media (max-width: 920px) {
         header, .layout { grid-template-columns: 1fr; display: grid; }
         .grid, .playerGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -166,9 +173,10 @@
           <div class="grid">
             <div class="metric"><span>등록된 REP</span><strong id="countReplays">-</strong></div>
             <div class="metric"><span>출처 후보</span><strong id="countSources">-</strong></div>
-            <div class="metric"><span>코칭 근거</span><strong id="countFindings">-</strong></div>
+            <div class="metric"><span>검수 대기 코칭</span><strong id="countFindingsPending">-</strong><small>아직 정답으로 쓰지 않음</small></div>
             <div class="metric"><span>분석 완료</span><strong id="countAnalyses">-</strong></div>
-            <div class="metric"><span>학습 후보</span><strong id="countSamples">-</strong></div>
+            <div class="metric"><span>학습 후보</span><strong id="countSamplesPending">-</strong><small>승인 전 대기 상태</small></div>
+            <div class="metric"><span>학습 승인</span><strong id="countSamplesApproved">-</strong><small>데이터팩 반영 가능</small></div>
           </div>
           <div class="actions">
             <button id="refreshBtn" type="button">상태 새로고침</button>
@@ -237,8 +245,18 @@
 
       <section class="panel" style="margin-top: 18px;">
         <span class="label">Analysis & Learning</span>
-        <h2>다운로드 후 다음 단계</h2>
-        <p>수집된 REP는 바로 학습에 쓰지 않습니다. 먼저 분석기를 돌려 경기 정보, 선수별 분당 명령 수, 생산 공백, 코칭 근거를 DB에 저장합니다. 그다음 검수된 결과만 공개 데이터팩에 반영합니다.</p>
+        <h2>분석은 학습이 아니라 검수 후보 생성입니다</h2>
+        <p>버튼을 누르면 REP에서 숫자와 장면 근거를 뽑아 후보로 저장합니다. 이 단계의 코칭은 “AI가 제안한 초안”이고, 사람이 리플레이와 맞는지 확인해서 승인해야 실제 학습 데이터로 봅니다.</p>
+        <div class="qualityGrid">
+          <div class="qualityCard pending"><span>코칭 검수 대기</span><strong id="qualityFindingPending">-</strong></div>
+          <div class="qualityCard approved"><span>코칭 승인</span><strong id="qualityFindingApproved">-</strong></div>
+          <div class="qualityCard pending"><span>학습 후보</span><strong id="qualitySamplePending">-</strong></div>
+          <div class="qualityCard approved"><span>학습 승인</span><strong id="qualitySampleApproved">-</strong></div>
+        </div>
+        <div class="help">
+          <p>정확한 코칭 학습으로 인정하려면 근거 시간대, 선수명, 맵, APM/분당 실효성 있는 유효 명령, 생산 공백 설명이 리플레이와 맞아야 합니다.</p>
+          <p>검수 전 후보는 공개 데이터팩에 반영하지 않습니다. 숫자가 늘어나는 것은 “분석할 재료가 늘었다”는 뜻이지 “정답 학습이 끝났다”는 뜻이 아닙니다.</p>
+        </div>
         <div class="yearGrid">
           <div>
             <label for="analysisLimit">한 번에 분석할 REP 수</label>
@@ -246,7 +264,7 @@
           </div>
           <div>
             <label>권장 흐름</label>
-            <small>수집 → REP 분석 → 학습 후보 검수 → 공개 데이터팩 생성 → 데이터팩 검증</small>
+            <small>수집 → REP 분석 → 코칭 검수 → 학습 승인 → 공개 데이터팩 생성 → 데이터팩 검증</small>
           </div>
         </div>
         <div class="actions">
@@ -424,9 +442,14 @@
           $("statusText").textContent = data.initialized ? "DB 준비됨" : "DB 초기화 필요";
           $("countReplays").textContent = data.counts?.replays ?? 0;
           $("countSources").textContent = data.counts?.replay_sources ?? 0;
-          $("countFindings").textContent = data.counts?.coach_findings ?? 0;
+          $("countFindingsPending").textContent = data.counts?.coach_findings_unreviewed ?? 0;
           $("countAnalyses").textContent = data.counts?.replay_analysis ?? 0;
-          $("countSamples").textContent = data.counts?.training_samples ?? 0;
+          $("countSamplesPending").textContent = data.counts?.training_samples_candidate ?? 0;
+          $("countSamplesApproved").textContent = data.counts?.training_samples_approved ?? 0;
+          $("qualityFindingPending").textContent = data.counts?.coach_findings_unreviewed ?? 0;
+          $("qualityFindingApproved").textContent = data.counts?.coach_findings_approved ?? 0;
+          $("qualitySamplePending").textContent = data.counts?.training_samples_candidate ?? 0;
+          $("qualitySampleApproved").textContent = data.counts?.training_samples_approved ?? 0;
           const rows = data.recentReplays ?? [];
           $("recentReplays").innerHTML = rows.length
             ? rows.map((row) => `<tr><td>${row.createdAt}</td><td>${row.fileName}</td><td>${row.status}</td><td>${bytes(row.fileSize)}</td></tr>`).join("")
@@ -502,7 +525,7 @@
             renderAnalysisProgress("done", {
               title: "분석 완료",
               count: `${analyzed}개 완료 / ${failed}개 실패`,
-              meta: `학습 후보 ${sumResultField(result, "samples")}개, 코칭 근거 ${sumResultField(result, "findings")}개를 만들었습니다.`,
+              meta: `검수 대기 후보 ${sumResultField(result, "samples")}개, 코칭 초안 ${sumResultField(result, "findings")}개를 만들었습니다. 아직 학습 승인 상태는 아닙니다.`,
             });
             setAnalysisButtonsDisabled(false);
             log("후보 REP 분석을 완료했습니다.", result);

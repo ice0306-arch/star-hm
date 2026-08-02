@@ -107,6 +107,16 @@ async function dashboard() {
     for (const table of ["replays", "replay_sources", "replay_analysis", "training_samples", "pro_players", "knowledge_items", "coach_findings", "export_versions"]) {
       counts[table] = tables.includes(table) ? Number((await runSqlite([], `select count(*) from ${table};`)) || 0) : 0;
     }
+    if (tables.includes("coach_findings")) {
+      counts.coach_findings_unreviewed = await countWhere("coach_findings", "review_status='unreviewed'");
+      counts.coach_findings_approved = await countWhere("coach_findings", "review_status='approved'");
+      counts.coach_findings_rejected = await countWhere("coach_findings", "review_status='rejected'");
+    }
+    if (tables.includes("training_samples")) {
+      counts.training_samples_candidate = await countWhere("training_samples", "status='candidate'");
+      counts.training_samples_approved = await countWhere("training_samples", "status='approved'");
+      counts.training_samples_rejected = await countWhere("training_samples", "status='rejected'");
+    }
     const recentReplayRows = tables.includes("replays")
       ? await runSqlite(
           [],
@@ -150,6 +160,10 @@ async function dashboard() {
       error: error instanceof Error ? error.message : String(error),
     };
   }
+}
+
+async function countWhere(table, where) {
+  return Number((await runSqlite([], `select count(*) from ${table} where ${where};`)) || 0);
 }
 
 async function collectReplays(req) {
