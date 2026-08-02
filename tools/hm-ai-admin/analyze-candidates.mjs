@@ -7,7 +7,7 @@ import { runSqlite } from "./db.mjs";
 const limit = Math.min(Math.max(Number(process.env.HM_AI_ANALYZE_LIMIT ?? 5), 1), 50);
 const goCacheDir = process.env.GOCACHE || "/private/tmp/hm-ai-go-build-cache";
 const goModCacheDir = process.env.GOMODCACHE || "/private/tmp/hm-ai-go-mod-cache";
-const remoteAnalyzerEndpoint = process.env.HM_AI_ANALYZER_ENDPOINT || "https://star-hm.vercel.app/api/replays/analyze";
+const remoteAnalyzerEndpoint = process.env.HM_AI_ANALYZER_ENDPOINT || "https://star-hm.vercel.app/api/replays/analyze?compact=admin";
 await mkdir(goCacheDir, { recursive: true });
 await mkdir(goModCacheDir, { recursive: true });
 const rows = await selectRows(

@@ -91,7 +91,28 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		writeError(w, apiErr.Status, apiErr.Code, apiErr.Message, apiErr.Details)
 		return
 	}
+	if r.FormValue("compact") == "admin" {
+		compactAnalysisResult(result)
+	}
 	writeJSON(w, http.StatusOK, result)
+}
+
+func compactAnalysisResult(result *replayanalyzer.SuccessResponse) {
+	if result == nil {
+		return
+	}
+	result.Commands = nil
+	result.Chat = nil
+	if len(result.Timeline) > 80 {
+		step := (len(result.Timeline) + 79) / 80
+		timeline := make([]replayanalyzer.TimelinePoint, 0, 80)
+		for index, point := range result.Timeline {
+			if index%step == 0 {
+				timeline = append(timeline, point)
+			}
+		}
+		result.Timeline = timeline
+	}
 }
 
 func validReplayName(name string) bool {
