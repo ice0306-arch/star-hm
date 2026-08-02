@@ -74,6 +74,7 @@ const server = createServer(async (req, res) => {
     if (url.pathname === "/api/db/backup" && req.method === "POST") return sendJson(res, 200, { ok: true, path: await backup() });
     if (url.pathname === "/api/replays/collect" && req.method === "POST") return sendJson(res, 200, await collectReplays(req));
     if (url.pathname === "/api/replays/collect-asl" && req.method === "POST") return sendJson(res, 200, await collectAslReplays(req));
+    if (url.pathname === "/api/replays/analyze-candidates" && req.method === "POST") return sendJson(res, 200, await analyzeCandidates(req));
     if (url.pathname === "/api/replays/upload" && req.method === "POST") return sendJson(res, 200, await uploadReplay(req));
     if (url.pathname === "/api/public-pack/build" && req.method === "POST") return sendJson(res, 200, await runScript("scripts/public-pack-build.mjs"));
     if (url.pathname === "/api/public-pack/verify" && req.method === "POST") return sendJson(res, 200, await runScript("scripts/public-pack-verify.mjs"));
@@ -99,7 +100,7 @@ async function dashboard() {
     const rows = await runSqlite([], "select name from sqlite_master where type='table' order by name;");
     const tables = rows.split("\n").filter(Boolean);
     const counts = {};
-    for (const table of ["replays", "replay_sources", "pro_players", "knowledge_items", "coach_findings", "export_versions"]) {
+    for (const table of ["replays", "replay_sources", "replay_analysis", "training_samples", "pro_players", "knowledge_items", "coach_findings", "export_versions"]) {
       counts[table] = tables.includes(table) ? Number((await runSqlite([], `select count(*) from ${table};`)) || 0) : 0;
     }
     const recentReplayRows = tables.includes("replays")
@@ -158,6 +159,17 @@ async function collectReplays(req) {
   if (!sourceUrl) throw new Error("수집할 URL을 입력하세요.");
 
   return collectSourceUrl({ sourceUrl, notes, maxFiles, fromYear, toYear, sourceType: "auto_download" });
+}
+
+async function analyzeCandidates(req) {
+  const body = await readJsonRequest(req);
+  const limit = Math.min(Math.max(Number(body.limit ?? 5), 1), 50);
+  const result = await runScript("tools/hm-ai-admin/analyze-candidates.mjs", { HM_AI_ANALYZE_LIMIT: String(limit) });
+  try {
+    return JSON.parse(result.output || "{}");
+  } catch {
+    return result;
+  }
 }
 
 async function collectAslReplays(req) {
@@ -520,9 +532,9 @@ function parseMultipart(body, contentType) {
   return parts;
 }
 
-function runScript(scriptPath) {
+function runScript(scriptPath, extraEnv = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [scriptPath], { cwd: process.cwd(), stdio: ["ignore", "pipe", "pipe"] });
+    const child = spawn(process.execPath, [scriptPath], { cwd: process.cwd(), env: { ...process.env, ...extraEnv }, stdio: ["ignore", "pipe", "pipe"] });
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (chunk) => (stdout += chunk));

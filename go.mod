@@ -1,6 +1,6 @@
 module github.com/hm-star/star-hm
 
-go 1.26
+go 1.23
 
 require github.com/icza/screp v1.13.3
 
