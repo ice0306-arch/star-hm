@@ -12,16 +12,6 @@ const LIVE_PLAYER_OVERRIDES = new Map<string, Partial<Pick<UniversityLivePlayer,
   ["2ahgo1203", { college: "뉴캣슬", name: "이아깽" }],
   ["sulstyle00", { college: "신세계", name: "설영욱", race: "Protoss", tier: "Baby" }],
   ["jmc06170", { college: "캄몬스타즈", name: "왜냐맨", race: "Protoss", tier: "Jack" }],
-  ["jk890202", { college: "리셋느" }],
-  ["djdbstn", { college: "리셋느" }],
-  ["dbsdydx", { college: "리셋느" }],
-  ["tjgpdus97", { college: "리셋느" }],
-  ["zalalz", { college: "리셋느" }],
-  ["mew030709", { college: "리셋느" }],
-  ["moguleave", { college: "리셋느" }],
-  ["imducko3o", { college: "리셋느" }],
-  ["queen030", { college: "리셋느" }],
-  ["wlswn6565", { college: "리셋느" }],
   ["qndnd12", { college: "수술대" }],
   ["comcmxx", { college: "수술대" }],
   ["wjswpalssla1", { college: "수술대" }],
@@ -94,7 +84,7 @@ function numberFrom(value: unknown) {
 
 function normalizeCollege(value: string) {
   const college = decodeHtml(value) || "무소속";
-  if (college === "FA" || college === "씨나인" || college.toUpperCase() === "C9") {
+  if (college === "FA" || college === "리셋느" || college === "씨나인" || college.toUpperCase() === "C9") {
     return "무소속";
   }
   return college;
