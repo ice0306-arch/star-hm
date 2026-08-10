@@ -730,6 +730,7 @@ export function AiToolsPage() {
             <a className="nav-link" href="/ai-tools">AI분석툴</a>
             <a className="nav-link" href="/university-tiers">대학티어</a>
             <a className="nav-link" href="/free-agents">FA현황</a>
+            <a className="nav-link" href="/k-jungman-cup">K-중만컵</a>
           </div>
         </nav>
       </header>

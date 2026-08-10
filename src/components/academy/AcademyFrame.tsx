@@ -9,6 +9,7 @@ const academyNav = [
   { label: "HOME", href: "/" },
   { label: "대학티어", href: "/university-tiers" },
   { label: "FA현황", href: "/free-agents" },
+  { label: "K-중만컵", href: "/k-jungman-cup" },
   { label: "AI분석툴", href: "/ai-tools" },
   { label: "ROOKIE", href: "/academy/rookie" },
   { label: "PLAYBOOK", href: "/academy/playbook" },
