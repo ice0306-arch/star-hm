@@ -1138,6 +1138,8 @@ function HmCoachBridgeReport({ hmCoach }: { hmCoach: HmCoachBridgeResult }) {
   const input = hmCoach.coachInput;
   const feedback = (hmCoach.feedbackItems.length ? hmCoach.feedbackItems : input.coaching?.feedbackItems ?? []).slice(0, 3);
   const nextGuide = (hmCoach.nextGameGuide.length ? hmCoach.nextGameGuide : input.coaching?.nextGameGuide ?? []).slice(0, 3);
+  const myBuild = input.dataContext?.myStrategyFocus ?? "빌드 확인 필요";
+  const opponentBuild = input.dataContext?.opponentStrategyFocus ?? "상대 빌드 확인 필요";
   return (
     <section className="ai-hm-coach-report">
       <div className="ai-hm-coach-report-head">
@@ -1156,6 +1158,8 @@ function HmCoachBridgeReport({ hmCoach }: { hmCoach: HmCoachBridgeResult }) {
         <Metric label="종족전" value={input.perspective?.matchup ?? "-"} />
         <Metric label="관점" value={input.perspective?.player ?? "-"} />
         <Metric label="상대" value={input.perspective?.opponent ?? "-"} />
+        <Metric label="내 빌드" value={conciseText(myBuild, 42)} />
+        <Metric label="상대 빌드" value={conciseText(opponentBuild, 42)} />
       </div>
 
       <div className="ai-hm-feedback-list">
@@ -5207,6 +5211,8 @@ function drawHmCoachPdfCover(page: PdfPage, result: AnalyzeSuccess, hmCoach: HmC
   const { ctx } = page;
   const input = hmCoach.coachInput;
   const firstNext = hmCoach.nextGameGuide[0] ?? input.coaching?.nextGameGuide?.[0] ?? input.coaching?.feedbackItems?.[0]?.next ?? "";
+  const myBuild = input.dataContext?.myStrategyFocus ?? "빌드 확인 필요";
+  const opponentBuild = input.dataContext?.opponentStrategyFocus ?? "상대 빌드 확인 필요";
   setPdfFont(ctx, 22, 900);
   ctx.fillStyle = PDF_COLORS.gold;
   ctx.fillText("HM COACH REPORT", PDF_MARGIN, page.y);
@@ -5221,6 +5227,8 @@ function drawHmCoachPdfCover(page: PdfPage, result: AnalyzeSuccess, hmCoach: HmC
     input.match?.map ?? result.replay.map.name ?? "맵 확인",
     input.perspective?.matchup ?? "매치업 확인",
     input.perspective?.resultLabel ?? "결과 확인",
+    `내 빌드 ${conciseText(myBuild, 34)}`,
+    `상대 빌드 ${conciseText(opponentBuild, 34)}`,
     input.dataContext?.confidenceLabel ?? null,
     typeof input.dataContext?.sampleSize === "number" ? `읽은 기록 ${input.dataContext.sampleSize.toLocaleString("ko-KR")}` : null,
   ].filter(Boolean).join(" · ");
@@ -5229,6 +5237,8 @@ function drawHmCoachPdfCover(page: PdfPage, result: AnalyzeSuccess, hmCoach: HmC
   drawHmCoachPdfMetaTiles(page, [
     { label: "관점", value: input.perspective?.matchup ?? "-" },
     { label: "결과", value: input.perspective?.resultLabel ?? "-" },
+    { label: "내 빌드", value: conciseText(myBuild, 30) },
+    { label: "상대 빌드", value: conciseText(opponentBuild, 30) },
     { label: "피드백", value: `${feedbackCount}개` },
     {
       label: "읽은 기록",
@@ -5379,19 +5389,23 @@ function drawV2PdfDetailRows(page: PdfPage, sections: Array<{ title: string; hea
 function drawHmCoachPdfMetaTiles(page: PdfPage, metrics: Array<{ label: string; value: string }>) {
   const { ctx } = page;
   const gap = 14;
-  const tileWidth = (PDF_CONTENT_WIDTH - gap * (metrics.length - 1)) / metrics.length;
+  const columns = metrics.length > 4 ? 3 : Math.max(1, metrics.length);
+  const tileWidth = (PDF_CONTENT_WIDTH - gap * (columns - 1)) / columns;
   const tileHeight = 96;
   metrics.forEach((metric, index) => {
-    const x = PDF_MARGIN + index * (tileWidth + gap);
-    drawPdfRoundRect(ctx, x, page.y, tileWidth, tileHeight, 12, "#ffffff", PDF_COLORS.line);
+    const column = index % columns;
+    const row = Math.floor(index / columns);
+    const x = PDF_MARGIN + column * (tileWidth + gap);
+    const y = page.y + row * (tileHeight + gap);
+    drawPdfRoundRect(ctx, x, y, tileWidth, tileHeight, 12, "#ffffff", PDF_COLORS.line);
     setPdfFont(ctx, 16, 900);
     ctx.fillStyle = PDF_COLORS.muted;
-    ctx.fillText(metric.label, x + 18, page.y + 18);
+    ctx.fillText(metric.label, x + 18, y + 18);
     setPdfFont(ctx, 26, 900);
     ctx.fillStyle = PDF_COLORS.ink;
-    drawPdfWrappedText(ctx, metric.value, x + 18, page.y + 48, tileWidth - 36, 30, 1);
+    drawPdfWrappedText(ctx, metric.value, x + 18, y + 48, tileWidth - 36, 30, 1);
   });
-  page.y += tileHeight;
+  page.y += Math.ceil(metrics.length / columns) * tileHeight + Math.max(0, Math.ceil(metrics.length / columns) - 1) * gap;
 }
 
 function drawHmCoachPdfBriefing(page: PdfPage, firstNext: string) {

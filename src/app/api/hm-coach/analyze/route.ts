@@ -192,6 +192,7 @@ function buildCoachInputFromAnalysisResult(result: AnalyzeSuccessInput, perspect
   const hotkeyReports = result.semantic?.hotkeyReports ?? result.hotkeyReports ?? [];
   const findings = result.coaching?.findings ?? [];
   const playerBuild = findReportForPlayer(buildClassifications, playerId);
+  const opponentBuild = findReportForPlayer(buildClassifications, opponentId);
   const playerProduction = findReportForPlayer(productionReports, playerId);
   const playerCommand = findReportForPlayer(commandEfficiency, playerId);
   const playerHotkey = findReportForPlayer(hotkeyReports, playerId);
@@ -243,7 +244,7 @@ function buildCoachInputFromAnalysisResult(result: AnalyzeSuccessInput, perspect
       sampleSize,
       confidenceLabel: confidenceText(result.coaching?.scope?.confidence),
       myStrategyFocus: stringValue(playerBuild?.buildName) || "빌드 분류 확인 필요",
-      opponentStrategyFocus: opponent ? `${opponent.name} ${raceLabel(opponent.race)}` : "상대 흐름 확인 필요",
+      opponentStrategyFocus: stringValue(opponentBuild?.buildName) || "상대 빌드 확인 필요",
     },
     coaching: {
       headline: isWinner ? "이긴 판에서 더 다듬을 부분" : "이번 판에서 못한 부분",
