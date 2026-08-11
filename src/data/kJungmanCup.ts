@@ -78,7 +78,7 @@ export const cupGroups: CupGroup[] = [
   {
     name: "A조",
     teams: [
-      { rank: "1", team: "kammon", wins: 1, losses: 0, setScore: "5-2", points: 1, seed: "1시드", advances: true },
+      { rank: "1", team: "kammon", wins: 1, losses: 0, setScore: "5-2", points: 1, seed: "인기투표 1위", advances: true },
       { rank: "2", team: "hm", wins: 0, losses: 0, setScore: "0-0", points: 0, advances: true },
       { rank: "3", team: "mbu", wins: 0, losses: 1, setScore: "2-5", points: 0 },
     ],
@@ -86,7 +86,7 @@ export const cupGroups: CupGroup[] = [
   {
     name: "B조",
     teams: [
-      { rank: "-", team: "newcastle", wins: 0, losses: 0, setScore: "0-0", points: 0, seed: "2시드" },
+      { rank: "-", team: "newcastle", wins: 0, losses: 0, setScore: "0-0", points: 0, seed: "인기투표 2위" },
       { rank: "-", team: "bgm", wins: 0, losses: 0, setScore: "0-0", points: 0 },
       { rank: "-", team: "jsa", wins: 0, losses: 0, setScore: "0-0", points: 0 },
     ],
@@ -95,14 +95,14 @@ export const cupGroups: CupGroup[] = [
     name: "C조",
     teams: [
       { rank: "1", team: "dm", wins: 1, losses: 0, setScore: "5-0", points: 1, advances: true },
-      { rank: "2", team: "k-university", wins: 0, losses: 0, setScore: "0-0", points: 0, seed: "3시드", advances: true },
+      { rank: "2", team: "k-university", wins: 0, losses: 0, setScore: "0-0", points: 0, seed: "인기투표 3위", advances: true },
       { rank: "3", team: "waffle", wins: 0, losses: 1, setScore: "0-5", points: 0 },
     ],
   },
   {
     name: "D조",
     teams: [
-      { rank: "-", team: "surgery", wins: 0, losses: 0, setScore: "0-0", points: 0, seed: "4시드" },
+      { rank: "-", team: "surgery", wins: 0, losses: 0, setScore: "0-0", points: 0, seed: "주최 대학" },
       { rank: "-", team: "shinsegae", wins: 0, losses: 0, setScore: "0-0", points: 0 },
       { rank: "-", team: "black-academy", wins: 0, losses: 0, setScore: "0-0", points: 0 },
     ],
@@ -126,7 +126,7 @@ export const cupMatches: CupMatch[] = [
 
 export const cupTimeline: CupTimelineStep[] = [
   { title: "수장회의", when: "7월 19일", status: "done", note: "대회 규정과 참가 대학 확정" },
-  { title: "인기투표", when: "7월 27일 ~ 7월 30일", status: "done", note: "1~3위가 1~3시드 획득" },
+  { title: "인기투표", when: "7월 27일 ~ 7월 30일", status: "done", note: "1~3위가 시드 배정권 획득" },
   { title: "와일드카드전", when: "8월 2일", status: "done", note: "본선 마지막 자리 결정" },
   { title: "조 추첨식", when: "8월 3일 15:00", status: "done", note: "12팀을 A~D 네 조로 배치" },
   { title: "조별리그", when: "8월 8일 ~ 8월 28일", status: "soon", note: "각 조 상위 2팀 8강 진출" },

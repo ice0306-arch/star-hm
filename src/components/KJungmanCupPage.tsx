@@ -128,8 +128,10 @@ export function KJungmanCupPage() {
                   {group.teams.map((standing) => (
                     <div key={standing.team} className={standing.advances ? "kj-cup-standing-row is-advance" : "kj-cup-standing-row"}>
                       <span className="kj-cup-rank">{standing.rank}</span>
-                      <TeamBadge teamKey={standing.team} />
-                      {standing.seed ? <span className="kj-cup-seed">{standing.seed}</span> : null}
+                      <div className="kj-cup-team-cell">
+                        <TeamBadge teamKey={standing.team} />
+                        {standing.seed ? <span className="kj-cup-seed">시드 배정 · {standing.seed}</span> : null}
+                      </div>
                       <div className="kj-cup-standing-stats">
                         <span><small>승패</small>{standing.wins}승 {standing.losses}패</span>
                         <span><small>세트</small>{standing.setScore}</span>
