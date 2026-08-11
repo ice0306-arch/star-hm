@@ -291,7 +291,13 @@ function buildAnalysisFeedbackItems({
 function collectUnitHints(result: AnalyzeSuccessInput, playerId: string) {
   const chunks = [...(result.commands ?? []), ...(result.buildOrder ?? [])]
     .filter((item) => !playerId || stringValue(item.playerId) === playerId)
-    .flatMap((item) => [stringValue(item.unitOrBuilding), stringValue(item.details), stringValue(item.label), stringValue(item.category), stringValue(item.type)])
+    .flatMap((item) => [
+      stringValue(fieldValue(item, "unitOrBuilding")),
+      stringValue(fieldValue(item, "details")),
+      stringValue(fieldValue(item, "label")),
+      stringValue(fieldValue(item, "category")),
+      stringValue(fieldValue(item, "type")),
+    ])
     .join(" ")
     .toLowerCase();
   const labels: Array<[string, string[]]> = [
@@ -312,6 +318,10 @@ function collectUnitHints(result: AnalyzeSuccessInput, playerId: string) {
     ["럴커", ["lurker"]],
   ];
   return labels.filter(([, tokens]) => tokens.some((token) => chunks.includes(token))).map(([label]) => label);
+}
+
+function fieldValue(item: unknown, key: string) {
+  return item && typeof item === "object" && key in item ? (item as LooseRecord)[key] : undefined;
 }
 
 function firstFindingTime(findings: LooseRecord[], playerId: string) {
