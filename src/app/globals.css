@@ -2089,7 +2089,7 @@ footer {
 
 .ai-hm-feedback-list article {
   display: grid;
-  grid-template-columns: 58px minmax(0, 1fr);
+  grid-template-columns: 56px minmax(0, 1fr);
   gap: 1rem;
   border: 1px solid rgba(214, 216, 210, 0.14);
   border-radius: 14px;
@@ -2106,7 +2106,6 @@ footer {
   display: grid;
   align-content: start;
   justify-items: center;
-  gap: 0.45rem;
 }
 
 .ai-hm-feedback-list article > div span {
@@ -2121,15 +2120,21 @@ footer {
   font-weight: 950;
 }
 
-.ai-hm-feedback-list article > div small {
+.ai-hm-priority-label {
+  display: inline-flex;
+  width: fit-content;
+  border: 1px solid rgba(202, 163, 91, 0.22);
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  background: rgba(202, 163, 91, 0.12);
   color: #f4d786;
-  font-size: 0.68rem;
+  font-size: 0.78rem;
   font-weight: 950;
-  line-height: 1.35;
-  text-align: center;
+  line-height: 1;
 }
 
 .ai-hm-feedback-list h4 {
+  margin-top: 0.65rem;
   color: white;
   font-size: clamp(1.35rem, 2vw, 2.2rem);
   font-weight: 950;

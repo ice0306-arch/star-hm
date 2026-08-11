@@ -1064,6 +1064,7 @@ function HmCoachBridgeReport({ hmCoach }: { hmCoach: HmCoachBridgeResult }) {
   const input = hmCoach.coachInput;
   const feedback = hmCoach.feedbackItems.length ? hmCoach.feedbackItems : input.coaching?.feedbackItems ?? [];
   const nextGuide = hmCoach.nextGameGuide.length ? hmCoach.nextGameGuide : input.coaching?.nextGameGuide ?? [];
+  const readCount = input.dataContext?.sampleSize;
   return (
     <section className="ai-hm-coach-report">
       <div className="ai-hm-coach-report-head">
@@ -1080,7 +1081,7 @@ function HmCoachBridgeReport({ hmCoach }: { hmCoach: HmCoachBridgeResult }) {
       <div className="ai-hm-coach-meta-grid">
         <Metric label="맵" value={input.match?.map ?? "-"} />
         <Metric label="관점" value={input.perspective?.matchup ?? "-"} />
-        <Metric label="읽은 기록" value={input.dataContext?.sampleSize ?? "-"} />
+        <Metric label="읽은 기록" value={typeof readCount === "number" ? readCount.toLocaleString("ko-KR") : "-"} />
         <Metric label="신뢰도" value={input.dataContext?.confidenceLabel ?? "-"} />
       </div>
 
@@ -1089,9 +1090,9 @@ function HmCoachBridgeReport({ hmCoach }: { hmCoach: HmCoachBridgeResult }) {
           <article key={`${item.title}-${index}`} className={index === 0 ? "is-primary" : ""}>
             <div>
               <span>{item.number ?? index + 1}</span>
-              <small>{index === 0 ? "가장 먼저 고칠 것" : "다음으로 고칠 것"}</small>
             </div>
             <section>
+              <small className="ai-hm-priority-label">{hmCoachPriorityLabel(index)}</small>
               <h4>{item.title}</h4>
               <p>{item.detail}</p>
               {item.next ? (
@@ -1117,6 +1118,12 @@ function HmCoachBridgeReport({ hmCoach }: { hmCoach: HmCoachBridgeResult }) {
       ) : null}
     </section>
   );
+}
+
+function hmCoachPriorityLabel(index: number) {
+  if (index === 0) return "제일 먼저 고칠 포인트";
+  if (index === 1) return "두 번째로 고칠 포인트";
+  return "같이 확인할 포인트";
 }
 
 function EmptyReportPreviewGraphic() {

@@ -180,6 +180,7 @@ function buildCoachInputFromAnalysisResult(result: AnalyzeSuccessInput): StarHmC
   const playerProduction = findReportForPlayer(productionReports, playerId);
   const playerCommand = findReportForPlayer(commandEfficiency, playerId);
   const playerHotkey = findReportForPlayer(hotkeyReports, playerId);
+  const sampleSize = replaySampleSize(result);
   const buildMatchup = stringValue(playerBuild?.matchup);
   const matchup =
     buildMatchup && /v|vs/i.test(buildMatchup)
@@ -218,6 +219,7 @@ function buildCoachInputFromAnalysisResult(result: AnalyzeSuccessInput): StarHmC
       resultLabel: perspectivePlayer?.result?.outcome === "WIN" ? "승리" : perspectivePlayer?.result?.outcome === "LOSS" ? "패배" : "결과 확인 필요",
     },
     dataContext: {
+      sampleSize,
       confidenceLabel: confidenceText(result.coaching?.scope?.confidence),
       myStrategyFocus: stringValue(playerBuild?.buildName) || "빌드 분류 확인 필요",
       opponentStrategyFocus: opponent ? `${opponent.name} ${raceLabel(opponent.race)}` : "상대 흐름 확인 필요",
@@ -230,6 +232,22 @@ function buildCoachInputFromAnalysisResult(result: AnalyzeSuccessInput): StarHmC
       limitationNote: result.coaching?.scope?.limitations?.join(" ") || "REP 분석 결과에서 확인된 기록만 사용했습니다.",
     },
   };
+}
+
+function replaySampleSize(result: AnalyzeSuccessInput) {
+  const commandCount = optionalNumberValue(result.canonical?.commandCount);
+  if (commandCount !== null && commandCount > 0) return Math.round(commandCount);
+
+  const rawEventCount = (result.commands?.length ?? 0) + (result.buildOrder?.length ?? 0);
+  if (rawEventCount > 0) return rawEventCount;
+
+  return [
+    result.semantic?.buildClassifications ?? result.buildClassifications,
+    result.semantic?.productionReports ?? result.productionReports,
+    result.semantic?.commandEfficiency ?? result.commandEfficiency,
+    result.semantic?.hotkeyReports ?? result.hotkeyReports,
+    result.coaching?.findings,
+  ].reduce((total, items) => total + (Array.isArray(items) ? items.length : 0), 0);
 }
 
 function buildAnalysisFeedbackItems({
