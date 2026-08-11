@@ -464,6 +464,7 @@ type AnalyzeSuccess = {
     }>;
     cautions: string[];
   };
+  hmCoaches?: Record<string, HmCoachBridgeResult>;
   hmCoach?: HmCoachBridgeResult | null;
   hmCoachError?: string | null;
 };
@@ -486,10 +487,13 @@ type HmCoachInput = {
     durationLabel?: string;
   };
   perspective?: {
+    playerId?: string;
+    opponentId?: string;
     player?: string;
     opponent?: string;
     matchup?: string;
     resultLabel?: string;
+    outcome?: "WIN" | "LOSS" | "UNKNOWN" | string;
   };
   dataContext?: {
     sampleSize?: number;
@@ -514,9 +518,12 @@ type HmCoachBridgeResult = {
   feedbackItems: HmCoachFeedbackItem[];
   nextGameGuide: string[];
   summary: {
+    playerId?: string;
+    player?: string;
     map?: string;
     matchup?: string;
     result?: string;
+    outcome?: string;
     confidence?: string;
     feedbackCount?: number;
   };
@@ -638,34 +645,96 @@ const tabMeta: Record<ReportTab, { label: string; hint: string }> = {
 };
 
 async function attachHmCoachToAnalysis(result: AnalyzeSuccess): Promise<AnalyzeSuccess> {
-  try {
-    const response = await fetch("/api/hm-coach/analyze", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ analysisResult: result }),
-    });
-    const payload = (await response.json()) as HmCoachBridgeResponse;
-    if (!response.ok || !payload.ok) {
-      return {
-        ...result,
-        hmCoach: null,
-        hmCoachError: payload.ok === false ? payload.error : "HM 코칭 결과를 만들지 못했습니다.",
-      };
-    }
-    return {
-      ...result,
-      hmCoach: payload,
-      hmCoachError: null,
-    };
-  } catch (error) {
+  const activePlayers = result.players.filter((player) => !player.observer);
+  if (!activePlayers.length) {
     return {
       ...result,
       hmCoach: null,
-      hmCoachError: error instanceof Error ? error.message : "HM 코칭 결과를 만들지 못했습니다.",
+      hmCoachError: "코칭할 플레이어를 찾지 못했습니다.",
     };
   }
+
+  const requests = await Promise.allSettled(
+    activePlayers.map(async (player) => {
+      const response = await fetch("/api/hm-coach/analyze", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ analysisResult: result, perspectivePlayerId: player.id }),
+      });
+      const payload = (await response.json()) as HmCoachBridgeResponse;
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.ok === false ? payload.error : `${player.name} 코칭 결과를 만들지 못했습니다.`);
+      }
+      return [String(player.id), payload] as const;
+    }),
+  );
+
+  const hmCoaches = requests.reduce<Record<string, HmCoachBridgeResult>>((coaches, request) => {
+    if (request.status === "fulfilled") {
+      const [playerId, coach] = request.value;
+      coaches[playerId] = coach;
+    }
+    return coaches;
+  }, {});
+
+  const defaultCoach = defaultHmCoachForResult(result, hmCoaches);
+  const failedCount = requests.filter((request) => request.status === "rejected").length;
+  if (defaultCoach) {
+    return {
+      ...result,
+      hmCoaches,
+      hmCoach: defaultCoach,
+      hmCoachError: failedCount ? `${failedCount}명 코칭은 생성하지 못했습니다.` : null,
+    };
+  }
+
+  const firstError = requests.find((request): request is PromiseRejectedResult => request.status === "rejected")?.reason;
+  return {
+    ...result,
+    hmCoaches,
+    hmCoach: null,
+    hmCoachError: firstError instanceof Error ? firstError.message : "HM 코칭 결과를 만들지 못했습니다.",
+  };
+}
+
+function defaultHmCoachForResult(result: AnalyzeSuccess, hmCoaches: Record<string, HmCoachBridgeResult> | undefined) {
+  const coaches = hmCoaches ?? result.hmCoaches ?? {};
+  const loser = result.players.find((player) => !player.observer && player.result.outcome === "LOSS" && coaches[String(player.id)]);
+  const fallback = result.players.find((player) => !player.observer && coaches[String(player.id)]);
+  return coaches[String(loser?.id ?? fallback?.id ?? "")] ?? result.hmCoach ?? null;
+}
+
+function hmCoachPerspectivePlayerId(hmCoach: HmCoachBridgeResult | null | undefined) {
+  return hmCoach?.coachInput.perspective?.playerId ?? hmCoach?.summary.playerId ?? null;
+}
+
+function hmCoachForSelectedPlayer(result: AnalyzeSuccess, activePlayerId: string | null) {
+  const coaches = result.hmCoaches ?? {};
+  if (activePlayerId && coaches[activePlayerId]) return coaches[activePlayerId];
+  return defaultHmCoachForResult(result, coaches);
+}
+
+function hmCoachPerspectiveOptions(result: AnalyzeSuccess) {
+  const coaches = result.hmCoaches ?? {};
+  return result.players
+    .filter((player) => !player.observer && coaches[String(player.id)])
+    .map((player) => ({
+      player,
+      id: String(player.id),
+    }));
+}
+
+function playerPerspectiveLabel(player: ReplayPlayer) {
+  if (player.result.outcome === "WIN") return "승자 관점";
+  if (player.result.outcome === "LOSS") return "패자 관점";
+  return "관점";
+}
+
+function hmCoachHeading(hmCoach: HmCoachBridgeResult) {
+  const outcome = hmCoach.coachInput.perspective?.outcome ?? hmCoach.summary.outcome;
+  return outcome === "WIN" ? "이긴 판에서 더 다듬을 부분" : "이번 판에서 바로 고칠 것";
 }
 
 export function AiToolsPage() {
@@ -677,6 +746,7 @@ export function AiToolsPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [activeTab, setActiveTab] = useState<ReportTab>("COACH");
   const [activeReportId, setActiveReportId] = useState<string | null>(null);
+  const [activeHmCoachPlayerId, setActiveHmCoachPlayerId] = useState<string | null>(null);
   const [winConditionModel, setWinConditionModel] = useState<WinConditionModel | null>(null);
 
   useEffect(() => {
@@ -705,6 +775,8 @@ export function AiToolsPage() {
     return selectedQueueItem?.result ?? null;
   }, [selectedQueueItem]);
   const players = selectedReport?.players.filter((player) => !player.observer) ?? [];
+  const selectedHmCoach = selectedReport ? hmCoachForSelectedPlayer(selectedReport, activeHmCoachPlayerId) : null;
+  const selectedHmCoachPlayerId = hmCoachPerspectivePlayerId(selectedHmCoach);
 
   function addFiles(fileList: FileList | File[]) {
     setError(null);
@@ -970,7 +1042,7 @@ export function AiToolsPage() {
                     </p>
                   </div>
                   <div className="ai-report-actions">
-                    <button className="command-button command-button-primary" type="button" onClick={() => void downloadPdf(selectedReport, players)}>
+                    <button className="command-button command-button-primary" type="button" onClick={() => void downloadPdf(selectedReport, players, selectedHmCoach)}>
                       PDF 다운로드
                     </button>
                     <button className="command-button" type="button" onClick={() => downloadJson(selectedReport)}>
@@ -1003,7 +1075,9 @@ export function AiToolsPage() {
                     players={players}
                     replayFile={selectedQueueItem?.file ?? null}
                     winConditionModel={winConditionModel}
-                    hmCoach={selectedReport.hmCoach ?? null}
+                    hmCoach={selectedHmCoach}
+                    hmCoachPlayerId={selectedHmCoachPlayerId}
+                    onHmCoachPlayerChange={setActiveHmCoachPlayerId}
                     hmCoachError={selectedReport.hmCoachError ?? null}
                   />
                 ) : null}
@@ -1069,7 +1143,7 @@ function HmCoachBridgeReport({ hmCoach }: { hmCoach: HmCoachBridgeResult }) {
       <div className="ai-hm-coach-report-head">
         <div>
           <span className="panel-kicker">이번 판 피드백</span>
-          <h3>이번 판에서 바로 고칠 것</h3>
+          <h3>{hmCoachHeading(hmCoach)}</h3>
           <p>
             {input.coaching?.verdict ?? "화면에 나온 유닛을 어디에 두고 어떻게 싸웠어야 했는지부터 봅니다."}
           </p>
@@ -1116,6 +1190,37 @@ function HmCoachBridgeReport({ hmCoach }: { hmCoach: HmCoachBridgeResult }) {
         </section>
       ) : null}
     </section>
+  );
+}
+
+function HmCoachPerspectiveTabs({
+  result,
+  activePlayerId,
+  onChange,
+}: {
+  result: AnalyzeSuccess;
+  activePlayerId: string | null;
+  onChange: (playerId: string) => void;
+}) {
+  const options = hmCoachPerspectiveOptions(result);
+  if (options.length < 2) return null;
+
+  return (
+    <div className="ai-hm-perspective-tabs" role="tablist" aria-label="HM 코칭 관점 선택">
+      {options.map(({ player, id }) => (
+        <button
+          key={id}
+          type="button"
+          role="tab"
+          aria-selected={activePlayerId === id}
+          className={activePlayerId === id ? "is-active" : ""}
+          onClick={() => onChange(id)}
+        >
+          <strong>{player.name}</strong>
+          <span>{playerPerspectiveLabel(player)}</span>
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -1412,6 +1517,8 @@ function CoachReport({
   replayFile,
   winConditionModel,
   hmCoach,
+  hmCoachPlayerId,
+  onHmCoachPlayerChange,
   hmCoachError,
 }: {
   result: AnalyzeSuccess;
@@ -1419,6 +1526,8 @@ function CoachReport({
   replayFile: File | null;
   winConditionModel: WinConditionModel | null;
   hmCoach: HmCoachBridgeResult | null;
+  hmCoachPlayerId: string | null;
+  onHmCoachPlayerChange: (playerId: string) => void;
   hmCoachError?: string | null;
 }) {
   const coach = buildCoachInsights(result, players);
@@ -1453,6 +1562,7 @@ function CoachReport({
         </div>
       </section> : null}
 
+      {hmCoach ? <HmCoachPerspectiveTabs result={result} activePlayerId={hmCoachPlayerId} onChange={onHmCoachPlayerChange} /> : null}
       {hmCoach ? <HmCoachBridgeReport hmCoach={hmCoach} /> : null}
       {!hmCoach && hmCoachError ? <div className="ai-error-line" role="status">추가 코칭 생성 실패: {hmCoachError}</div> : null}
 
@@ -4698,10 +4808,11 @@ type PdfPage = {
   pageNumber: number;
 };
 
-async function downloadPdf(result: AnalyzeSuccess, players: ReplayPlayer[]) {
+async function downloadPdf(result: AnalyzeSuccess, players: ReplayPlayer[], selectedHmCoach?: HmCoachBridgeResult | null) {
   try {
     await preparePdfFonts();
-    const images = result.hmCoach ? renderHmCoachPdfReportImages(result, result.hmCoach) : renderPdfReportImages(result, players, buildCoachInsights(result, players));
+    const hmCoach = selectedHmCoach ?? result.hmCoach ?? null;
+    const images = hmCoach ? renderHmCoachPdfReportImages(result, hmCoach) : renderPdfReportImages(result, players, buildCoachInsights(result, players));
     const blob = buildImagePdfBlob(images);
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
@@ -4759,7 +4870,7 @@ function drawHmCoachPdfCover(page: PdfPage, result: AnalyzeSuccess, hmCoach: HmC
   page.y += 42;
   setPdfFont(ctx, 62, 900);
   ctx.fillStyle = PDF_COLORS.ink;
-  page.y = drawPdfWrappedText(ctx, "이번 판에서 못한 부분", PDF_MARGIN, page.y, PDF_CONTENT_WIDTH, 72, 2) + 12;
+  page.y = drawPdfWrappedText(ctx, hmCoachHeading(hmCoach), PDF_MARGIN, page.y, PDF_CONTENT_WIDTH, 72, 2) + 12;
 
   setPdfFont(ctx, 24, 800);
   ctx.fillStyle = PDF_COLORS.muted;

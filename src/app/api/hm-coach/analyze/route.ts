@@ -4,6 +4,7 @@ export const maxDuration = 30;
 type CoachRequest = {
   replayId?: number | string;
   perspective?: 1 | 2 | string;
+  perspectivePlayerId?: number | string;
   coachUrl?: string;
   coachInput?: StarHmCoachInput;
   analysisResult?: AnalyzeSuccessInput;
@@ -79,10 +80,13 @@ type StarHmCoachInput = {
     durationLabel?: string;
   };
   perspective?: {
+    playerId?: string;
+    opponentId?: string;
     player?: string;
     opponent?: string;
     matchup?: string;
     resultLabel?: string;
+    outcome?: string;
   };
   dataContext?: {
     sampleSize?: number;
@@ -133,7 +137,7 @@ function buildAiPrompt(payload: StarHmCoachInput) {
     `내 전략 축: ${payload.dataContext?.myStrategyFocus ?? "-"}`,
     `상대 흐름: ${payload.dataContext?.opponentStrategyFocus ?? "-"}`,
     "",
-    "[이번 판에서 못한 부분]",
+    `[${payload.coaching?.headline ?? "이번 판에서 못한 부분"}]`,
     ...feedback.flatMap((item, index) => [
       `${index + 1}. ${item.title}`,
       `- 근거: ${item.detail}`,
@@ -157,20 +161,31 @@ function normalizeCoachPayload(payload: StarHmCoachInput) {
     feedbackItems,
     nextGameGuide: payload.coaching?.nextGameGuide ?? [],
     summary: {
+      playerId: payload.perspective?.playerId,
+      player: payload.perspective?.player,
       map: payload.match?.map,
       matchup: payload.perspective?.matchup,
       result: payload.perspective?.resultLabel,
+      outcome: payload.perspective?.outcome,
       confidence: payload.dataContext?.confidenceLabel,
       feedbackCount: feedbackItems.length,
     },
   };
 }
 
-function buildCoachInputFromAnalysisResult(result: AnalyzeSuccessInput): StarHmCoachInput {
+function buildCoachInputFromAnalysisResult(result: AnalyzeSuccessInput, perspectivePlayerId?: number | string): StarHmCoachInput {
   const players = (result.players ?? []).filter((player) => !player.observer);
-  const perspectivePlayer = players.find((player) => player.result?.outcome === "LOSS") ?? players[0] ?? null;
+  const requestedPlayerId = stringValue(perspectivePlayerId);
+  const perspectivePlayer =
+    (requestedPlayerId ? players.find((player) => stringValue(player.id) === requestedPlayerId) : null) ??
+    players.find((player) => player.result?.outcome === "LOSS") ??
+    players[0] ??
+    null;
   const opponent = players.find((player) => player !== perspectivePlayer) ?? null;
   const playerId = String(perspectivePlayer?.id ?? "");
+  const opponentId = String(opponent?.id ?? "");
+  const outcome = perspectivePlayer?.result?.outcome ?? "UNKNOWN";
+  const isWinner = outcome === "WIN";
   const buildClassifications = result.semantic?.buildClassifications ?? result.buildClassifications ?? [];
   const productionReports = result.semantic?.productionReports ?? result.productionReports ?? [];
   const commandEfficiency = result.semantic?.commandEfficiency ?? result.commandEfficiency ?? [];
@@ -202,6 +217,7 @@ function buildCoachInputFromAnalysisResult(result: AnalyzeSuccessInput): StarHmC
     hotkey: playerHotkey,
     findings,
     playerId,
+    isWinner,
   });
   const nextGameGuide = feedbackItems.slice(0, 4).map((item) => item.next || item.detail);
 
@@ -213,10 +229,13 @@ function buildCoachInputFromAnalysisResult(result: AnalyzeSuccessInput): StarHmC
       durationLabel: formatDuration(result.replay?.durationSeconds ?? null),
     },
     perspective: {
+      playerId,
+      opponentId,
       player: perspectivePlayer?.name ?? "관점 플레이어",
       opponent: opponent?.name ?? "상대",
       matchup,
-      resultLabel: perspectivePlayer?.result?.outcome === "WIN" ? "승리" : perspectivePlayer?.result?.outcome === "LOSS" ? "패배" : "결과 확인 필요",
+      resultLabel: outcome === "WIN" ? "승리" : outcome === "LOSS" ? "패배" : "결과 확인 필요",
+      outcome,
     },
     dataContext: {
       sampleSize,
@@ -225,8 +244,10 @@ function buildCoachInputFromAnalysisResult(result: AnalyzeSuccessInput): StarHmC
       opponentStrategyFocus: opponent ? `${opponent.name} ${raceLabel(opponent.race)}` : "상대 흐름 확인 필요",
     },
     coaching: {
-      headline: "이번 판에서 못한 부분",
-      verdict: `이번 판에서는 ${perspectivePlayer?.name ?? "관점 플레이어"}가 수치 자체보다 화면에 나온 유닛을 어디에 두고 어떻게 싸웠어야 했는지를 먼저 봐야 했어.`,
+      headline: isWinner ? "이긴 판에서 더 다듬을 부분" : "이번 판에서 못한 부분",
+      verdict: isWinner
+        ? `이번 판은 이겼지만 ${perspectivePlayer?.name ?? "관점 플레이어"}가 더 안정적으로 이기려면 유닛 위치와 교전 시작 순서를 더 다듬었어야 했어.`
+        : `이번 판에서는 ${perspectivePlayer?.name ?? "관점 플레이어"}가 수치 자체보다 화면에 나온 유닛을 어디에 두고 어떻게 싸웠어야 했는지를 먼저 봐야 했어.`,
       feedbackItems,
       nextGameGuide,
       limitationNote: result.coaching?.scope?.limitations?.join(" ") || "REP 분석 결과에서 확인된 기록만 사용했습니다.",
@@ -263,6 +284,7 @@ function buildAnalysisFeedbackItems({
   hotkey,
   findings,
   playerId,
+  isWinner,
 }: {
   playerName: string;
   opponentName: string;
@@ -276,6 +298,7 @@ function buildAnalysisFeedbackItems({
   hotkey: LooseRecord | null;
   findings: LooseRecord[];
   playerId: string;
+  isWinner: boolean;
 }) {
   const buildName = stringValue(build?.buildName);
   const gaps = arrayValue(production?.productionGaps);
@@ -303,7 +326,24 @@ function buildAnalysisFeedbackItems({
     evidence,
   });
 
-  return matchupItems.slice(0, 3).map((item, index) => ({ ...item, number: index + 1 }));
+  const tonedItems = isWinner ? matchupItems.map((item) => winnerCoachItem(item)) : matchupItems;
+  return tonedItems.slice(0, 3).map((item, index) => ({ ...item, number: index + 1 }));
+}
+
+function winnerCoachItem(item: StarHmFeedbackItem): StarHmFeedbackItem {
+  const title = item.title.startsWith("이번 판에서는 ")
+    ? item.title.replace("이번 판에서는 ", "이긴 판에서도 ")
+    : `이긴 판에서도 ${item.title}`;
+  const detail = item.detail.startsWith("승리는 했지만 ") ? item.detail : `승리는 했지만 ${item.detail}`;
+  const next = item.next?.startsWith("다음 판에는 ")
+    ? item.next.replace("다음 판에는 ", "다음 판에도 ")
+    : item.next;
+  return {
+    ...item,
+    title,
+    detail,
+    next,
+  };
 }
 
 function collectUnitHints(result: AnalyzeSuccessInput, playerId: string) {
@@ -631,7 +671,7 @@ export async function POST(request: Request) {
     }
 
     if (body.analysisResult) {
-      return jsonResponse(normalizeCoachPayload(buildCoachInputFromAnalysisResult(body.analysisResult)));
+      return jsonResponse(normalizeCoachPayload(buildCoachInputFromAnalysisResult(body.analysisResult, body.perspectivePlayerId)));
     }
 
     const replayId = Number(body.replayId);

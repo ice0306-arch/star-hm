@@ -2034,6 +2034,40 @@ footer {
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
 }
 
+.ai-hm-perspective-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.ai-hm-perspective-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid rgba(214, 216, 210, 0.16);
+  border-radius: 999px;
+  padding: 0.7rem 0.95rem;
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(241, 240, 235, 0.86);
+  font-weight: 900;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.ai-hm-perspective-tabs button:hover,
+.ai-hm-perspective-tabs button.is-active {
+  border-color: rgba(202, 163, 91, 0.72);
+  background: rgba(202, 163, 91, 0.14);
+  color: white;
+}
+
+.ai-hm-perspective-tabs button span {
+  color: #f4d786;
+  font-size: 0.74rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+}
+
 .ai-hm-coach-report-head {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
