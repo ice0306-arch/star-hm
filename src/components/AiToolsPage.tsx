@@ -4701,8 +4701,7 @@ type PdfPage = {
 async function downloadPdf(result: AnalyzeSuccess, players: ReplayPlayer[]) {
   try {
     await preparePdfFonts();
-    const coach = buildCoachInsights(result, players);
-    const images = renderPdfReportImages(result, players, coach);
+    const images = result.hmCoach ? renderHmCoachPdfReportImages(result, result.hmCoach) : renderPdfReportImages(result, players, buildCoachInsights(result, players));
     const blob = buildImagePdfBlob(images);
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
@@ -4714,6 +4713,155 @@ async function downloadPdf(result: AnalyzeSuccess, players: ReplayPlayer[]) {
     console.error(error);
     window.print();
   }
+}
+
+function renderHmCoachPdfReportImages(result: AnalyzeSuccess, hmCoach: HmCoachBridgeResult) {
+  const pages: string[] = [];
+  const feedback = (hmCoach.feedbackItems.length ? hmCoach.feedbackItems : hmCoach.coachInput.coaching?.feedbackItems ?? []).slice(0, 3);
+  const nextGuide = (hmCoach.nextGameGuide.length ? hmCoach.nextGameGuide : hmCoach.coachInput.coaching?.nextGameGuide ?? []).slice(0, 4);
+  let page = createPdfPage(1);
+  drawHmCoachPdfCover(page, result, hmCoach, feedback.length);
+
+  for (const [index, item] of feedback.entries()) {
+    const height = measureHmCoachFeedbackCard(page.ctx, item);
+    if (page.y + height > PDF_CANVAS_HEIGHT - 110) {
+      finishPdfPage(page, pages);
+      page = createPdfPage(page.pageNumber + 1);
+      drawPdfSectionTitle(page, "이번 판 피드백", "이어지는 코칭 카드");
+      page.y += 18;
+    }
+    drawHmCoachFeedbackCard(page, item, index);
+    page.y += 22;
+  }
+
+  if (nextGuide.length) {
+    const guideHeight = measureHmCoachNextGuide(page.ctx, nextGuide);
+    if (page.y + guideHeight > PDF_CANVAS_HEIGHT - 110) {
+      finishPdfPage(page, pages);
+      page = createPdfPage(page.pageNumber + 1);
+      drawPdfSectionTitle(page, "다음 판 실행 순서", "이 순서대로 다시 해보세요");
+      page.y += 18;
+    }
+    drawHmCoachNextGuide(page, nextGuide);
+  }
+
+  finishPdfPage(page, pages);
+  return pages;
+}
+
+function drawHmCoachPdfCover(page: PdfPage, result: AnalyzeSuccess, hmCoach: HmCoachBridgeResult, feedbackCount: number) {
+  const { ctx } = page;
+  const input = hmCoach.coachInput;
+  setPdfFont(ctx, 22, 900);
+  ctx.fillStyle = PDF_COLORS.gold;
+  ctx.fillText("HM COACH REPORT", PDF_MARGIN, page.y);
+  page.y += 42;
+  setPdfFont(ctx, 62, 900);
+  ctx.fillStyle = PDF_COLORS.ink;
+  page.y = drawPdfWrappedText(ctx, "이번 판에서 못한 부분", PDF_MARGIN, page.y, PDF_CONTENT_WIDTH, 72, 2) + 12;
+
+  setPdfFont(ctx, 24, 800);
+  ctx.fillStyle = PDF_COLORS.muted;
+  const meta = [
+    input.match?.map ?? result.replay.map.name ?? "맵 확인",
+    input.perspective?.matchup ?? "매치업 확인",
+    input.perspective?.resultLabel ?? "결과 확인",
+    input.dataContext?.confidenceLabel ?? null,
+    typeof input.dataContext?.sampleSize === "number" ? `읽은 기록 ${input.dataContext.sampleSize.toLocaleString("ko-KR")}` : null,
+  ].filter(Boolean).join(" · ");
+  page.y = drawPdfWrappedText(ctx, meta, PDF_MARGIN, page.y, PDF_CONTENT_WIDTH, 34, 2) + 34;
+
+  const x = PDF_MARGIN;
+  const y = page.y;
+  const width = PDF_CONTENT_WIDTH;
+  const height = 190;
+  drawPdfRoundRect(ctx, x, y, width, height, 18, "#ffffff", PDF_COLORS.gold);
+  setPdfFont(ctx, 24, 900);
+  ctx.fillStyle = PDF_COLORS.gold;
+  ctx.fillText("코칭 요약", x + 28, y + 24);
+  setPdfFont(ctx, 34, 900);
+  ctx.fillStyle = PDF_COLORS.ink;
+  drawPdfWrappedText(ctx, input.coaching?.verdict ?? "화면에 나온 유닛을 어디에 두고 어떻게 싸웠어야 했는지부터 봅니다.", x + 28, y + 62, width - 56, 42, 2);
+  setPdfFont(ctx, 20, 900);
+  ctx.fillStyle = PDF_COLORS.muted;
+  ctx.fillText(`메인 피드백 ${feedbackCount}개`, x + 28, y + 150);
+  page.y += height + 34;
+}
+
+function measureHmCoachFeedbackCard(ctx: CanvasRenderingContext2D, item: HmCoachFeedbackItem) {
+  setPdfFont(ctx, 31, 900);
+  const titleHeight = Math.min(92, measurePdfTextBlock(ctx, item.title, PDF_CONTENT_WIDTH - 72, 38));
+  setPdfFont(ctx, 21, 500);
+  const detailHeight = Math.min(116, measurePdfTextBlock(ctx, item.detail, PDF_CONTENT_WIDTH - 72, 29));
+  const nextHeight = item.next ? Math.min(72, measurePdfTextBlock(ctx, item.next, PDF_CONTENT_WIDTH - 190, 26)) : 0;
+  return 118 + titleHeight + detailHeight + (item.next ? 44 + nextHeight : 0);
+}
+
+function drawHmCoachFeedbackCard(page: PdfPage, item: HmCoachFeedbackItem, index: number) {
+  const { ctx } = page;
+  const x = PDF_MARGIN;
+  const y = page.y;
+  const width = PDF_CONTENT_WIDTH;
+  const height = measureHmCoachFeedbackCard(ctx, item);
+  const tone = index === 0 ? PDF_COLORS.gold : index === 1 ? PDF_COLORS.green : PDF_COLORS.blue;
+  drawPdfRoundRect(ctx, x, y, width, height, 18, "#ffffff", tone);
+  ctx.fillStyle = tone;
+  ctx.fillRect(x, y, 10, height);
+  setPdfFont(ctx, 18, 900);
+  ctx.fillStyle = tone;
+  ctx.fillText(pdfHmCoachPriorityLabel(index), x + 30, y + 24);
+  setPdfFont(ctx, 31, 900);
+  ctx.fillStyle = PDF_COLORS.ink;
+  const titleEnd = drawPdfWrappedText(ctx, item.title, x + 30, y + 60, width - 60, 38, 3);
+  setPdfFont(ctx, 21, 500);
+  ctx.fillStyle = PDF_COLORS.slate;
+  const detailEnd = drawPdfWrappedText(ctx, item.detail, x + 30, titleEnd + 16, width - 60, 29, 4);
+  if (item.next) {
+    const nextY = detailEnd + 22;
+    drawPdfRoundRect(ctx, x + 30, nextY, width - 60, Math.min(116, height - (nextY - y) - 24), 14, PDF_COLORS.soft, PDF_COLORS.line);
+    setPdfFont(ctx, 18, 900);
+    ctx.fillStyle = PDF_COLORS.green;
+    ctx.fillText("다음 판에는", x + 52, nextY + 22);
+    setPdfFont(ctx, 20, 700);
+    ctx.fillStyle = PDF_COLORS.ink;
+    drawPdfWrappedText(ctx, item.next, x + 174, nextY + 18, width - 226, 26, 3);
+  }
+  page.y += height;
+}
+
+function pdfHmCoachPriorityLabel(index: number) {
+  if (index === 0) return "제일 먼저 고칠 포인트";
+  if (index === 1) return "두 번째로 고칠 포인트";
+  return "같이 확인할 포인트";
+}
+
+function measureHmCoachNextGuide(ctx: CanvasRenderingContext2D, items: string[]) {
+  setPdfFont(ctx, 22, 700);
+  return 126 + items.reduce((total, item) => total + Math.max(34, measurePdfTextBlock(ctx, item, PDF_CONTENT_WIDTH - 120, 28)), 0);
+}
+
+function drawHmCoachNextGuide(page: PdfPage, items: string[]) {
+  const { ctx } = page;
+  const x = PDF_MARGIN;
+  const y = page.y;
+  const width = PDF_CONTENT_WIDTH;
+  const height = measureHmCoachNextGuide(ctx, items);
+  drawPdfRoundRect(ctx, x, y, width, height, 18, "#ffffff", PDF_COLORS.green);
+  setPdfFont(ctx, 22, 900);
+  ctx.fillStyle = PDF_COLORS.green;
+  ctx.fillText("다음 판 실행 순서", x + 28, y + 24);
+  let rowY = y + 70;
+  items.forEach((item, index) => {
+    drawPdfRoundRect(ctx, x + 28, rowY, 42, 42, 10, PDF_COLORS.green, PDF_COLORS.green);
+    setPdfFont(ctx, 20, 900);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(String(index + 1), x + 43, rowY + 10);
+    setPdfFont(ctx, 22, 700);
+    ctx.fillStyle = PDF_COLORS.ink;
+    const nextY = drawPdfWrappedText(ctx, item, x + 88, rowY + 4, width - 116, 28, 2);
+    rowY = Math.max(rowY + 54, nextY + 18);
+  });
+  page.y += height;
 }
 
 function renderPdfReportImages(result: AnalyzeSuccess, players: ReplayPlayer[], coach: ReturnType<typeof buildCoachInsights>) {
