@@ -4727,7 +4727,7 @@ function renderHmCoachPdfReportImages(result: AnalyzeSuccess, hmCoach: HmCoachBr
     if (page.y + height > PDF_CANVAS_HEIGHT - 110) {
       finishPdfPage(page, pages);
       page = createPdfPage(page.pageNumber + 1);
-      drawPdfSectionTitle(page, "이번 판 피드백", "이어지는 코칭 카드");
+      drawPdfSectionTitle(page, "이번 판 피드백", "구체적으로 고칠 장면");
       page.y += 18;
     }
     drawHmCoachFeedbackCard(page, item, index);
@@ -4739,7 +4739,7 @@ function renderHmCoachPdfReportImages(result: AnalyzeSuccess, hmCoach: HmCoachBr
     if (page.y + guideHeight > PDF_CANVAS_HEIGHT - 110) {
       finishPdfPage(page, pages);
       page = createPdfPage(page.pageNumber + 1);
-      drawPdfSectionTitle(page, "다음 판 실행 순서", "이 순서대로 다시 해보세요");
+      drawPdfSectionTitle(page, "다음 판 실행 순서", "한 경기에서 하나씩 바꾸기");
       page.y += 18;
     }
     drawHmCoachNextGuide(page, nextGuide);
@@ -4752,6 +4752,7 @@ function renderHmCoachPdfReportImages(result: AnalyzeSuccess, hmCoach: HmCoachBr
 function drawHmCoachPdfCover(page: PdfPage, result: AnalyzeSuccess, hmCoach: HmCoachBridgeResult, feedbackCount: number) {
   const { ctx } = page;
   const input = hmCoach.coachInput;
+  const firstNext = hmCoach.nextGameGuide[0] ?? input.coaching?.nextGameGuide?.[0] ?? input.coaching?.feedbackItems?.[0]?.next ?? "";
   setPdfFont(ctx, 22, 900);
   ctx.fillStyle = PDF_COLORS.gold;
   ctx.fillText("HM COACH REPORT", PDF_MARGIN, page.y);
@@ -4771,10 +4772,21 @@ function drawHmCoachPdfCover(page: PdfPage, result: AnalyzeSuccess, hmCoach: HmC
   ].filter(Boolean).join(" · ");
   page.y = drawPdfWrappedText(ctx, meta, PDF_MARGIN, page.y, PDF_CONTENT_WIDTH, 34, 2) + 34;
 
+  drawHmCoachPdfMetaTiles(page, [
+    { label: "관점", value: input.perspective?.matchup ?? "-" },
+    { label: "결과", value: input.perspective?.resultLabel ?? "-" },
+    { label: "피드백", value: `${feedbackCount}개` },
+    {
+      label: "읽은 기록",
+      value: typeof input.dataContext?.sampleSize === "number" ? input.dataContext.sampleSize.toLocaleString("ko-KR") : "-",
+    },
+  ]);
+  page.y += 28;
+
   const x = PDF_MARGIN;
   const y = page.y;
   const width = PDF_CONTENT_WIDTH;
-  const height = 190;
+  const height = 184;
   drawPdfRoundRect(ctx, x, y, width, height, 18, "#ffffff", PDF_COLORS.gold);
   setPdfFont(ctx, 24, 900);
   ctx.fillStyle = PDF_COLORS.gold;
@@ -4784,8 +4796,65 @@ function drawHmCoachPdfCover(page: PdfPage, result: AnalyzeSuccess, hmCoach: HmC
   drawPdfWrappedText(ctx, input.coaching?.verdict ?? "화면에 나온 유닛을 어디에 두고 어떻게 싸웠어야 했는지부터 봅니다.", x + 28, y + 62, width - 56, 42, 2);
   setPdfFont(ctx, 20, 900);
   ctx.fillStyle = PDF_COLORS.muted;
-  ctx.fillText(`메인 피드백 ${feedbackCount}개`, x + 28, y + 150);
-  page.y += height + 34;
+  ctx.fillText("수치 설명보다 다음 판에서 바로 바꿀 행동만 남겼습니다.", x + 28, y + 148);
+  page.y += height + 24;
+
+  drawHmCoachPdfBriefing(page, firstNext);
+  page.y += 28;
+}
+
+function drawHmCoachPdfMetaTiles(page: PdfPage, metrics: Array<{ label: string; value: string }>) {
+  const { ctx } = page;
+  const gap = 14;
+  const tileWidth = (PDF_CONTENT_WIDTH - gap * (metrics.length - 1)) / metrics.length;
+  const tileHeight = 96;
+  metrics.forEach((metric, index) => {
+    const x = PDF_MARGIN + index * (tileWidth + gap);
+    drawPdfRoundRect(ctx, x, page.y, tileWidth, tileHeight, 12, "#ffffff", PDF_COLORS.line);
+    setPdfFont(ctx, 16, 900);
+    ctx.fillStyle = PDF_COLORS.muted;
+    ctx.fillText(metric.label, x + 18, page.y + 18);
+    setPdfFont(ctx, 26, 900);
+    ctx.fillStyle = PDF_COLORS.ink;
+    drawPdfWrappedText(ctx, metric.value, x + 18, page.y + 48, tileWidth - 36, 30, 1);
+  });
+  page.y += tileHeight;
+}
+
+function drawHmCoachPdfBriefing(page: PdfPage, firstNext: string) {
+  const { ctx } = page;
+  const gap = 18;
+  const cardWidth = (PDF_CONTENT_WIDTH - gap) / 2;
+  const height = 178;
+  const cards = [
+    {
+      kicker: "복기할 때 먼저 볼 것",
+      title: "상대가 들어온 순간 내 유닛이 어디 있었는지",
+      body: "빌드명보다 병력이 먼저 맞았는지, 뒤에서 때렸는지, 빠져야 할 유닛이 오래 남았는지를 봅니다.",
+      color: PDF_COLORS.blue,
+    },
+    {
+      kicker: "다음 게임 목표",
+      title: "한 가지 행동만 바꿔서 다시 해보기",
+      body: firstNext || "첫 교전 직전 유닛 위치와 진입 순서를 하나만 정하고 싸움을 여세요.",
+      color: PDF_COLORS.green,
+    },
+  ];
+
+  cards.forEach((card, index) => {
+    const x = PDF_MARGIN + index * (cardWidth + gap);
+    drawPdfRoundRect(ctx, x, page.y, cardWidth, height, 16, "#ffffff", card.color);
+    setPdfFont(ctx, 17, 900);
+    ctx.fillStyle = card.color;
+    ctx.fillText(card.kicker, x + 22, page.y + 22);
+    setPdfFont(ctx, 24, 900);
+    ctx.fillStyle = PDF_COLORS.ink;
+    const titleEnd = drawPdfWrappedText(ctx, card.title, x + 22, page.y + 54, cardWidth - 44, 29, 2);
+    setPdfFont(ctx, 18, 600);
+    ctx.fillStyle = PDF_COLORS.slate;
+    drawPdfWrappedText(ctx, card.body, x + 22, titleEnd + 12, cardWidth - 44, 24, 3);
+  });
+  page.y += height;
 }
 
 function measureHmCoachFeedbackCard(ctx: CanvasRenderingContext2D, item: HmCoachFeedbackItem) {
