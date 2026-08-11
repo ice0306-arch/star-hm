@@ -2224,6 +2224,112 @@ footer {
   line-height: 1.6;
 }
 
+.ai-v2-report {
+  display: grid;
+  gap: 1rem;
+  border: 1px solid rgba(241, 240, 235, 0.12);
+  border-radius: 12px;
+  padding: clamp(1rem, 2vw, 1.25rem);
+  background:
+    linear-gradient(180deg, rgba(88, 166, 255, 0.055), transparent 44%),
+    rgba(9, 11, 15, 0.58);
+}
+
+.ai-v2-report .ai-section-title p {
+  max-width: 58rem;
+  color: rgba(241, 240, 235, 0.66);
+  font-size: 0.9rem;
+  font-weight: 760;
+  line-height: 1.68;
+}
+
+.ai-v2-basic-grid,
+.ai-v2-score-grid,
+.ai-v2-summary-grid,
+.ai-v2-two-column,
+.ai-v2-detail-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.ai-v2-basic-grid {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.ai-v2-score-grid,
+.ai-v2-summary-grid,
+.ai-v2-two-column {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ai-v2-detail-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.ai-v2-score-card,
+.ai-v2-summary-grid article,
+.ai-v2-two-column > section,
+.ai-v2-detail-grid article {
+  min-width: 0;
+  border: 1px solid rgba(241, 240, 235, 0.1);
+  border-radius: 9px;
+  padding: 0.95rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ai-v2-score-card span,
+.ai-v2-summary-grid span,
+.ai-v2-detail-grid span {
+  color: var(--ai-signal);
+  font-size: 0.68rem;
+  font-weight: 950;
+  letter-spacing: 0.11em;
+}
+
+.ai-v2-score-card strong,
+.ai-v2-two-column strong,
+.ai-v2-detail-grid strong {
+  display: block;
+  margin-top: 0.38rem;
+  color: white;
+  font-size: 1rem;
+  font-weight: 950;
+  line-height: 1.35;
+  word-break: keep-all;
+}
+
+.ai-v2-score-card strong {
+  color: #f4d786;
+  font-size: clamp(1.35rem, 2vw, 2rem);
+}
+
+.ai-v2-score-card p,
+.ai-v2-summary-grid p,
+.ai-v2-two-column p,
+.ai-v2-detail-grid p {
+  margin-top: 0.5rem;
+  color: rgba(241, 240, 235, 0.72);
+  font-size: 0.82rem;
+  font-weight: 720;
+  line-height: 1.62;
+  word-break: keep-all;
+}
+
+.ai-v2-two-column > section {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.ai-v2-two-column article {
+  border-top: 1px solid rgba(241, 240, 235, 0.08);
+  padding-top: 0.65rem;
+}
+
+.ai-v2-two-column article:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
 @media (max-width: 760px) {
   .ai-hm-coach-report-head,
   .ai-hm-feedback-list article,
@@ -2237,6 +2343,12 @@ footer {
 
   .ai-hm-feedback-list article > div {
     justify-items: start;
+  }
+
+  .ai-v2-score-grid,
+  .ai-v2-summary-grid,
+  .ai-v2-two-column {
+    grid-template-columns: 1fr;
   }
 }
 

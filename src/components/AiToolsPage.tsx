@@ -1224,6 +1224,265 @@ function HmCoachPerspectiveTabs({
   );
 }
 
+function V2AnalysisReport({
+  result,
+  players,
+  coach,
+  hmCoach,
+}: {
+  result: AnalyzeSuccess;
+  players: ReplayPlayer[];
+  coach: ReturnType<typeof buildCoachInsights>;
+  hmCoach: HmCoachBridgeResult | null;
+}) {
+  const data = buildV2ReportData(result, players, coach, hmCoach);
+  return (
+    <section className="ai-v2-report" aria-label="V2 분석 보고서">
+      <div className="ai-section-title">
+        <span className="panel-kicker">V2 분석 보고서</span>
+        <h3>코칭 결론 뒤에 보는 경기 분석</h3>
+        <p>없는 데이터는 만들지 않고, 현재 REP 분석에서 확인 가능한 정보만 보고서 형태로 정리했습니다.</p>
+      </div>
+
+      <div className="ai-v2-basic-grid">
+        {data.basicInfo.map((item) => (
+          <Metric key={item.label} label={item.label} value={item.value} />
+        ))}
+      </div>
+
+      <div className="ai-v2-score-grid">
+        {data.scores.map((item) => (
+          <article key={item.label} className="ai-v2-score-card">
+            <span>{item.label}</span>
+            <strong>{item.value}</strong>
+            <p>{item.detail}</p>
+          </article>
+        ))}
+      </div>
+
+      <div className="ai-v2-summary-grid">
+        <article>
+          <span>AI 한 줄 총평</span>
+          <p>{data.oneLine}</p>
+        </article>
+        <article>
+          <span>경기 흐름 요약</span>
+          <p>{data.flowSummary}</p>
+        </article>
+      </div>
+
+      <div className="ai-v2-two-column">
+        <section>
+          <span className="panel-kicker">잘한 점</span>
+          {data.strengths.map((item) => (
+            <article key={item.title}>
+              <strong>{item.title}</strong>
+              <p>{item.body}</p>
+            </article>
+          ))}
+        </section>
+        <section>
+          <span className="panel-kicker">핵심 문제 TOP 3</span>
+          {data.problems.map((item, index) => (
+            <article key={`${item.title}-${index}`}>
+              <strong>{index + 1}. {item.title}</strong>
+              <p>{item.body}</p>
+            </article>
+          ))}
+        </section>
+      </div>
+
+      <div className="ai-v2-detail-grid">
+        {data.detailSections.map((section) => (
+          <article key={section.title}>
+            <span>{section.title}</span>
+            <strong>{section.headline}</strong>
+            <p>{section.body}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+type V2ReportData = {
+  basicInfo: Array<{ label: string; value: string | number }>;
+  scores: Array<{ label: string; value: string | number; detail: string }>;
+  oneLine: string;
+  flowSummary: string;
+  strengths: Array<{ title: string; body: string }>;
+  problems: Array<{ title: string; body: string }>;
+  detailSections: Array<{ title: string; headline: string; body: string }>;
+};
+
+function buildV2ReportData(result: AnalyzeSuccess, players: ReplayPlayer[], coach: ReturnType<typeof buildCoachInsights>, hmCoach: HmCoachBridgeResult | null): V2ReportData {
+  const perspectivePlayerId = hmCoachPerspectivePlayerId(hmCoach);
+  const perspectivePlayer = perspectivePlayerId ? players.find((player) => String(player.id) === perspectivePlayerId) ?? null : null;
+  const buildNames = result.semantic.buildClassifications
+    .slice(0, 2)
+    .map((item) => `${item.playerName}: ${item.buildName || "빌드 분류 부족"} (${confidenceLabel(item.confidence)})`);
+  const productionAverage = average(result.semantic.productionReports.map((report) => report.stabilityScore).filter(Number.isFinite));
+  const hotkeyAverage = average(result.semantic.hotkeyReports.map((report) => report.breadthScore).filter(Number.isFinite));
+  const readiness = [...(result.coaching.winReadiness ?? [])].sort((a, b) => b.score - a.score)[0] ?? null;
+  const meaningfulMoments = coach.moments.filter((moment) => moment.severity !== "INFO" && !isMetricOnlyMoment(moment)).slice(0, 3);
+  const findings = result.coaching.findings.filter((finding) => !isMetricOnlyFinding(finding));
+  const strengths = buildV2Strengths(result, coach);
+  const problems = meaningfulMoments.length
+    ? meaningfulMoments.map((moment) => ({
+        title: moment.title,
+        body: tacticalHadToAction({
+          id: moment.id,
+          start: momentBounds(moment, timingTotalSeconds(coach.moments, result.replay.durationSeconds)).start,
+          end: momentBounds(moment, timingTotalSeconds(coach.moments, result.replay.durationSeconds)).end,
+          label: moment.timeLabel,
+          severity: moment.severity,
+          playerName: moment.playerName,
+          tag: moment.tag,
+          problem: moment.title,
+          reason: moment.detail,
+          reviewPoint: moment.detail,
+          fixPoint: momentCoachNotes(moment)[0]?.text ?? moment.detail,
+        }),
+      }))
+    : [{ title: "핵심 문제 데이터 부족", body: "분석 가능한 데이터가 부족합니다." }];
+
+  return {
+    basicInfo: [
+      { label: "맵", value: result.replay.map.name ?? "데이터 부족" },
+      { label: "경기 시간", value: formatDuration(result.replay.durationSeconds) },
+      { label: "관점", value: perspectivePlayer ? `${perspectivePlayer.name} · ${resultLabel(perspectivePlayer)}` : "전체 경기" },
+      { label: "매치업", value: result.coaching.scope.matchup || hmCoach?.coachInput.perspective?.matchup || "데이터 부족" },
+      { label: "플레이어", value: players.map((player) => `${player.name} ${raceLabelShort(player.race)}`).join(" vs ") || "데이터 부족" },
+      { label: "분석 상태", value: statusLabel(result.analysisRun.status) },
+    ],
+    scores: [
+      { label: "HM AI 종합 점수", value: coach.score, detail: coach.focus },
+      { label: "생산 안정성", value: productionAverage > 0 ? Math.round(productionAverage) : "데이터 부족", detail: productionAverage > 0 ? "생산 공백과 안정 점수 기준입니다." : "분석 가능한 데이터가 부족합니다." },
+      { label: "컨트롤/습관", value: hotkeyAverage > 0 ? Math.round(hotkeyAverage) : "데이터 부족", detail: hotkeyAverage > 0 ? "부대지정 활용 폭을 보조 기준으로 봅니다." : "분석 가능한 데이터가 부족합니다." },
+      { label: "승리 조건 근접도", value: readiness ? `${readiness.score}점` : "데이터 부족", detail: readiness ? plainWinReadinessVerdict(readiness.verdict) : "분석 가능한 데이터가 부족합니다." },
+    ],
+    oneLine: hmCoach?.coachInput.coaching?.verdict ?? coach.focus,
+    flowSummary: buildNames.length
+      ? `${buildNames.join(" · ")}. ${meaningfulMoments[0] ? `${meaningfulMoments[0].timeLabel} 구간부터 판단 복기가 필요합니다.` : "큰 문제 구간은 제한적입니다."}`
+      : "초반 빌드 흐름을 분류할 데이터가 부족합니다.",
+    strengths,
+    problems,
+    detailSections: buildV2DetailSections(result, players, coach, findings),
+  };
+}
+
+function buildV2Strengths(result: AnalyzeSuccess, coach: ReturnType<typeof buildCoachInsights>) {
+  const narrativeStrengths = coach.narrative.strengths.slice(0, 2).map((item) => ({
+    title: stripCoachMarkup(item.title),
+    body: stripCoachMarkup(item.body),
+  }));
+  if (narrativeStrengths.length) return narrativeStrengths;
+  const victoryPatterns = (result.coaching.victoryPatterns ?? []).slice(0, 2).map((item) => ({
+    title: item.title,
+    body: item.summary,
+  }));
+  if (victoryPatterns.length) return victoryPatterns;
+  return [{ title: "잘한 점 데이터 부족", body: "분석 가능한 데이터가 부족합니다." }];
+}
+
+function buildV2DetailSections(result: AnalyzeSuccess, players: ReplayPlayer[], coach: ReturnType<typeof buildCoachInsights>, findings: CoachFinding[]) {
+  const build = result.semantic.buildClassifications[0];
+  const production = [...result.semantic.productionReports].sort((a, b) => b.productionGaps.length - a.productionGaps.length)[0];
+  const command = result.semantic.commandEfficiency[0];
+  const hotkey = result.semantic.hotkeyReports[0];
+  const multitasking = result.semantic.multitaskingReports[0];
+  const findingByCategory = (category: string) => findings.find((finding) => finding.category === category);
+  const drill = coach.drills[0];
+  const firstProblem = coach.moments.find((moment) => moment.severity !== "INFO" && !isMetricOnlyMoment(moment));
+  return [
+    {
+      title: "Build",
+      headline: build ? `${build.playerName} · ${build.buildName}` : "데이터 부족",
+      body: build ? `${build.matchup} 기준 ${confidenceLabel(build.confidence)}로 분류됐습니다.` : "분석 가능한 데이터가 부족합니다.",
+    },
+    {
+      title: "Production",
+      headline: production ? `${production.playerName} · 안정성 ${Math.round(production.stabilityScore)}점` : "데이터 부족",
+      body: production?.productionGaps.length ? `가장 긴 공백은 ${Math.round(Math.max(...production.productionGaps.map((gap) => gap.duration)))}초입니다.` : production ? "큰 생산 공백은 제한적입니다." : "분석 가능한 데이터가 부족합니다.",
+    },
+    {
+      title: "Economy",
+      headline: findingByCategory("economy")?.title ?? "데이터 부족",
+      body: findingByCategory("economy")?.summary ?? "분석 가능한 데이터가 부족합니다.",
+    },
+    {
+      title: "Supply",
+      headline: result.coaching.facts.find((fact) => fact.category === "economy" && /supply|서플|파일런|오버로드/i.test(fact.label))?.label ?? "데이터 부족",
+      body: "현재 리포트에서 보급 관련 구조화 데이터가 부족하면 별도 판단을 만들지 않습니다.",
+    },
+    {
+      title: "Scouting",
+      headline: findingByCategory("scouting")?.title ?? "데이터 부족",
+      body: findingByCategory("scouting")?.summary ?? "분석 가능한 데이터가 부족합니다.",
+    },
+    {
+      title: "Battle",
+      headline: findingByCategory("engagement")?.title ?? firstProblem?.title ?? "데이터 부족",
+      body: findingByCategory("engagement")?.nextAction ?? (firstProblem ? tacticalHadToActionFromMoment(firstProblem, coach, result) : "분석 가능한 데이터가 부족합니다."),
+    },
+    {
+      title: "Control",
+      headline: command ? `${command.playerName} · 입력 리듬 참고` : "데이터 부족",
+      body: command ? "입력 수 자체보다 교전, 후퇴, 생산 중 첫 행동이 이어졌는지 보조 근거로 봅니다." : "분석 가능한 데이터가 부족합니다.",
+    },
+    {
+      title: "Habit",
+      headline: hotkey ? `${hotkey.playerName} · 부대지정 폭 ${Math.round(hotkey.breadthScore)}` : "데이터 부족",
+      body: hotkey ? `주로 사용한 그룹은 ${hotkey.usedGroups.join(", ") || "데이터 부족"}입니다.` : "분석 가능한 데이터가 부족합니다.",
+    },
+    {
+      title: "Priority",
+      headline: firstProblem?.title ?? "데이터 부족",
+      body: firstProblem ? tacticalHadToActionFromMoment(firstProblem, coach, result) : "분석 가능한 데이터가 부족합니다.",
+    },
+    {
+      title: "Training Goal",
+      headline: drill?.title ?? "데이터 부족",
+      body: drill ? `${drill.detail} 기준: ${drill.successMetric}` : "분석 가능한 데이터가 부족합니다.",
+    },
+    {
+      title: "Final Comment",
+      headline: coach.narrative.overall.title,
+      body: stripCoachMarkup(coach.narrative.overall.body),
+    },
+    {
+      title: "Screen Flow",
+      headline: multitasking ? `${multitasking.playerName} · 화면 전환 ${multitasking.regionSwitchEstimate}` : "데이터 부족",
+      body: multitasking ? multitasking.qualifier : "분석 가능한 데이터가 부족합니다.",
+    },
+  ];
+}
+
+function tacticalHadToActionFromMoment(moment: CoachMoment, coach: ReturnType<typeof buildCoachInsights>, result: AnalyzeSuccess) {
+  const bounds = momentBounds(moment, timingTotalSeconds(coach.moments, result.replay.durationSeconds));
+  return tacticalHadToAction({
+    id: moment.id,
+    start: bounds.start,
+    end: bounds.end,
+    label: moment.timeLabel,
+    severity: moment.severity,
+    playerName: moment.playerName,
+    tag: moment.tag,
+    problem: moment.title,
+    reason: moment.detail,
+    reviewPoint: moment.detail,
+    fixPoint: moment.detail,
+  });
+}
+
+function raceLabelShort(value: string) {
+  const lower = value.toLowerCase();
+  if (lower.startsWith("t")) return "T";
+  if (lower.startsWith("z")) return "Z";
+  if (lower.startsWith("p")) return "P";
+  return value || "?";
+}
+
 function hmCoachPriorityLabel(index: number) {
   if (index === 0) return "이번 판에서 바로 고칠 것";
   if (index === 1) return "다음 판에 이렇게 하세요";
@@ -1565,6 +1824,8 @@ function CoachReport({
       {hmCoach ? <HmCoachPerspectiveTabs result={result} activePlayerId={hmCoachPlayerId} onChange={onHmCoachPlayerChange} /> : null}
       {hmCoach ? <HmCoachBridgeReport hmCoach={hmCoach} /> : null}
       {!hmCoach && hmCoachError ? <div className="ai-error-line" role="status">추가 코칭 생성 실패: {hmCoachError}</div> : null}
+
+      <V2AnalysisReport result={result} players={players} coach={coach} hmCoach={hmCoach} />
 
       {hasHmCoach ? (
         <details className="ai-coach-supporting-evidence">
@@ -4901,6 +5162,9 @@ async function downloadPdf(result: AnalyzeSuccess, players: ReplayPlayer[], sele
 
 function renderHmCoachPdfReportImages(result: AnalyzeSuccess, hmCoach: HmCoachBridgeResult) {
   const pages: string[] = [];
+  const players = result.players.filter((player) => !player.observer);
+  const coach = buildCoachInsights(result, players);
+  const v2Data = buildV2ReportData(result, players, coach, hmCoach);
   const feedback = (hmCoach.feedbackItems.length ? hmCoach.feedbackItems : hmCoach.coachInput.coaching?.feedbackItems ?? []).slice(0, 3);
   const nextGuide = (hmCoach.nextGameGuide.length ? hmCoach.nextGameGuide : hmCoach.coachInput.coaching?.nextGameGuide ?? []).slice(0, 4);
   let page = createPdfPage(1);
@@ -4929,6 +5193,9 @@ function renderHmCoachPdfReportImages(result: AnalyzeSuccess, hmCoach: HmCoachBr
     drawHmCoachNextGuide(page, nextGuide);
   }
 
+  finishPdfPage(page, pages);
+  page = createPdfPage(page.pageNumber + 1);
+  drawV2PdfReportSummary(page, v2Data);
   finishPdfPage(page, pages);
   return pages;
 }
@@ -4985,6 +5252,125 @@ function drawHmCoachPdfCover(page: PdfPage, result: AnalyzeSuccess, hmCoach: HmC
 
   drawHmCoachPdfBriefing(page, firstNext);
   page.y += 28;
+}
+
+function drawV2PdfReportSummary(page: PdfPage, data: V2ReportData) {
+  const { ctx } = page;
+  drawPdfSectionTitle(page, "V2 분석 보고서", "코칭 결론 뒤에 보는 경기 분석");
+  page.y += 18;
+
+  drawV2PdfTileGrid(page, data.basicInfo.slice(0, 6), 3);
+  page.y += 18;
+  drawV2PdfScoreGrid(page, data.scores.slice(0, 4));
+  page.y += 18;
+
+  const summaryHeight = 184;
+  drawPdfRoundRect(ctx, PDF_MARGIN, page.y, PDF_CONTENT_WIDTH, summaryHeight, 16, "#ffffff", PDF_COLORS.line);
+  setPdfFont(ctx, 19, 900);
+  ctx.fillStyle = PDF_COLORS.gold;
+  ctx.fillText("AI 한 줄 총평", PDF_MARGIN + 24, page.y + 24);
+  setPdfFont(ctx, 24, 800);
+  ctx.fillStyle = PDF_COLORS.ink;
+  const oneLineEnd = drawPdfWrappedText(ctx, data.oneLine, PDF_MARGIN + 24, page.y + 58, PDF_CONTENT_WIDTH - 48, 31, 2);
+  setPdfFont(ctx, 19, 900);
+  ctx.fillStyle = PDF_COLORS.blue;
+  ctx.fillText("경기 흐름 요약", PDF_MARGIN + 24, oneLineEnd + 22);
+  setPdfFont(ctx, 21, 600);
+  ctx.fillStyle = PDF_COLORS.slate;
+  drawPdfWrappedText(ctx, data.flowSummary, PDF_MARGIN + 24, oneLineEnd + 56, PDF_CONTENT_WIDTH - 48, 28, 2);
+  page.y += summaryHeight + 22;
+
+  drawV2PdfListSection(page, "잘한 점", data.strengths.slice(0, 2));
+  page.y += 16;
+  drawV2PdfListSection(page, "핵심 문제 TOP 3", data.problems.slice(0, 3));
+
+  if (page.y + 250 > PDF_CANVAS_HEIGHT - 92) return;
+  page.y += 18;
+  drawV2PdfDetailRows(page, data.detailSections.slice(0, 6));
+}
+
+function drawV2PdfTileGrid(page: PdfPage, items: Array<{ label: string; value: string | number }>, columns: number) {
+  const { ctx } = page;
+  const gap = 12;
+  const tileWidth = (PDF_CONTENT_WIDTH - gap * (columns - 1)) / columns;
+  const tileHeight = 82;
+  items.forEach((item, index) => {
+    const col = index % columns;
+    const row = Math.floor(index / columns);
+    const x = PDF_MARGIN + col * (tileWidth + gap);
+    const y = page.y + row * (tileHeight + gap);
+    drawPdfRoundRect(ctx, x, y, tileWidth, tileHeight, 12, "#ffffff", PDF_COLORS.line);
+    setPdfFont(ctx, 15, 900);
+    ctx.fillStyle = PDF_COLORS.muted;
+    ctx.fillText(item.label, x + 16, y + 18);
+    setPdfFont(ctx, 22, 900);
+    ctx.fillStyle = PDF_COLORS.ink;
+    drawPdfWrappedText(ctx, String(item.value), x + 16, y + 45, tileWidth - 32, 26, 1);
+  });
+  page.y += Math.ceil(items.length / columns) * tileHeight + Math.max(0, Math.ceil(items.length / columns) - 1) * gap;
+}
+
+function drawV2PdfScoreGrid(page: PdfPage, items: Array<{ label: string; value: string | number; detail: string }>) {
+  const { ctx } = page;
+  const gap = 12;
+  const columns = 2;
+  const tileWidth = (PDF_CONTENT_WIDTH - gap) / columns;
+  const tileHeight = 128;
+  items.forEach((item, index) => {
+    const x = PDF_MARGIN + (index % columns) * (tileWidth + gap);
+    const y = page.y + Math.floor(index / columns) * (tileHeight + gap);
+    drawPdfRoundRect(ctx, x, y, tileWidth, tileHeight, 14, "#ffffff", index === 0 ? PDF_COLORS.gold : PDF_COLORS.line);
+    setPdfFont(ctx, 16, 900);
+    ctx.fillStyle = PDF_COLORS.blue;
+    ctx.fillText(item.label, x + 18, y + 20);
+    setPdfFont(ctx, 30, 900);
+    ctx.fillStyle = PDF_COLORS.ink;
+    ctx.fillText(String(item.value), x + 18, y + 58);
+    setPdfFont(ctx, 18, 600);
+    ctx.fillStyle = PDF_COLORS.slate;
+    drawPdfWrappedText(ctx, item.detail, x + 18, y + 88, tileWidth - 36, 23, 1);
+  });
+  page.y += Math.ceil(items.length / columns) * tileHeight + Math.max(0, Math.ceil(items.length / columns) - 1) * gap;
+}
+
+function drawV2PdfListSection(page: PdfPage, title: string, items: Array<{ title: string; body: string }>) {
+  const { ctx } = page;
+  setPdfFont(ctx, 22, 900);
+  ctx.fillStyle = PDF_COLORS.gold;
+  ctx.fillText(title, PDF_MARGIN, page.y);
+  page.y += 34;
+  for (const item of items) {
+    setPdfFont(ctx, 21, 900);
+    ctx.fillStyle = PDF_COLORS.ink;
+    const titleEnd = drawPdfWrappedText(ctx, item.title, PDF_MARGIN, page.y, PDF_CONTENT_WIDTH, 27, 1);
+    setPdfFont(ctx, 19, 600);
+    ctx.fillStyle = PDF_COLORS.slate;
+    page.y = drawPdfWrappedText(ctx, item.body, PDF_MARGIN + 18, titleEnd + 8, PDF_CONTENT_WIDTH - 18, 24, 2) + 12;
+  }
+}
+
+function drawV2PdfDetailRows(page: PdfPage, sections: Array<{ title: string; headline: string; body: string }>) {
+  const { ctx } = page;
+  setPdfFont(ctx, 22, 900);
+  ctx.fillStyle = PDF_COLORS.blue;
+  ctx.fillText("세부 분석", PDF_MARGIN, page.y);
+  page.y += 34;
+  const gap = 10;
+  const columns = 2;
+  const rowWidth = (PDF_CONTENT_WIDTH - gap) / columns;
+  const rowHeight = 92;
+  sections.forEach((section, index) => {
+    const x = PDF_MARGIN + (index % columns) * (rowWidth + gap);
+    const y = page.y + Math.floor(index / columns) * (rowHeight + gap);
+    drawPdfRoundRect(ctx, x, y, rowWidth, rowHeight, 12, "#ffffff", PDF_COLORS.line);
+    setPdfFont(ctx, 14, 900);
+    ctx.fillStyle = PDF_COLORS.gold;
+    ctx.fillText(section.title, x + 14, y + 16);
+    setPdfFont(ctx, 20, 900);
+    ctx.fillStyle = PDF_COLORS.ink;
+    drawPdfWrappedText(ctx, section.headline, x + 14, y + 44, rowWidth - 28, 23, 1);
+  });
+  page.y += Math.ceil(sections.length / columns) * rowHeight + Math.max(0, Math.ceil(sections.length / columns) - 1) * gap;
 }
 
 function drawHmCoachPdfMetaTiles(page: PdfPage, metrics: Array<{ label: string; value: string }>) {
