@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -36,7 +37,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	r.Body = http.MaxBytesReader(w, r.Body, maxReplaySize+1024)
 	if err := r.ParseMultipartForm(2 << 20); err != nil {
-		writeError(w, http.StatusBadRequest, "FILE_TOO_LARGE", "업로드 가능한 리플레이 크기를 초과했습니다.", nil)
+		if isTooLargeUpload(err) {
+			writeError(w, http.StatusBadRequest, "FILE_TOO_LARGE", "업로드 가능한 리플레이 크기를 초과했습니다.", nil)
+			return
+		}
+		writeError(w, http.StatusBadRequest, "INVALID_REPLAY", "분석할 리플레이 파일을 다시 선택해 주세요.", err)
 		return
 	}
 
@@ -95,6 +100,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		compactAnalysisResult(result)
 	}
 	writeJSON(w, http.StatusOK, result)
+}
+
+func isTooLargeUpload(err error) bool {
+	var maxBytesError *http.MaxBytesError
+	return errors.As(err, &maxBytesError)
 }
 
 func compactAnalysisResult(result *replayanalyzer.SuccessResponse) {
