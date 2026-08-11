@@ -470,6 +470,58 @@ type AnalyzeResponse = AnalyzeSuccess | { success: false; error: ApiError };
 type QueueStatus = "QUEUED" | "VALIDATING" | "PARSING" | "COMPLETED" | "FAILED";
 type ReportTab = "OVERVIEW" | "ECONOMY" | "CONTROL" | "TIMING" | "BUILD" | "STRATEGY" | "COACH" | "EVIDENCE";
 
+type HmCoachFeedbackItem = {
+  number?: number;
+  label?: string;
+  title: string;
+  detail: string;
+  next?: string;
+};
+
+type HmCoachInput = {
+  match?: {
+    map?: string;
+    durationLabel?: string;
+  };
+  perspective?: {
+    player?: string;
+    opponent?: string;
+    matchup?: string;
+    resultLabel?: string;
+  };
+  dataContext?: {
+    sampleSize?: number;
+    confidenceLabel?: string;
+    myStrategyFocus?: string;
+    opponentStrategyFocus?: string;
+  };
+  coaching?: {
+    headline?: string;
+    verdict?: string;
+    feedbackItems?: HmCoachFeedbackItem[];
+    nextGameGuide?: string[];
+    limitationNote?: string;
+  };
+};
+
+type HmCoachBridgeResult = {
+  ok: true;
+  source: string;
+  coachInput: HmCoachInput;
+  aiPrompt: string;
+  feedbackItems: HmCoachFeedbackItem[];
+  nextGameGuide: string[];
+  summary: {
+    map?: string;
+    matchup?: string;
+    result?: string;
+    confidence?: string;
+    feedbackCount?: number;
+  };
+};
+
+type HmCoachBridgeResponse = HmCoachBridgeResult | { ok: false; error: string; coachStatus?: number };
+
 type CoachSeverity = "HIGH" | "MEDIUM" | "INFO";
 
 type CoachMoment = {
@@ -593,6 +645,12 @@ export function AiToolsPage() {
   const [activeTab, setActiveTab] = useState<ReportTab>("COACH");
   const [activeReportId, setActiveReportId] = useState<string | null>(null);
   const [winConditionModel, setWinConditionModel] = useState<WinConditionModel | null>(null);
+  const [hmCoachReplayId, setHmCoachReplayId] = useState("");
+  const [hmCoachPerspective, setHmCoachPerspective] = useState<"1" | "2">("1");
+  const [hmCoachJson, setHmCoachJson] = useState("");
+  const [hmCoachStatus, setHmCoachStatus] = useState<"IDLE" | "LOADING" | "READY" | "FAILED">("IDLE");
+  const [hmCoachError, setHmCoachError] = useState<string | null>(null);
+  const [hmCoachResult, setHmCoachResult] = useState<HmCoachBridgeResult | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -689,6 +747,40 @@ export function AiToolsPage() {
     }
     for (const item of targets) {
       await analyzeItem(item);
+    }
+  }
+
+  async function loadHmCoachReport() {
+    setHmCoachError(null);
+    setHmCoachStatus("LOADING");
+    try {
+      let body: { replayId?: string; perspective?: "1" | "2"; coachInput?: HmCoachInput };
+      if (hmCoachJson.trim()) {
+        body = { coachInput: JSON.parse(hmCoachJson.trim()) as HmCoachInput };
+      } else {
+        body = { replayId: hmCoachReplayId.trim(), perspective: hmCoachPerspective };
+      }
+
+      const response = await fetch("/api/hm-coach/analyze", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+      const payload = (await response.json()) as HmCoachBridgeResponse;
+      if (!payload.ok) {
+        setHmCoachStatus("FAILED");
+        setHmCoachError(payload.error || "HM 코치 엔진에서 결과를 가져오지 못했습니다.");
+        return;
+      }
+      setHmCoachResult(payload);
+      setHmCoachStatus("READY");
+      setActiveTab("COACH");
+      window.requestAnimationFrame(() => scrollToReportPanel());
+    } catch (nextError) {
+      setHmCoachStatus("FAILED");
+      setHmCoachError(nextError instanceof Error ? nextError.message : "HM 코치 엔진 연결에 실패했습니다.");
     }
   }
 
@@ -862,11 +954,61 @@ export function AiToolsPage() {
               </button>
             </section>
 
+            <section className="ai-upload-panel ai-hm-coach-bridge" aria-labelledby="hm-coach-bridge-title">
+              <div className="ai-panel-head">
+                <div>
+                  <div className="panel-kicker">HM COACH BRIDGE</div>
+                  <h2 id="hm-coach-bridge-title">콜렉터 코칭 불러오기</h2>
+                </div>
+                <strong>ID</strong>
+              </div>
+              <p className="ai-scope-note">로컬에서 HM 코치 엔진이 켜져 있으면 리플레이 ID로 바로 불러옵니다. Vercel에서는 export JSON을 붙여넣어 같은 코칭 카드를 볼 수 있습니다.</p>
+              <div className="ai-hm-coach-form">
+                <label>
+                  <span>리플레이 ID</span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="예: 2867"
+                    value={hmCoachReplayId}
+                    onChange={(event) => setHmCoachReplayId(event.target.value)}
+                  />
+                </label>
+                <label>
+                  <span>관점</span>
+                  <select value={hmCoachPerspective} onChange={(event) => setHmCoachPerspective(event.target.value === "2" ? "2" : "1")}>
+                    <option value="1">P1 관점</option>
+                    <option value="2">P2 관점</option>
+                  </select>
+                </label>
+                <label className="ai-hm-coach-json">
+                  <span>export JSON 붙여넣기</span>
+                  <textarea
+                    placeholder="로컬 코치 엔진에서 export한 star-hm-coach JSON을 붙여넣으면 운영 서버에서도 볼 수 있습니다."
+                    value={hmCoachJson}
+                    onChange={(event) => setHmCoachJson(event.target.value)}
+                  />
+                </label>
+              </div>
+              {hmCoachError ? <div className="ai-error-line" role="status">{hmCoachError}</div> : null}
+              {hmCoachStatus === "READY" && hmCoachResult ? (
+                <div className="ai-progress">
+                  <strong>{hmCoachResult.summary.map ?? "HM 코칭"} 연결됨</strong>
+                  <p>{hmCoachResult.summary.matchup ?? "매치업 확인"} · 피드백 {hmCoachResult.summary.feedbackCount ?? hmCoachResult.feedbackItems.length}개</p>
+                </div>
+              ) : null}
+              <button className="command-button command-button-primary ai-analyze-button" type="button" disabled={hmCoachStatus === "LOADING"} onClick={() => void loadHmCoachReport()}>
+                {hmCoachStatus === "LOADING" ? "불러오는 중" : "HM 코칭 불러오기"}
+              </button>
+            </section>
+
           </div>
 
-          <section ref={reportPanelRef} className={selectedReport ? "ai-report-panel" : "ai-report-panel is-empty"} aria-labelledby="report-title" tabIndex={-1}>
-            {!selectedReport ? (
+          <section ref={reportPanelRef} className={selectedReport || hmCoachResult ? "ai-report-panel" : "ai-report-panel is-empty"} aria-labelledby="report-title" tabIndex={-1}>
+            {!selectedReport && !hmCoachResult ? (
               <EmptyReport />
+            ) : !selectedReport && hmCoachResult ? (
+              <StandaloneHmCoachReport hmCoach={hmCoachResult} />
             ) : (
               <>
                 <div className="ai-report-head">
@@ -905,7 +1047,7 @@ export function AiToolsPage() {
                   ))}
                 </div>
 
-                {activeTab === "COACH" ? <CoachReport result={selectedReport} players={players} replayFile={selectedQueueItem?.file ?? null} winConditionModel={winConditionModel} /> : null}
+                {activeTab === "COACH" ? <CoachReport result={selectedReport} players={players} replayFile={selectedQueueItem?.file ?? null} winConditionModel={winConditionModel} hmCoach={hmCoachResult} /> : null}
                 {activeTab === "OVERVIEW" ? <OverviewReport result={selectedReport} players={players} winConditionModel={winConditionModel} /> : null}
                 {activeTab === "ECONOMY" ? <ProductionReportView result={selectedReport} /> : null}
                 {activeTab === "CONTROL" ? <ControlReportView result={selectedReport} players={players} /> : null}
@@ -956,6 +1098,88 @@ function EmptyReport() {
         </div>
       </div>
     </div>
+  );
+}
+
+function StandaloneHmCoachReport({ hmCoach }: { hmCoach: HmCoachBridgeResult }) {
+  const input = hmCoach.coachInput;
+  return (
+    <>
+      <div className="ai-report-head">
+        <div>
+          <span className="panel-kicker">HM COACH ENGINE</span>
+          <h2 id="report-title">{input.match?.map ?? "HM 코칭 리포트"}</h2>
+          <p>
+            {input.perspective?.matchup ?? "매치업"} · {input.perspective?.resultLabel ?? "결과 확인"} · {input.match?.durationLabel ?? "시간 확인"}
+          </p>
+        </div>
+        <div className="ai-report-actions">
+          <button className="command-button" type="button" onClick={() => downloadHmCoachJson(hmCoach)}>
+            JSON 다운로드
+          </button>
+        </div>
+      </div>
+      <HmCoachBridgeReport hmCoach={hmCoach} />
+    </>
+  );
+}
+
+function HmCoachBridgeReport({ hmCoach }: { hmCoach: HmCoachBridgeResult }) {
+  const input = hmCoach.coachInput;
+  const feedback = hmCoach.feedbackItems.length ? hmCoach.feedbackItems : input.coaching?.feedbackItems ?? [];
+  const nextGuide = hmCoach.nextGameGuide.length ? hmCoach.nextGameGuide : input.coaching?.nextGameGuide ?? [];
+  return (
+    <section className="ai-hm-coach-report">
+      <div className="ai-hm-coach-report-head">
+        <div>
+          <span className="panel-kicker">이번 판 피드백</span>
+          <h3>{input.coaching?.headline ?? "이번 판에서 못한 부분"}</h3>
+          <p>
+            {input.coaching?.verdict ?? "상대 빌드명보다, 화면에 보이는 내 유닛이 어디서 무엇을 했어야 하는지부터 봅니다."}
+          </p>
+        </div>
+        <strong>{feedback.length}개</strong>
+      </div>
+
+      <div className="ai-hm-coach-meta-grid">
+        <Metric label="맵" value={input.match?.map ?? "-"} />
+        <Metric label="관점" value={input.perspective?.matchup ?? "-"} />
+        <Metric label="샘플" value={input.dataContext?.sampleSize ?? "-"} />
+        <Metric label="신뢰도" value={input.dataContext?.confidenceLabel ?? "-"} />
+      </div>
+
+      <div className="ai-hm-feedback-list">
+        {feedback.map((item, index) => (
+          <article key={`${item.title}-${index}`} className={index === 0 ? "is-primary" : ""}>
+            <div>
+              <span>{item.number ?? index + 1}</span>
+              <small>{index === 0 ? "가장 먼저 고칠 것" : "다음으로 고칠 것"}</small>
+            </div>
+            <section>
+              <h4>{item.title}</h4>
+              <p>{item.detail}</p>
+              {item.next ? (
+                <div className="ai-hm-next-line">
+                  <strong>다음 판에는</strong>
+                  <span>{item.next}</span>
+                </div>
+              ) : null}
+            </section>
+          </article>
+        ))}
+      </div>
+
+      {nextGuide.length ? (
+        <section className="ai-hm-next-guide">
+          <span className="panel-kicker">다음 게임 실행 순서</span>
+          <ol>
+            {nextGuide.map((item, index) => (
+              <li key={`${item}-${index}`}>{item}</li>
+            ))}
+          </ol>
+        </section>
+      ) : null}
+    </section>
   );
 }
 
@@ -1247,7 +1471,19 @@ function WinConditionPanel({ result, players, model }: { result: AnalyzeSuccess;
   );
 }
 
-function CoachReport({ result, players, replayFile, winConditionModel }: { result: AnalyzeSuccess; players: ReplayPlayer[]; replayFile: File | null; winConditionModel: WinConditionModel | null }) {
+function CoachReport({
+  result,
+  players,
+  replayFile,
+  winConditionModel,
+  hmCoach,
+}: {
+  result: AnalyzeSuccess;
+  players: ReplayPlayer[];
+  replayFile: File | null;
+  winConditionModel: WinConditionModel | null;
+  hmCoach: HmCoachBridgeResult | null;
+}) {
   const coach = buildCoachInsights(result, players);
   const [viewerSeekMs, setViewerSeekMs] = useState<number | null>(null);
   const firstProblem = [...coach.moments]
@@ -1278,6 +1514,8 @@ function CoachReport({ result, players, replayFile, winConditionModel }: { resul
           <span>리포트 점수</span>
         </div>
       </section>
+
+      {hmCoach ? <HmCoachBridgeReport hmCoach={hmCoach} /> : null}
 
       <WinConditionPanel result={result} players={players} model={winConditionModel} />
 
@@ -5133,6 +5371,16 @@ function downloadJson(result: AnalyzeSuccess) {
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = `hm-ai-analysis-${safeFilePart(result.replay.fileName)}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function downloadHmCoachJson(result: HmCoachBridgeResult) {
+  const blob = new Blob([JSON.stringify(result.coachInput, null, 2)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `hm-coach-${safeFilePart(result.summary.map ?? "replay")}-${safeFilePart(result.summary.matchup ?? "matchup")}.json`;
   anchor.click();
   URL.revokeObjectURL(url);
 }
