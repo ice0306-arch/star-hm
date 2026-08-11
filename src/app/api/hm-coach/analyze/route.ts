@@ -375,11 +375,14 @@ function collectUnitHints(result: AnalyzeSuccessInput, playerId: string) {
     ["리버", ["reaver"]],
     ["커세어", ["corsair"]],
     ["하이템플러", ["high templar"]],
+    ["오버로드", ["overlord"]],
     ["저글링", ["zergling"]],
+    ["드론", ["drone"]],
     ["뮤탈", ["mutalisk"]],
     ["스커지", ["scourge"]],
     ["히드라", ["hydralisk"]],
     ["럴커", ["lurker"]],
+    ["레이스", ["wraith"]],
   ];
   return labels.filter(([, tokens]) => tokens.some((token) => chunks.includes(token))).map(([label]) => label);
 }
@@ -427,7 +430,11 @@ function matchupCoachItems({
   const context = evidenceLine(evidence);
   const hasOwnUnit = (...units: string[]) => units.some((unit) => evidence.unitHints.includes(unit));
   const hasOpponentUnit = (...units: string[]) => units.some((unit) => evidence.opponentUnitHints.includes(unit));
-  const withFallback = (items: StarHmFeedbackItem[]) => items.length ? items : [genericEvidenceCoachItem(playerName, opponentName, matchup, context)];
+  const hasAnyUnit = (...units: string[]) => units.some((unit) => evidence.unitHints.includes(unit) || evidence.opponentUnitHints.includes(unit));
+  const withFallback = (items: StarHmFeedbackItem[]) => {
+    const supportedItems = items.filter((item) => coachItemUsesOnlyConfirmedUnits(item, hasAnyUnit));
+    return supportedItems.length ? supportedItems : [genericEvidenceCoachItem(playerName, opponentName, matchup, context)];
+  };
   const protossTankFightSequence = () => {
     const steps = ["탱크 자리 확인"];
     if (hasOwnUnit("질럿")) steps.push("질럿이 먼저 맞아주기");
@@ -441,15 +448,15 @@ function matchupCoachItems({
     if (hasOwnUnit("탱크") && hasOpponentUnit("드라군", "질럿")) {
       items.push({
         title: "이번 판에서는 탱크가 먼저 나가기보다 자리를 먼저 잡았어야 했어",
-        detail: `${playerName}은 ${opponentName}의 드라군/질럿이 들어오는 각을 먼저 끊고, 벌처 마인으로 길목을 잠근 뒤 탱크를 시즈했어야 했어. 탱크가 앞으로 걸어 나가면 드라군 사거리와 질럿 진입 각을 동시에 내줍니다.${context}`,
-        next: "다음 판에는 벌처로 앞 경로에 마인을 먼저 깔고, 탱크는 한 줄씩만 전진시키면서 드라군이 때릴 수 없는 언덕/좁은 길부터 잡으세요.",
+        detail: `${playerName}은 ${opponentName}의 드라군/질럿이 들어오는 각을 먼저 끊고, 길목을 확인한 뒤 탱크를 시즈했어야 했어. 탱크가 앞으로 걸어 나가면 드라군 사거리와 질럿 진입 각을 동시에 내줍니다.${context}`,
+        next: "다음 판에는 앞 경로를 먼저 확인하고, 탱크는 한 줄씩만 전진시키면서 드라군이 때릴 수 없는 언덕/좁은 길부터 잡으세요.",
       });
     }
     if (hasOwnUnit("벌처") && hasOwnUnit("탱크")) {
       items.push({
         title: "이번 판에서는 벌처를 탱크 앞에서 죽이지 말고 상대 이동을 막는 데 썼어야 했어",
         detail: "벌처는 데미지를 넣는 유닛이라기보다 드라군 이동을 늦추고 질럿 돌파 각을 막는 유닛입니다. 탱크 정면에 던지면 마인을 못 깔고 사라져서 탱크가 바로 노출됩니다.",
-        next: "다음 판에는 벌처 시야 → 마인으로 길목 잠금 → 탱크 시즈 → 스타포트/드랍 체크 순서로 보세요.",
+        next: "다음 판에는 벌처 시야 → 마인으로 길목 잠금 → 탱크 시즈 → 다음 전진 경로 확인 순서로 보세요.",
       });
     }
     return withFallback(items);
@@ -498,7 +505,7 @@ function matchupCoachItems({
     if (hasOwnUnit("커세어")) {
       items.push({
         title: "이번 판에서는 커세어가 잡는 것보다 보는 역할을 먼저 했어야 했어",
-        detail: `${playerName}은 커세어를 띄웠다면 오버로드를 몇 기 잡았는지보다, 저그 병력이 어느 방향으로 나오는지 먼저 확인했어야 했어. 커세어가 시야를 주지 못하면 본진과 앞마당 방어 준비가 늦어집니다.${context}`,
+        detail: `${playerName}은 커세어를 띄웠다면 킬 수보다, 저그 병력이 어느 방향으로 나오는지 먼저 확인했어야 했어. 커세어가 시야를 주지 못하면 본진과 앞마당 방어 준비가 늦어집니다.${context}`,
         next: "다음 판에는 커세어를 잡는 유닛보다 시야 유닛으로 먼저 쓰고, 상대 병력이 출발하는 방향을 확인한 뒤 방어 위치를 잡으세요.",
       });
     }
@@ -517,7 +524,7 @@ function matchupCoachItems({
     if (hasOwnUnit("마린")) {
       items.push({
         title: "이번 판에서는 마린이 열린 공간으로 길게 나가기보다 방어선 안에서 싸웠어야 했어",
-        detail: `${playerName}은 마린을 밖으로 길게 끌고 나가기보다 벙커, 터렛, 생산 건물 근처처럼 다시 합류하기 쉬운 자리에서 싸웠어야 했어. 마린이 열린 공간으로 벌어지면 후속 병력과 합류가 늦어집니다.${context}`,
+        detail: `${playerName}은 마린을 밖으로 길게 끌고 나가기보다 후속 병력과 다시 합류하기 쉬운 자리에서 싸웠어야 했어. 마린이 열린 공간으로 벌어지면 후속 병력과 합류가 늦어집니다.${context}`,
         next: "다음 판에는 마린은 방어선 안에서 먼저 모으고, 후속 병력이 붙기 전까지 중앙으로 길게 나가지 마세요.",
       });
     }
@@ -562,7 +569,7 @@ function matchupCoachItems({
     if (hasOwnUnit("뮤탈") && hasOwnUnit("스커지")) {
       items.push({
         title: "이번 판에서는 뮤탈 싸움 전에 스커지를 옆 각으로 보냈어야 했어",
-        detail: "뮤탈끼리 정면으로만 싸우면 숫자 싸움이 됩니다. 스커지를 옆으로 보내 상대 뮤탈 움직임을 제한하고, 내 뮤탈은 드론 피해를 낸 뒤 잃지 않고 빠졌어야 합니다.",
+        detail: "뮤탈끼리 정면으로만 싸우면 숫자 싸움이 됩니다. 스커지를 옆으로 보내 상대 뮤탈 움직임을 제한하고, 내 뮤탈은 빈 곳을 흔든 뒤 잃지 않고 빠졌어야 합니다.",
         next: "다음 판에는 뮤탈 출발 방향 확인 → 스커지 옆 각 → 피해 후 이탈 순서로 보세요.",
       });
     }
@@ -598,8 +605,8 @@ function matchupCoachItems({
     if (hasOwnUnit("탱크") && hasOpponentUnit("탱크")) {
       items.push({
         title: "이번 판에서는 탱크가 먼저 많이 나가기보다 자리를 먼저 잡았어야 했어",
-        detail: `${playerName}은 탱크를 한 번에 전진시키기보다 벌처 시야와 마인으로 길목을 잠그고 시즈 라인을 먼저 만들었어야 했어. 탱크가 자리 없이 걸어가면 상대 탱크 첫 포격에 라인이 무너집니다.${context}`,
-        next: "다음 판에는 벌처 시야 → 마인 길목 잠금 → 탱크 한 줄 시즈 → 레이스/드랍 체크 순서로 전진하세요.",
+        detail: `${playerName}은 탱크를 한 번에 전진시키기보다 길목을 확인하고 시즈 라인을 먼저 만들었어야 했어. 탱크가 자리 없이 걸어가면 상대 탱크 첫 포격에 라인이 무너집니다.${context}`,
+        next: "다음 판에는 전진 경로 확인 → 탱크 한 줄 시즈 → 다음 전진 경로 확인 순서로 전진하세요.",
       });
     }
     if (hasOwnUnit("벌처") && hasOwnUnit("탱크")) {
@@ -627,6 +634,33 @@ function genericEvidenceCoachItem(playerName: string, opponentName: string, matc
     detail: `${playerName}은 ${opponentName}과의 ${matchup}에서 특정 유닛 빌드명을 맞히기보다, 실제 기록에 보인 병력이 어디에서 시작했고 어디로 빠졌는지를 먼저 봐야 했어. 앞에서 맞아줄 병력과 뒤에서 때릴 병력이 나뉘지 않으면 첫 교전 판단이 계속 늦어집니다.${context}`,
     next: "다음 판에는 첫 교전 직전 내 병력이 앞에서 맞을 유닛과 뒤에서 때릴 유닛으로 나뉘어 있는지 확인하세요.",
   };
+}
+
+function coachItemUsesOnlyConfirmedUnits(item: StarHmFeedbackItem, hasAnyUnit: (...units: string[]) => boolean) {
+  const text = `${item.title} ${item.detail} ${item.next ?? ""}`;
+  const unitRules: Array<{ pattern: RegExp; units: string[] }> = [
+    { pattern: /탱크|시즈/, units: ["탱크"] },
+    { pattern: /벌처/, units: ["벌처"] },
+    { pattern: /마인/, units: ["벌처"] },
+    { pattern: /마린/, units: ["마린"] },
+    { pattern: /메딕/, units: ["메딕"] },
+    { pattern: /드라군/, units: ["드라군"] },
+    { pattern: /질럿/, units: ["질럿"] },
+    { pattern: /셔틀/, units: ["셔틀"] },
+    { pattern: /리버/, units: ["리버"] },
+    { pattern: /커세어/, units: ["커세어"] },
+    { pattern: /하이\s*템플러|하이템플러|템플러/, units: ["하이템플러"] },
+    { pattern: /오버로드/, units: ["오버로드"] },
+    { pattern: /저글링/, units: ["저글링"] },
+    { pattern: /드론/, units: ["드론"] },
+    { pattern: /뮤탈/, units: ["뮤탈"] },
+    { pattern: /스커지/, units: ["스커지"] },
+    { pattern: /히드라/, units: ["히드라"] },
+    { pattern: /럴커|러커/, units: ["럴커"] },
+    { pattern: /레이스/, units: ["레이스"] },
+  ];
+
+  return unitRules.every((rule) => !rule.pattern.test(text) || hasAnyUnit(...rule.units));
 }
 
 function raceCode(value?: string) {
