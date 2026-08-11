@@ -464,6 +464,8 @@ type AnalyzeSuccess = {
     }>;
     cautions: string[];
   };
+  hmCoach?: HmCoachBridgeResult | null;
+  hmCoachError?: string | null;
 };
 
 type AnalyzeResponse = AnalyzeSuccess | { success: false; error: ApiError };
@@ -635,6 +637,37 @@ const tabMeta: Record<ReportTab, { label: string; hint: string }> = {
   EVIDENCE: { label: "근거", hint: "세부 기록" },
 };
 
+async function attachHmCoachToAnalysis(result: AnalyzeSuccess): Promise<AnalyzeSuccess> {
+  try {
+    const response = await fetch("/api/hm-coach/analyze", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ analysisResult: result }),
+    });
+    const payload = (await response.json()) as HmCoachBridgeResponse;
+    if (!response.ok || !payload.ok) {
+      return {
+        ...result,
+        hmCoach: null,
+        hmCoachError: payload.ok === false ? payload.error : "HM 코칭 결과를 만들지 못했습니다.",
+      };
+    }
+    return {
+      ...result,
+      hmCoach: payload,
+      hmCoachError: null,
+    };
+  } catch (error) {
+    return {
+      ...result,
+      hmCoach: null,
+      hmCoachError: error instanceof Error ? error.message : "HM 코칭 결과를 만들지 못했습니다.",
+    };
+  }
+}
+
 export function AiToolsPage() {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const uploadPanelRef = useRef<HTMLElement | null>(null);
@@ -645,12 +678,6 @@ export function AiToolsPage() {
   const [activeTab, setActiveTab] = useState<ReportTab>("COACH");
   const [activeReportId, setActiveReportId] = useState<string | null>(null);
   const [winConditionModel, setWinConditionModel] = useState<WinConditionModel | null>(null);
-  const [hmCoachReplayId, setHmCoachReplayId] = useState("");
-  const [hmCoachPerspective, setHmCoachPerspective] = useState<"1" | "2">("1");
-  const [hmCoachJson, setHmCoachJson] = useState("");
-  const [hmCoachStatus, setHmCoachStatus] = useState<"IDLE" | "LOADING" | "READY" | "FAILED">("IDLE");
-  const [hmCoachError, setHmCoachError] = useState<string | null>(null);
-  const [hmCoachResult, setHmCoachResult] = useState<HmCoachBridgeResult | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -729,7 +756,14 @@ export function AiToolsPage() {
         setError(payload.error.message);
         return;
       }
-      updateQueueItem(item.id, { status: "COMPLETED", message: "분석 완료", result: payload, error: undefined });
+      updateQueueItem(item.id, { status: "PARSING", message: "기본 분석 완료, HM 코칭 생성 중" });
+      const resultWithCoach = await attachHmCoachToAnalysis(payload);
+      updateQueueItem(item.id, {
+        status: "COMPLETED",
+        message: resultWithCoach.hmCoach ? "분석 완료 · HM 코칭 포함" : resultWithCoach.hmCoachError ? "분석 완료 · 추가 코칭 생성 실패" : "분석 완료",
+        result: resultWithCoach,
+        error: undefined,
+      });
       setActiveReportId(item.id);
       setActiveTab("COACH");
       window.requestAnimationFrame(() => scrollToReportPanel());
@@ -747,40 +781,6 @@ export function AiToolsPage() {
     }
     for (const item of targets) {
       await analyzeItem(item);
-    }
-  }
-
-  async function loadHmCoachReport() {
-    setHmCoachError(null);
-    setHmCoachStatus("LOADING");
-    try {
-      let body: { replayId?: string; perspective?: "1" | "2"; coachInput?: HmCoachInput };
-      if (hmCoachJson.trim()) {
-        body = { coachInput: JSON.parse(hmCoachJson.trim()) as HmCoachInput };
-      } else {
-        body = { replayId: hmCoachReplayId.trim(), perspective: hmCoachPerspective };
-      }
-
-      const response = await fetch("/api/hm-coach/analyze", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
-      const payload = (await response.json()) as HmCoachBridgeResponse;
-      if (!payload.ok) {
-        setHmCoachStatus("FAILED");
-        setHmCoachError(payload.error || "HM 코치 엔진에서 결과를 가져오지 못했습니다.");
-        return;
-      }
-      setHmCoachResult(payload);
-      setHmCoachStatus("READY");
-      setActiveTab("COACH");
-      window.requestAnimationFrame(() => scrollToReportPanel());
-    } catch (nextError) {
-      setHmCoachStatus("FAILED");
-      setHmCoachError(nextError instanceof Error ? nextError.message : "HM 코치 엔진 연결에 실패했습니다.");
     }
   }
 
@@ -954,61 +954,11 @@ export function AiToolsPage() {
               </button>
             </section>
 
-            <section className="ai-upload-panel ai-hm-coach-bridge" aria-labelledby="hm-coach-bridge-title">
-              <div className="ai-panel-head">
-                <div>
-                  <div className="panel-kicker">HM COACH BRIDGE</div>
-                  <h2 id="hm-coach-bridge-title">콜렉터 코칭 불러오기</h2>
-                </div>
-                <strong>ID</strong>
-              </div>
-              <p className="ai-scope-note">로컬에서 HM 코치 엔진이 켜져 있으면 리플레이 ID로 바로 불러옵니다. Vercel에서는 export JSON을 붙여넣어 같은 코칭 카드를 볼 수 있습니다.</p>
-              <div className="ai-hm-coach-form">
-                <label>
-                  <span>리플레이 ID</span>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    placeholder="예: 2867"
-                    value={hmCoachReplayId}
-                    onChange={(event) => setHmCoachReplayId(event.target.value)}
-                  />
-                </label>
-                <label>
-                  <span>관점</span>
-                  <select value={hmCoachPerspective} onChange={(event) => setHmCoachPerspective(event.target.value === "2" ? "2" : "1")}>
-                    <option value="1">P1 관점</option>
-                    <option value="2">P2 관점</option>
-                  </select>
-                </label>
-                <label className="ai-hm-coach-json">
-                  <span>export JSON 붙여넣기</span>
-                  <textarea
-                    placeholder="로컬 코치 엔진에서 export한 star-hm-coach JSON을 붙여넣으면 운영 서버에서도 볼 수 있습니다."
-                    value={hmCoachJson}
-                    onChange={(event) => setHmCoachJson(event.target.value)}
-                  />
-                </label>
-              </div>
-              {hmCoachError ? <div className="ai-error-line" role="status">{hmCoachError}</div> : null}
-              {hmCoachStatus === "READY" && hmCoachResult ? (
-                <div className="ai-progress">
-                  <strong>{hmCoachResult.summary.map ?? "HM 코칭"} 연결됨</strong>
-                  <p>{hmCoachResult.summary.matchup ?? "매치업 확인"} · 피드백 {hmCoachResult.summary.feedbackCount ?? hmCoachResult.feedbackItems.length}개</p>
-                </div>
-              ) : null}
-              <button className="command-button command-button-primary ai-analyze-button" type="button" disabled={hmCoachStatus === "LOADING"} onClick={() => void loadHmCoachReport()}>
-                {hmCoachStatus === "LOADING" ? "불러오는 중" : "HM 코칭 불러오기"}
-              </button>
-            </section>
-
           </div>
 
-          <section ref={reportPanelRef} className={selectedReport || hmCoachResult ? "ai-report-panel" : "ai-report-panel is-empty"} aria-labelledby="report-title" tabIndex={-1}>
-            {!selectedReport && !hmCoachResult ? (
+          <section ref={reportPanelRef} className={selectedReport ? "ai-report-panel" : "ai-report-panel is-empty"} aria-labelledby="report-title" tabIndex={-1}>
+            {!selectedReport ? (
               <EmptyReport />
-            ) : !selectedReport && hmCoachResult ? (
-              <StandaloneHmCoachReport hmCoach={hmCoachResult} />
             ) : (
               <>
                 <div className="ai-report-head">
@@ -1047,7 +997,16 @@ export function AiToolsPage() {
                   ))}
                 </div>
 
-                {activeTab === "COACH" ? <CoachReport result={selectedReport} players={players} replayFile={selectedQueueItem?.file ?? null} winConditionModel={winConditionModel} hmCoach={hmCoachResult} /> : null}
+                {activeTab === "COACH" ? (
+                  <CoachReport
+                    result={selectedReport}
+                    players={players}
+                    replayFile={selectedQueueItem?.file ?? null}
+                    winConditionModel={winConditionModel}
+                    hmCoach={selectedReport.hmCoach ?? null}
+                    hmCoachError={selectedReport.hmCoachError ?? null}
+                  />
+                ) : null}
                 {activeTab === "OVERVIEW" ? <OverviewReport result={selectedReport} players={players} winConditionModel={winConditionModel} /> : null}
                 {activeTab === "ECONOMY" ? <ProductionReportView result={selectedReport} /> : null}
                 {activeTab === "CONTROL" ? <ControlReportView result={selectedReport} players={players} /> : null}
@@ -1098,29 +1057,6 @@ function EmptyReport() {
         </div>
       </div>
     </div>
-  );
-}
-
-function StandaloneHmCoachReport({ hmCoach }: { hmCoach: HmCoachBridgeResult }) {
-  const input = hmCoach.coachInput;
-  return (
-    <>
-      <div className="ai-report-head">
-        <div>
-          <span className="panel-kicker">HM COACH ENGINE</span>
-          <h2 id="report-title">{input.match?.map ?? "HM 코칭 리포트"}</h2>
-          <p>
-            {input.perspective?.matchup ?? "매치업"} · {input.perspective?.resultLabel ?? "결과 확인"} · {input.match?.durationLabel ?? "시간 확인"}
-          </p>
-        </div>
-        <div className="ai-report-actions">
-          <button className="command-button" type="button" onClick={() => downloadHmCoachJson(hmCoach)}>
-            JSON 다운로드
-          </button>
-        </div>
-      </div>
-      <HmCoachBridgeReport hmCoach={hmCoach} />
-    </>
   );
 }
 
@@ -1477,12 +1413,14 @@ function CoachReport({
   replayFile,
   winConditionModel,
   hmCoach,
+  hmCoachError,
 }: {
   result: AnalyzeSuccess;
   players: ReplayPlayer[];
   replayFile: File | null;
   winConditionModel: WinConditionModel | null;
   hmCoach: HmCoachBridgeResult | null;
+  hmCoachError?: string | null;
 }) {
   const coach = buildCoachInsights(result, players);
   const [viewerSeekMs, setViewerSeekMs] = useState<number | null>(null);
@@ -1516,6 +1454,7 @@ function CoachReport({
       </section>
 
       {hmCoach ? <HmCoachBridgeReport hmCoach={hmCoach} /> : null}
+      {!hmCoach && hmCoachError ? <div className="ai-error-line" role="status">추가 코칭 생성 실패: {hmCoachError}</div> : null}
 
       <WinConditionPanel result={result} players={players} model={winConditionModel} />
 
@@ -5371,16 +5310,6 @@ function downloadJson(result: AnalyzeSuccess) {
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = `hm-ai-analysis-${safeFilePart(result.replay.fileName)}.json`;
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
-
-function downloadHmCoachJson(result: HmCoachBridgeResult) {
-  const blob = new Blob([JSON.stringify(result.coachInput, null, 2)], { type: "application/json;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = `hm-coach-${safeFilePart(result.summary.map ?? "replay")}-${safeFilePart(result.summary.matchup ?? "matchup")}.json`;
   anchor.click();
   URL.revokeObjectURL(url);
 }
