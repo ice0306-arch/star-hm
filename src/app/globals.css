@@ -3488,13 +3488,16 @@ footer {
   word-break: keep-all;
 }
 
-.ai-review-guide-grid {
+.ai-review-guide-grid,
+.ai-review-coaching-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.65rem;
 }
 
 .ai-review-guide-grid section,
+.ai-review-coaching-grid section,
+.ai-review-raw-details,
 .ai-review-event-list,
 .ai-review-side-head,
 .ai-review-range-list {
@@ -3508,7 +3511,15 @@ footer {
   padding: 0.85rem;
 }
 
+.ai-review-coaching-grid section {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.95rem;
+}
+
 .ai-review-guide-grid span,
+.ai-review-coaching-grid span,
+.ai-review-raw-details summary,
 .ai-review-event-list > span,
 .ai-review-side-head span {
   color: var(--ai-signal);
@@ -3519,11 +3530,20 @@ footer {
 
 .ai-review-guide-grid p {
   margin-top: 0.4rem;
+}
+
+.ai-review-guide-grid p,
+.ai-review-coaching-grid p {
   color: rgba(241, 240, 235, 0.76);
   font-size: 0.82rem;
   font-weight: 720;
   line-height: 1.68;
   word-break: keep-all;
+}
+
+.ai-review-coaching-grid section:nth-child(2) {
+  border-color: rgba(202, 163, 91, 0.28);
+  background: rgba(202, 163, 91, 0.075);
 }
 
 .ai-replay-viewer {
@@ -3995,6 +4015,36 @@ footer {
   display: grid;
   gap: 0.55rem;
   padding: 0.9rem;
+}
+
+.ai-review-raw-details {
+  overflow: hidden;
+  background: rgba(9, 11, 15, 0.34);
+}
+
+.ai-review-raw-details summary {
+  cursor: pointer;
+  padding: 0.85rem 0.95rem;
+  list-style: none;
+}
+
+.ai-review-raw-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.ai-review-raw-details summary::after {
+  content: " +";
+  color: var(--gold);
+}
+
+.ai-review-raw-details[open] summary::after {
+  content: " -";
+}
+
+.ai-review-raw-details .ai-review-event-list {
+  border-width: 1px 0 0;
+  border-radius: 0;
+  background: rgba(0, 0, 0, 0.18);
 }
 
 .ai-review-event-list article {
@@ -9626,6 +9676,7 @@ footer {
   .ai-pdf-guide,
   .ai-review-layout,
   .ai-review-guide-grid,
+  .ai-review-coaching-grid,
   .ai-coach-moment,
   .ai-timing-brief,
   .ai-strategy-column-grid,
@@ -9718,7 +9769,8 @@ footer {
   }
 
   .ai-review-focus > p,
-  .ai-review-guide-grid p {
+  .ai-review-guide-grid p,
+  .ai-review-coaching-grid p {
     font-size: 0.84rem;
     line-height: 1.62;
   }

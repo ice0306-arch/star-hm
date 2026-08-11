@@ -2931,10 +2931,10 @@ function TacticalReplaySimulator({ result, moments }: { result: AnalyzeSuccess; 
   const reviewEvents = selectedRange ? tacticalEventsForRange(simulation, selectedRange) : simulation.events.slice(0, 5);
 
   return (
-    <section className="ai-tactical-simulator" aria-label="문제 장면 복기">
+    <section className="ai-tactical-simulator" aria-label="이번 판에서 바로 고칠 장면">
       <div className="ai-section-title">
-        <span className="panel-kicker">문제 장면 복기</span>
-        <h3>문제가 생긴 시간과 이유를 같이 보기</h3>
+        <span className="panel-kicker">이번 판에서 바로 고칠 장면</span>
+        <h3>좌표가 아니라 행동으로 복기하기</h3>
       </div>
 
       <div className="ai-review-layout">
@@ -2947,15 +2947,18 @@ function TacticalReplaySimulator({ result, moments }: { result: AnalyzeSuccess; 
                 <em>{selectedRange.tag}</em>
               </div>
               <h4>{selectedRange.problem}</h4>
-              <p>{selectedRange.reason}</p>
-              <div className="ai-review-guide-grid">
+              <div className="ai-review-coaching-grid">
                 <section>
-                  <span>리플레이에서 확인할 것</span>
-                  <p>{selectedRange.reviewPoint}</p>
+                  <span>실제로 보인 흐름</span>
+                  <p>{tacticalHumanFlow(selectedRange, reviewEvents)}</p>
                 </section>
                 <section>
-                  <span>다음 게임에서 바로 고칠 것</span>
-                  <p>{selectedRange.fixPoint}</p>
+                  <span>이번 판에서 했어야 한 행동</span>
+                  <p>{tacticalHadToAction(selectedRange)}</p>
+                </section>
+                <section>
+                  <span>다음 판 체크포인트</span>
+                  <p>{tacticalNextCheckpoint(selectedRange)}</p>
                 </section>
               </div>
             </article>
@@ -2967,26 +2970,42 @@ function TacticalReplaySimulator({ result, moments }: { result: AnalyzeSuccess; 
                 <em>안정</em>
               </div>
               <h4>크게 튄 문제 구간은 많지 않습니다.</h4>
-              <p>이럴 때는 큰 실수보다 첫 생산, 첫 확장, 첫 진출 타이밍이 얼마나 일정했는지를 보는 편이 좋습니다.</p>
+              <div className="ai-review-coaching-grid">
+                <section>
+                  <span>실제로 보인 흐름</span>
+                  <p>큰 실수보다 첫 생산, 첫 확장, 첫 진출 타이밍이 얼마나 일정했는지를 봐야 하는 경기입니다.</p>
+                </section>
+                <section>
+                  <span>이번 판에서 했어야 한 행동</span>
+                  <p>이번 판에서는 첫 교전 전에 생산, 정찰, 병력 위치를 한 번씩 확인하고 들어갔어야 했어.</p>
+                </section>
+                <section>
+                  <span>다음 판 체크포인트</span>
+                  <p>첫 6분을 30초 단위로 끊어서 생산, 정찰, 병력 이동이 모두 들어갔는지 확인하세요.</p>
+                </section>
+              </div>
             </article>
           )}
 
-          <div className="ai-review-event-list" aria-label="문제 시간대 명령 목록">
-            <span>이 시간대에 실제로 들어간 명령</span>
-            {reviewEvents.length ? (
-              reviewEvents.slice(0, 6).map((event, index) => (
-                <article key={`review-event-${event.id}`}>
-                  <b>{index + 1}</b>
-                  <div>
-                    <strong>{event.timeLabel} · {event.playerName}</strong>
-                    <p>{plainTacticalEventLabel(event)}</p>
-                  </div>
-                </article>
-              ))
-            ) : (
-              <p>이 구간에는 위치가 남은 명령이 적습니다. 그래도 시간대와 생산 공백은 리포트 기준으로 확인할 수 있습니다.</p>
-            )}
-          </div>
+          <details className="ai-review-raw-details">
+            <summary>근거 보기</summary>
+            <div className="ai-review-event-list" aria-label="개발용 원시 명령 보기">
+              <span>개발용 원시 명령 보기</span>
+              {reviewEvents.length ? (
+                reviewEvents.slice(0, 8).map((event, index) => (
+                  <article key={`review-event-${event.id}`}>
+                    <b>{index + 1}</b>
+                    <div>
+                      <strong>{event.timeLabel} · {event.playerName}</strong>
+                      <p>{plainTacticalEventLabel(event)} · x={event.position.x}, y={event.position.y}</p>
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <p>이 구간에는 위치가 남은 명령이 적습니다. 그래도 시간대와 생산 공백은 리포트 기준으로 확인할 수 있습니다.</p>
+              )}
+            </div>
+          </details>
         </div>
 
         <aside className="ai-review-side">
@@ -3014,10 +3033,10 @@ function CoachVisualPanel({ result, players, coach }: { result: AnalyzeSuccess; 
   return (
     <section className="ai-coach-visual-panel">
       <div className="ai-section-title">
-        <span className="panel-kicker">그래프로 먼저 보기</span>
-        <h3>리플레이 흐름을 그래프로 보기</h3>
+        <span className="panel-kicker">운영 리듬</span>
+        <h3>생산, 교전, 화면 전환이 끊긴 흐름 보기</h3>
       </div>
-      <ApmEapmGuide />
+      <RhythmGuide />
       <div className="ai-coach-visual-grid">
         <ApmEapmChart result={result} players={players} />
         <MacroMicroChart profiles={coach.profiles} />
@@ -3027,23 +3046,23 @@ function CoachVisualPanel({ result, players, coach }: { result: AnalyzeSuccess; 
   );
 }
 
-function ApmEapmGuide() {
+function RhythmGuide() {
   return (
-    <aside className="ai-term-guide" aria-label="APM과 EAPM 설명">
+    <aside className="ai-term-guide" aria-label="운영 리듬 설명">
       <section>
-        <span>분당 명령 수</span>
-        <strong>1분 동안 누른 전체 입력입니다</strong>
-        <p>마우스 클릭, 키보드 입력, 반복 선택까지 모두 포함합니다. 손이 얼마나 바쁘게 움직였는지 보는 숫자입니다.</p>
+        <span>생산 공백</span>
+        <strong>병력이 늦게 나오는 구간입니다</strong>
+        <p>전투를 보느라 생산 건물을 놓쳤는지, 정찰 직후 다음 유닛 예약이 늦었는지를 확인하는 근거입니다.</p>
       </section>
       <section>
-        <span>분당 유효 명령 수</span>
-        <strong>그중 실제로 도움이 된 입력입니다</strong>
-        <p>생산, 이동, 공격, 후퇴처럼 경기 흐름을 바꾼 입력을 더 중요하게 봅니다. 쓸모 없는 반복 클릭은 덜 반영됩니다.</p>
+        <span>교전 리듬</span>
+        <strong>싸우기 전 자리를 잡았는지 봅니다</strong>
+        <p>공격, 후퇴, 생산 중 첫 행동이 늦으면 병력이 있어도 싸움이 흐트러집니다.</p>
       </section>
       <section>
-        <span>차이가 크면?</span>
-        <strong>입력 효율 참고 구간입니다</strong>
-        <p>교전 중 첫 결정이 공격, 후퇴, 생산 중 무엇이었는지 리플레이에서 확인해보면 됩니다.</p>
+        <span>다음 행동 지연</span>
+        <strong>화면 이동 뒤 무엇을 했는지 봅니다</strong>
+        <p>화면을 옮긴 뒤 생산, 수비 위치, 정찰 확인 중 무엇을 먼저 했어야 했는지를 찾습니다.</p>
       </section>
     </aside>
   );
@@ -3058,12 +3077,12 @@ function ApmEapmChart({ result, players }: { result: AnalyzeSuccess; players: Re
   return (
     <article className="ai-visual-card ai-apm-visual">
       <div className="ai-visual-card-head">
-        <span>손속도 그래프</span>
-        <strong>많이 움직인 시간과 실제로 도움이 된 입력</strong>
+        <span>입력 리듬</span>
+        <strong>명령이 많았던 시간보다 다음 행동이 이어졌는지 보기</strong>
       </div>
       <div className="ai-visual-legend">
-        <span className="apm">분당 명령 수</span>
-        <span className="eapm">분당 유효 명령 수</span>
+        <span className="apm">전체 입력 참고</span>
+        <span className="eapm">흐름을 바꾼 입력</span>
       </div>
       <div className="ai-player-chart-list">
         {players.map((player) => {
@@ -3076,13 +3095,13 @@ function ApmEapmChart({ result, players }: { result: AnalyzeSuccess; players: Re
               </div>
               <div className="ai-chart-bars">
                 {points.map((point) => (
-                  <span key={`${player.id}-${point.startSeconds}`} title={`${formatDuration(point.startSeconds)}-${formatDuration(point.endSeconds)} 분당 명령 수 ${point.apm} / 분당 유효 명령 수 ${point.eapm}`}>
+                  <span key={`${player.id}-${point.startSeconds}`} title={`${formatDuration(point.startSeconds)}-${formatDuration(point.endSeconds)} 전체 입력 ${point.apm} / 흐름을 바꾼 입력 ${point.eapm}`}>
                     <i className="apm" style={{ height: barHeight(point.apm, maxValue) }} />
                     <i className="eapm" style={{ height: barHeight(point.eapm, maxValue) }} />
                   </span>
                 ))}
               </div>
-              <small>{points[0] ? `${formatDuration(points[0].startSeconds)}-${formatDuration(points[points.length - 1].endSeconds)} · 파란색은 분당 명령 수, 금색은 분당 유효 명령 수` : "구간 데이터 없음"}</small>
+              <small>{points[0] ? `${formatDuration(points[0].startSeconds)}-${formatDuration(points[points.length - 1].endSeconds)} · 파란색은 전체 입력 참고, 금색은 흐름을 바꾼 입력` : "구간 데이터 없음"}</small>
             </section>
           );
         })}
@@ -3388,7 +3407,7 @@ function OverviewReport({ result, players, winConditionModel }: { result: Analyz
           </article>
         ))}
       </div>
-      <ApmEapmGuide />
+      <RhythmGuide />
       <section className="ai-overview-win-card">
         <div>
           <span className="panel-kicker">승리 조건</span>
@@ -3486,7 +3505,7 @@ function CommandEfficiencyView({ result, players }: { result: AnalyzeSuccess; pl
   const maxApm = Math.max(1, ...result.timeline.map((point) => point.apm));
   return (
     <div className="ai-report-section">
-      <ApmEapmGuide />
+      <RhythmGuide />
       {result.semantic.commandEfficiency.map((report) => (
         <section className="ai-efficiency-panel" key={report.playerId}>
           <div>
@@ -3776,15 +3795,15 @@ function momentCoachNotes(moment: CoachMoment) {
     return [
       {
         label: "경기 영향",
-        text: `${moment.timeLabel}에는 손이 멈춘 것이 아니라, 손의 움직임이 결과로 잘 이어지지 않았습니다. 분당 명령 수는 높아도 생산, 공격 전환, 후퇴, 업그레이드처럼 실제로 도움이 되는 명령이 줄면 병력 회전과 반응이 늦어집니다.`,
+        text: `${moment.timeLabel}에는 손이 멈춘 것이 아니라 첫 판단이 경기 흐름으로 잘 이어지지 않았습니다. 이 시간에는 생산, 공격 전환, 후퇴, 업그레이드 중 무엇을 먼저 했어야 했는지 확인해야 합니다.`,
       },
       {
         label: "복기 포인트",
-        text: "클릭 수보다 클릭의 목적을 보세요. 같은 유닛을 다시 잡았는지, 이미 이동 중인 병력에 같은 우클릭을 반복했는지, 교전 직전에 생산 건물을 한 번도 열지 않았는지를 확인하면 원인이 보입니다.",
+        text: "같은 유닛을 다시 잡았는지보다, 교전 직전에 생산 건물을 열었는지와 병력을 계속 밀지 아니면 빼야 했는지를 먼저 보세요.",
       },
       {
         label: "다음 게임에서 해볼 것",
-        text: "20초만 일부러 천천히 플레이해보세요. 클릭하기 전에 이 입력이 공격, 후퇴, 생산, 정찰 중 무엇인지 말로 설명할 수 있을 때만 누르는 방식입니다. 속도는 조금 줄어도 분당 유효 명령 수는 늘어납니다.",
+        text: "20초만 일부러 천천히 플레이해보세요. 누르기 전에 이 입력이 공격, 후퇴, 생산, 정찰 중 무엇인지 말로 설명할 수 있을 때만 누르는 방식입니다.",
       },
     ];
   }
@@ -4381,6 +4400,56 @@ function plainReviewCopy(moment: CoachMoment) {
     reviewPoint: "문제 구간 직전 10초부터 보면서 화면 위치, 선택한 유닛, 첫 번째 의미 있는 명령을 확인하세요.",
     fixPoint: "다음 게임에서는 같은 상황이 오기 전에 생산, 공격, 후퇴, 정찰 중 하나를 먼저 결정하고 입력하세요.",
   };
+}
+
+function tacticalHumanFlow(range: TacticalReplayRange, events: TacticalReplayEvent[]) {
+  const nearTime = formatDuration(range.start);
+  const eventTypes = events.map((event) => tacticalPlainEventKind(event));
+  const movementCount = eventTypes.filter((type) => type === "이동").length;
+  const productionCount = eventTypes.filter((type) => type.includes("생산") || type.includes("건설") || type.includes("테크")).length;
+  const fightCount = eventTypes.filter((type) => type.includes("공격") || type.includes("교전")).length;
+  const firstTarget = cleanCommandTarget(events[0]?.label.split("·")[1]?.trim() ?? null);
+
+  if (!events.length) {
+    return `${nearTime} 전후에는 좌표가 남은 명령이 적었습니다. 그래서 좌표보다 이 시간대에 생산, 수비 위치, 다음 진출이 이어졌는지를 먼저 봐야 했습니다.`;
+  }
+
+  if (productionCount >= Math.max(movementCount, fightCount)) {
+    const target = firstTarget ? ` ${firstTarget}` : "";
+    return `${nearTime} 전후에 ${range.playerName}의 생산/건설${target} 흐름이 보였습니다. 이 타이밍이면 상대 테크 전환이나 다음 진출 준비까지 같이 확인했어야 했습니다.`;
+  }
+
+  if (fightCount >= Math.max(movementCount, productionCount)) {
+    return `${nearTime} 전후에 ${range.playerName}의 공격/교전 명령이 이어졌습니다. 이때 병력을 먼저 밀어 넣기보다 앞에서 맞아줄 유닛과 뒤에서 때릴 유닛 위치가 나뉘어 있었는지 봐야 했습니다.`;
+  }
+
+  return `${nearTime} 전후에 ${range.playerName}의 병력이 한 방향으로 빠지는 흐름이 보였습니다. 이때 본진/앞마당 방어 병력이 남아 있었는지, 이동 뒤 다음 생산이 바로 이어졌는지 확인해야 했습니다.`;
+}
+
+function tacticalHadToAction(range: TacticalReplayRange) {
+  if (range.tag.includes("생산")) {
+    return `이번 판에서는 ${formatDuration(range.start)}에 화면이 다른 곳으로 가기 전에 생산 건물 단축키를 먼저 열고 필요한 유닛을 예약했어야 했어.`;
+  }
+  if (range.tag.includes("EAPM")) {
+    return `이번 판에서는 ${formatDuration(range.start)}에 더 빨리 누르기보다 공격, 후퇴, 생산 중 무엇을 먼저 할지 정하고 입력했어야 했어.`;
+  }
+  if (range.tag.includes("단축키")) {
+    return `이번 판에서는 ${formatDuration(range.start)} 전에 주병력, 수비 병력, 생산 건물 번호를 나눠서 교전 중 다시 찾는 시간을 줄였어야 했어.`;
+  }
+  return `이번 판에서는 ${formatDuration(range.start)}에 병력을 움직이기 전에 생산, 수비 위치, 교전 시작 순서를 먼저 정했어야 했어.`;
+}
+
+function tacticalNextCheckpoint(range: TacticalReplayRange) {
+  if (range.tag.includes("생산")) {
+    return "다음 판에는 전투 화면을 보기 전 생산 건물 단축키를 한 번 누르고, 병력 예약 후 교전 화면으로 돌아가세요.";
+  }
+  if (range.tag.includes("EAPM")) {
+    return "다음 판에는 같은 상황에서 첫 입력을 넣기 전에 공격/후퇴/생산 중 하나를 말로 정하고 누르세요.";
+  }
+  if (range.tag.includes("단축키")) {
+    return "다음 판에는 1번 주병력, 2번 보조 병력, 3번 생산처럼 번호 역할을 정하고 한 경기 동안 유지하세요.";
+  }
+  return range.fixPoint;
 }
 
 function tacticalEventsForRange(simulation: TacticalReplaySimulation, range: TacticalReplayRange) {
@@ -5067,14 +5136,14 @@ function renderPdfReportImages(result: AnalyzeSuccess, players: ReplayPlayer[], 
   finishPdfPage(page, pages);
 
   page = createPdfPage(pages.length + 1);
-  drawPdfSectionTitle(page, "시간별 복기", "문제가 생긴 시간과 이유");
+  drawPdfSectionTitle(page, "이번 판에서 바로 고칠 장면", "좌표가 아니라 행동으로 복기하기");
   page.y += 18;
   for (const moment of coach.moments) {
     const cardHeight = measurePdfMomentCard(page.ctx, moment);
     if (page.y + cardHeight > PDF_CANVAS_HEIGHT - 96) {
       finishPdfPage(page, pages);
       page = createPdfPage(page.pageNumber + 1);
-      drawPdfSectionTitle(page, "시간별 복기", "이어지는 장면");
+      drawPdfSectionTitle(page, "이번 판에서 바로 고칠 장면", "이어지는 코칭 카드");
       page.y += 18;
     }
     drawPdfMomentCard(page, moment, result.replay.durationSeconds);
@@ -5155,7 +5224,7 @@ function drawPdfCoverPage(page: PdfPage, result: AnalyzeSuccess, players: Replay
   ]);
   page.y += 44;
 
-  drawPdfSectionTitle(page, "그래프 요약", "경기 흐름을 한눈에 보기");
+  drawPdfSectionTitle(page, "운영 리듬", "생산, 교전, 화면 전환이 끊긴 흐름");
   page.y += 16;
   drawPdfApmChart(page, result, players);
   page.y += 24;
@@ -5275,10 +5344,10 @@ function drawPdfApmChart(page: PdfPage, result: AnalyzeSuccess, players: ReplayP
   drawPdfRoundRect(ctx, x, y, width, height, 18, "#ffffff", PDF_COLORS.line);
   setPdfFont(ctx, 20, 900);
   ctx.fillStyle = PDF_COLORS.blue;
-  ctx.fillText("입력 그래프", x + 24, y + 22);
+  ctx.fillText("운영 리듬", x + 24, y + 22);
   setPdfFont(ctx, 28, 900);
   ctx.fillStyle = PDF_COLORS.ink;
-  ctx.fillText("전체 입력과 실제 도움 된 입력", x + 24, y + 52);
+  ctx.fillText("다음 행동이 이어졌는지 보는 근거", x + 24, y + 52);
 
   const points = players.flatMap((player) => timelinePointsForPlayer(result, player).slice(0, 6));
   const maxValue = Math.max(1, ...points.map((point) => Math.max(point.apm, point.eapm)));
@@ -5308,7 +5377,7 @@ function drawPdfApmChart(page: PdfPage, result: AnalyzeSuccess, players: ReplayP
   ctx.fillStyle = PDF_COLORS.muted;
   drawPdfWrappedText(
     ctx,
-    "분당 명령 수는 1분 동안 누른 전체 입력 수입니다. 분당 유효 명령 수는 그중 생산, 이동, 공격처럼 실제로 경기에 도움이 된 입력 수입니다.",
+    "이 그래프는 클릭 수를 평가하려는 것이 아니라 생산, 이동, 공격 뒤에 다음 행동이 끊기지 않았는지 확인하는 보조 근거입니다.",
     x + 24,
     y + height - 62,
     width - 48,
@@ -5388,17 +5457,13 @@ function drawPdfTimingTrack(page: PdfPage, moments: CoachMoment[], durationSecon
 }
 
 function measurePdfMomentCard(ctx: CanvasRenderingContext2D, moment: CoachMoment) {
-  const detailWidth = PDF_CONTENT_WIDTH - 348;
-  const interpretationWidth = PDF_CONTENT_WIDTH - 410;
-  const noteWidth = PDF_CONTENT_WIDTH - 164;
-  setPdfFont(ctx, 22, 500);
-  const detailHeight = measurePdfTextBlock(ctx, moment.detail, detailWidth, 28);
-  const interpretationHeight = measurePdfTextBlock(ctx, momentInterpretation(moment), interpretationWidth, 28);
-  const noteHeight = momentCoachNotes(moment).reduce((total, note) => {
-    setPdfFont(ctx, 20, 500);
-    return total + 32 + measurePdfTextBlock(ctx, note.text, noteWidth, 26);
-  }, 0);
-  return Math.max(330, 144 + detailHeight + interpretationHeight + noteHeight);
+  const textWidth = PDF_CONTENT_WIDTH - 348;
+  const copy = plainReviewCopy(moment);
+  setPdfFont(ctx, 21, 500);
+  const flowHeight = measurePdfTextBlock(ctx, copy.reason, textWidth, 28, 3);
+  const actionHeight = measurePdfTextBlock(ctx, pdfMomentHadToAction(moment), textWidth, 28, 3);
+  const checkHeight = measurePdfTextBlock(ctx, pdfMomentNextCheckpoint(moment), textWidth, 28, 3);
+  return Math.max(360, 172 + flowHeight + actionHeight + checkHeight);
 }
 
 function drawPdfMomentCard(page: PdfPage, moment: CoachMoment, durationSeconds: number | null) {
@@ -5420,28 +5485,46 @@ function drawPdfMomentCard(page: PdfPage, moment: CoachMoment, durationSeconds: 
   ctx.fillStyle = PDF_COLORS.ink;
   drawPdfWrappedText(ctx, moment.title, x + 320, y + 24, width - 348, 34, 2);
   drawPdfMiniMomentGraphic(ctx, x + 28, y + 106, 246, 116, moment, durationSeconds);
-  setPdfFont(ctx, 21, 500);
-  ctx.fillStyle = PDF_COLORS.slate;
-  const detailEnd = drawPdfWrappedText(ctx, moment.detail, x + 320, y + 106, width - 348, 28);
-  setPdfFont(ctx, 20, 900);
-  ctx.fillStyle = PDF_COLORS.blue;
-  ctx.fillText("해석", x + 320, detailEnd + 14);
-  setPdfFont(ctx, 21, 500);
-  ctx.fillStyle = PDF_COLORS.slate;
-  const interpretationEnd = drawPdfWrappedText(ctx, momentInterpretation(moment), x + 382, detailEnd + 14, width - 410, 28);
-  let noteY = Math.max(y + 246, interpretationEnd + 26);
-  for (const note of momentCoachNotes(moment)) {
-    setPdfFont(ctx, 19, 900);
-    ctx.fillStyle = PDF_COLORS.gold;
-    ctx.fillText(note.label, x + 28, noteY);
-    setPdfFont(ctx, 20, 500);
-    ctx.fillStyle = PDF_COLORS.slate;
-    noteY = drawPdfWrappedText(ctx, note.text, x + 136, noteY - 2, width - 164, 26) + 16;
-  }
+  const copy = plainReviewCopy(moment);
+  let rowY = y + 106;
+  rowY = drawPdfCoachingRow(ctx, "실제로 보인 흐름", copy.reason, x + 320, rowY, width - 348) + 16;
+  rowY = drawPdfCoachingRow(ctx, "이번 판에서 했어야 한 행동", pdfMomentHadToAction(moment), x + 320, rowY, width - 348) + 16;
+  drawPdfCoachingRow(ctx, "다음 판 체크포인트", pdfMomentNextCheckpoint(moment), x + 320, rowY, width - 348);
   setPdfFont(ctx, 17, 800);
   ctx.fillStyle = PDF_COLORS.muted;
   ctx.fillText(`${moment.playerName} · ${moment.evidence}`, x + 28, y + height - 34);
   page.y += height;
+}
+
+function drawPdfCoachingRow(ctx: CanvasRenderingContext2D, label: string, text: string, x: number, y: number, width: number) {
+  setPdfFont(ctx, 18, 900);
+  ctx.fillStyle = label.includes("했어야") ? PDF_COLORS.gold : PDF_COLORS.blue;
+  ctx.fillText(label, x, y);
+  setPdfFont(ctx, 21, 500);
+  ctx.fillStyle = PDF_COLORS.slate;
+  return drawPdfWrappedText(ctx, text, x, y + 28, width, 28, 3);
+}
+
+function pdfMomentHadToAction(moment: CoachMoment) {
+  const start = moment.timeLabel.split("-")[0] || moment.timeLabel;
+  if (moment.tag.includes("생산")) {
+    return `이번 판에서는 ${start}에 화면이 다른 곳으로 가기 전에 생산 건물 단축키를 먼저 열고 필요한 유닛을 예약했어야 했어.`;
+  }
+  if (moment.tag.includes("EAPM")) {
+    return `이번 판에서는 ${start}에 더 빨리 누르기보다 공격, 후퇴, 생산 중 무엇을 먼저 할지 정하고 입력했어야 했어.`;
+  }
+  if (moment.tag.includes("단축키")) {
+    return `이번 판에서는 ${start} 전에 주병력, 수비 병력, 생산 건물 번호를 나눠서 교전 중 다시 찾는 시간을 줄였어야 했어.`;
+  }
+  return `이번 판에서는 ${start}에 병력을 움직이기 전에 생산, 수비 위치, 교전 시작 순서를 먼저 정했어야 했어.`;
+}
+
+function pdfMomentNextCheckpoint(moment: CoachMoment) {
+  const copy = plainReviewCopy(moment);
+  if (moment.tag.includes("생산")) return "다음 판에는 전투 화면을 보기 전 생산 건물 단축키를 한 번 누르고, 병력 예약 후 교전 화면으로 돌아가세요.";
+  if (moment.tag.includes("EAPM")) return "다음 판에는 같은 상황에서 첫 입력을 넣기 전에 공격/후퇴/생산 중 하나를 말로 정하고 누르세요.";
+  if (moment.tag.includes("단축키")) return "다음 판에는 1번 주병력, 2번 보조 병력, 3번 생산처럼 번호 역할을 정하고 한 경기 동안 유지하세요.";
+  return copy.fixPoint;
 }
 
 function drawPdfMiniMomentGraphic(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, moment: CoachMoment, durationSeconds: number | null) {
@@ -5511,8 +5594,8 @@ function drawPdfWrappedText(ctx: CanvasRenderingContext2D, text: string, x: numb
   return y + visibleLines.length * lineHeight;
 }
 
-function measurePdfTextBlock(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, lineHeight: number) {
-  return pdfTextLines(ctx, text, maxWidth).length * lineHeight;
+function measurePdfTextBlock(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, lineHeight: number, maxLines?: number) {
+  return Math.min(pdfTextLines(ctx, text, maxWidth).length, maxLines ?? Number.POSITIVE_INFINITY) * lineHeight;
 }
 
 function pdfTextLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
