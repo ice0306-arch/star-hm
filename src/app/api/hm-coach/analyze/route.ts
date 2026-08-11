@@ -128,7 +128,7 @@ function buildAiPrompt(payload: StarHmCoachInput) {
     `길이: ${payload.match?.durationLabel ?? "-"}`,
     "",
     "[데이터]",
-    `샘플: ${payload.dataContext?.sampleSize ?? "-"}`,
+    `읽은 기록: ${payload.dataContext?.sampleSize ?? "-"}`,
     `신뢰도: ${payload.dataContext?.confidenceLabel ?? "-"}`,
     `내 전략 축: ${payload.dataContext?.myStrategyFocus ?? "-"}`,
     `상대 흐름: ${payload.dataContext?.opponentStrategyFocus ?? "-"}`,
@@ -218,7 +218,6 @@ function buildCoachInputFromAnalysisResult(result: AnalyzeSuccessInput): StarHmC
       resultLabel: perspectivePlayer?.result?.outcome === "WIN" ? "승리" : perspectivePlayer?.result?.outcome === "LOSS" ? "패배" : "결과 확인 필요",
     },
     dataContext: {
-      sampleSize: result.canonical?.commandCount ?? undefined,
       confidenceLabel: confidenceText(result.coaching?.scope?.confidence),
       myStrategyFocus: stringValue(playerBuild?.buildName) || "빌드 분류 확인 필요",
       opponentStrategyFocus: opponent ? `${opponent.name} ${raceLabel(opponent.race)}` : "상대 흐름 확인 필요",
@@ -230,7 +229,6 @@ function buildCoachInputFromAnalysisResult(result: AnalyzeSuccessInput): StarHmC
       nextGameGuide,
       limitationNote: result.coaching?.scope?.limitations?.join(" ") || "REP 분석 결과에서 확인된 기록만 사용했습니다.",
     },
-    aiAnalysisInput: result,
   };
 }
 
@@ -514,10 +512,9 @@ function evidenceLine(evidence: {
   unitHints: string[];
 }) {
   const parts = [
-    evidence.buildName ? `빌드 흐름은 ${evidence.buildName}로 읽혔고` : "",
+    evidence.buildName ? `초반 선택은 ${evidence.buildName}로 읽혔고` : "",
     evidence.unitHints.length ? `기록에 보인 핵심 유닛은 ${evidence.unitHints.slice(0, 4).join(", ")}입니다` : "",
     evidence.firstFindingTime ? `먼저 볼 구간은 ${evidence.firstFindingTime}입니다` : "",
-    evidence.longestGapSeconds && evidence.longestGapStart ? `${evidence.longestGapStart} 부근에 생산 공백 ${evidence.longestGapSeconds}초가 있었습니다` : "",
   ].filter(Boolean);
   return parts.length ? ` 기록 근거로는 ${parts.join(". ")}.` : "";
 }
