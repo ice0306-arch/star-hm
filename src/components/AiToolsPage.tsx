@@ -1062,17 +1062,16 @@ function EmptyReport() {
 
 function HmCoachBridgeReport({ hmCoach }: { hmCoach: HmCoachBridgeResult }) {
   const input = hmCoach.coachInput;
-  const feedback = hmCoach.feedbackItems.length ? hmCoach.feedbackItems : input.coaching?.feedbackItems ?? [];
-  const nextGuide = hmCoach.nextGameGuide.length ? hmCoach.nextGameGuide : input.coaching?.nextGameGuide ?? [];
-  const readCount = input.dataContext?.sampleSize;
+  const feedback = (hmCoach.feedbackItems.length ? hmCoach.feedbackItems : input.coaching?.feedbackItems ?? []).slice(0, 3);
+  const nextGuide = (hmCoach.nextGameGuide.length ? hmCoach.nextGameGuide : input.coaching?.nextGameGuide ?? []).slice(0, 3);
   return (
     <section className="ai-hm-coach-report">
       <div className="ai-hm-coach-report-head">
         <div>
           <span className="panel-kicker">이번 판 피드백</span>
-          <h3>{input.coaching?.headline ?? "이번 판에서 못한 부분"}</h3>
+          <h3>이번 판에서 바로 고칠 것</h3>
           <p>
-            {input.coaching?.verdict ?? "상대 빌드명보다, 화면에 보이는 내 유닛이 어디서 무엇을 했어야 하는지부터 봅니다."}
+            {input.coaching?.verdict ?? "화면에 나온 유닛을 어디에 두고 어떻게 싸웠어야 했는지부터 봅니다."}
           </p>
         </div>
         <strong>{feedback.length}개</strong>
@@ -1080,9 +1079,9 @@ function HmCoachBridgeReport({ hmCoach }: { hmCoach: HmCoachBridgeResult }) {
 
       <div className="ai-hm-coach-meta-grid">
         <Metric label="맵" value={input.match?.map ?? "-"} />
-        <Metric label="관점" value={input.perspective?.matchup ?? "-"} />
-        <Metric label="읽은 기록" value={typeof readCount === "number" ? readCount.toLocaleString("ko-KR") : "-"} />
-        <Metric label="신뢰도" value={input.dataContext?.confidenceLabel ?? "-"} />
+        <Metric label="종족전" value={input.perspective?.matchup ?? "-"} />
+        <Metric label="관점" value={input.perspective?.player ?? "-"} />
+        <Metric label="상대" value={input.perspective?.opponent ?? "-"} />
       </div>
 
       <div className="ai-hm-feedback-list">
@@ -1121,9 +1120,9 @@ function HmCoachBridgeReport({ hmCoach }: { hmCoach: HmCoachBridgeResult }) {
 }
 
 function hmCoachPriorityLabel(index: number) {
-  if (index === 0) return "제일 먼저 고칠 포인트";
-  if (index === 1) return "두 번째로 고칠 포인트";
-  return "같이 확인할 포인트";
+  if (index === 0) return "이번 판에서 바로 고칠 것";
+  if (index === 1) return "다음 판에 이렇게 하세요";
+  return "복기할 장면";
 }
 
 function EmptyReportPreviewGraphic() {
@@ -1182,41 +1181,30 @@ function ReportInsightStrip({ result, players }: { result: AnalyzeSuccess; playe
   const coach = buildCoachInsights(result, players);
   const primaryBuild = [...result.semantic.buildClassifications].sort((a, b) => b.confidence - a.confidence)[0];
   const bestReadiness = [...(result.coaching.winReadiness ?? [])].sort((a, b) => b.score - a.score)[0];
-  const riskMoments = coach.moments.filter((moment) => moment.severity !== "INFO").length;
   const firstProblem = [...coach.moments]
-    .filter((moment) => moment.severity !== "INFO")
+    .filter((moment) => moment.severity !== "INFO" && !isMetricOnlyMoment(moment))
     .sort((a, b) => timeValue(a.timeLabel) - timeValue(b.timeLabel))[0];
   return (
     <div className="ai-report-intel-strip" aria-label="분석 리포트 요약">
       <section>
-        <span>리포트 점수</span>
+        <span>코칭 요약</span>
         <strong>{coach.score}</strong>
-        <small>높을수록 경기 흐름이 안정적입니다</small>
+        <small>낮은 항목은 보조 근거에서만 봅니다</small>
       </section>
       <section>
-        <span>먼저 볼 장면</span>
+        <span>복기할 장면</span>
         <strong>{firstProblem ? firstProblem.timeLabel : "큰 문제 없음"}</strong>
-        <small>{firstProblem ? firstProblem.tag : "전체 흐름을 가볍게 확인하세요"}</small>
+        <small>{firstProblem ? firstProblem.tag : "새 코칭 카드부터 보세요"}</small>
       </section>
       <section>
-        <span>확인할 장면</span>
-        <strong>{riskMoments}개</strong>
-        <small>시간대별로 다시 볼 포인트</small>
-      </section>
-      <section>
-        <span>읽은 기록</span>
-        <strong>{result.canonical.commandCount.toLocaleString("ko-KR")}</strong>
-        <small>클릭, 생산, 단축키 기록</small>
-      </section>
-      <section>
-        <span>빌드 읽기</span>
+        <span>빌드 흐름</span>
         <strong>{primaryBuild ? confidenceLabel(primaryBuild.confidence) : "대기"}</strong>
-        <small>{primaryBuild ? primaryBuild.buildName : "빌드 정보가 부족합니다"}</small>
+        <small>{primaryBuild ? conciseText(primaryBuild.buildName, 42) : "빌드 정보가 부족합니다"}</small>
       </section>
       <section>
         <span>승리 조건</span>
         <strong>{bestReadiness ? `${bestReadiness.score}점` : "계산 전"}</strong>
-        <small>{bestReadiness ? bestReadiness.playerName : "REP 분석 후 비교합니다"}</small>
+        <small>{bestReadiness ? `${bestReadiness.playerName} 기준` : "부족한 조건만 봅니다"}</small>
       </section>
     </div>
   );
@@ -1256,10 +1244,10 @@ function buildWinConditionRows(result: AnalyzeSuccess, player: ReplayPlayer, con
   const longestGap = Math.max(0, ...(production?.productionGaps ?? []).map((gap) => gap.duration));
   const thresholds = condition.thresholds;
   return [
-    thresholdRow("분당 실효성 있는 유효 명령", command?.eapm ?? player.eapm, thresholds.minimumEapm, "higher", "회"),
-    thresholdRow("도움 된 명령 비율", command?.effectiveRate ?? player.effectiveRate, thresholds.minimumEffectiveRate, "higher", "%"),
-    thresholdRow("생산이 끊기지 않은 정도", production?.stabilityScore ?? null, thresholds.minimumProductionStability, "higher", "점"),
-    thresholdRow("가장 긴 생산 공백", longestGap || null, thresholds.maximumProductionGapSeconds, "lower", "초"),
+    thresholdRow("입력 효율 참고", command?.eapm ?? player.eapm, thresholds.minimumEapm, "higher", "회"),
+    thresholdRow("의미 있는 입력 비중", command?.effectiveRate ?? player.effectiveRate, thresholds.minimumEffectiveRate, "higher", "%"),
+    thresholdRow("운영 유지 점수", production?.stabilityScore ?? null, thresholds.minimumProductionStability, "higher", "점"),
+    thresholdRow("가장 긴 운영 중단", longestGap || null, thresholds.maximumProductionGapSeconds, "lower", "초"),
     thresholdRow("부대지정 활용 폭", hotkey?.breadthScore ?? null, thresholds.minimumHotkeyBreadth, "higher", "점"),
     thresholdRow("승리 조건 점수", readiness?.score ?? null, thresholds.minimumWinReadinessScore, "higher", "점"),
   ].filter((row) => row.target !== "기준 없음");
@@ -1301,14 +1289,17 @@ function winReadinessTone(score: number) {
 function plainWinReadinessVerdict(value: string) {
   return plainConditionText(value)
     .replaceAll("승리 가능성", "이긴 경기 기준과의 근접도")
-    .replaceAll("EAPM", "분당 실효성 있는 유효 명령")
+    .replaceAll("EAPM", "입력 효율")
     .replaceAll("APM", "분당 명령 수");
 }
 
 function plainConditionText(value: string) {
   return value
-    .replaceAll("EAPM", "분당 실효성 있는 유효 명령")
+    .replaceAll("EAPM", "입력 효율")
     .replaceAll("APM", "분당 명령 수")
+    .replaceAll("도움 된 명령 비율", "의미 있는 입력 비중")
+    .replaceAll("유효 명령 비율", "입력 효율")
+    .replaceAll("마우스 클릭 수", "반복 입력")
     .replaceAll("hotkey", "부대지정")
     .replaceAll("Hotkey", "부대지정")
     .replaceAll("production", "생산")
@@ -1317,20 +1308,18 @@ function plainConditionText(value: string) {
     .replaceAll("저하이", "저하가");
 }
 
-function WinConditionPanel({ result, players, model }: { result: AnalyzeSuccess; players: ReplayPlayer[]; model: WinConditionModel | null }) {
-  const readiness = [...(result.coaching.winReadiness ?? [])].sort((a, b) => b.score - a.score);
+function WinConditionPanel({ result, players, model, compact = false }: { result: AnalyzeSuccess; players: ReplayPlayer[]; model: WinConditionModel | null; compact?: boolean }) {
+  const readiness = [...(result.coaching.winReadiness ?? [])].sort((a, b) => b.score - a.score).slice(0, compact ? 2 : 99);
   const matches = useMemo(() => buildWinConditionMatches(result, players, model), [result, players, model]);
   const topMatch = matches[0] ?? null;
+  const visibleRows = topMatch?.rows.filter((row) => row.pass === false).slice(0, 3) ?? [];
   return (
     <section className="ai-win-condition-panel">
       <div className="ai-section-title">
         <span className="panel-kicker">승리 조건 비교</span>
-        <h3>새 REP가 이긴 경기의 조건에 얼마나 가까운지 봅니다</h3>
+        <h3>이긴 경기들과 비교했을 때 부족했던 기준만 봅니다</h3>
       </div>
-      <p className="ai-win-condition-note">
-        공개 사이트에서 REP를 넣으면 관리자에서 만든 승리 조건 데이터와 바로 비교합니다. 실제 게임 엔진을 돌려 미래를 예언하는 방식은 아니고, 이긴 경기에서 반복된 기준을 기준값으로 삼아
-        생산 유지, 도움 되는 명령, 단축키 활용, 빌드 흐름이 얼마나 맞았는지 확인합니다.
-      </p>
+      <p className="ai-win-condition-note">지금 화면에서는 다음 판에 바로 고칠 부족 조건만 짧게 보여줍니다.</p>
 
       <div className="ai-win-readiness-grid">
         {readiness.length > 0 ? (
@@ -1344,17 +1333,19 @@ function WinConditionPanel({ result, players, model }: { result: AnalyzeSuccess;
                 </div>
                 <b>{item.score}</b>
               </div>
-              <p>{plainWinReadinessVerdict(item.verdict)}</p>
+              {!compact ? <p>{plainWinReadinessVerdict(item.verdict)}</p> : null}
               <div className="ai-win-case-columns">
+                {!compact ? (
                 <div>
                   <span>맞은 조건</span>
                   {(item.winningCases.length > 0 ? item.winningCases : ["아직 뚜렷한 강점 조건이 적습니다."]).slice(0, 3).map((text) => (
                     <em key={text}>{plainConditionText(text)}</em>
                   ))}
                 </div>
+                ) : null}
                 <div>
                   <span>부족한 조건</span>
-                  {(item.missingCases.length > 0 ? item.missingCases : ["큰 결손은 적습니다. 세부 타이밍을 보세요."]).slice(0, 3).map((text) => (
+                  {(item.missingCases.length > 0 ? item.missingCases : ["큰 결손은 적습니다. 세부 타이밍을 보세요."]).slice(0, compact ? 2 : 3).map((text) => (
                     <em key={text}>{plainConditionText(text)}</em>
                   ))}
                 </div>
@@ -1376,11 +1367,12 @@ function WinConditionPanel({ result, players, model }: { result: AnalyzeSuccess;
         )}
       </div>
 
-      <div className="ai-win-condition-model">
+      <details className="ai-win-condition-model" open={!compact}>
+        <summary>{compact ? "세부 기준 보기" : "비교 기준"}</summary>
         <div className="ai-win-condition-model-head">
           <div>
             <span className="panel-kicker">비교 기준</span>
-            <h4>{model ? `${model.totalWinnerSamples.toLocaleString("ko-KR")}개 승리 샘플에서 만든 기준` : "승리 조건 데이터 로딩 중"}</h4>
+            <h4>{model ? "승리 패턴 기준" : "승리 조건 데이터 로딩 중"}</h4>
           </div>
           <strong>{model ? `${model.conditions.length.toLocaleString("ko-KR")}개 조건` : "대기"}</strong>
         </div>
@@ -1390,11 +1382,11 @@ function WinConditionPanel({ result, players, model }: { result: AnalyzeSuccess;
               <span>가장 가까운 승리 패턴</span>
               <h4>{topMatch.condition.buildName}</h4>
               <p>
-                {topMatch.condition.race} · {topMatch.condition.matchup} · {topMatch.condition.map || "맵 제한 없음"} · 샘플 {topMatch.condition.sampleCount.toLocaleString("ko-KR")}개
+                {topMatch.condition.race} · {topMatch.condition.matchup} · {topMatch.condition.map || "맵 제한 없음"}
               </p>
             </div>
             <div className="ai-win-threshold-grid">
-              {topMatch.rows.map((row) => (
+              {(visibleRows.length ? visibleRows : topMatch.rows.slice(0, compact ? 3 : 6)).map((row) => (
                 <div className={`ai-win-threshold-row ${row.pass === true ? "pass" : row.pass === false ? "fail" : "unknown"}`} key={row.label}>
                   <span>{row.label}</span>
                   <strong>{row.actual}</strong>
@@ -1402,14 +1394,14 @@ function WinConditionPanel({ result, players, model }: { result: AnalyzeSuccess;
                 </div>
               ))}
             </div>
-            <p className="ai-win-condition-advice">{topMatch.condition.coachingUse}</p>
+            {!compact ? <p className="ai-win-condition-advice">{topMatch.condition.coachingUse}</p> : null}
           </div>
         ) : (
           <p className="ai-win-condition-empty">
-            아직 이 REP와 바로 비교할 수 있는 공개 승리 조건이 부족합니다. 관리자에서 후보 REP 분석 후 공개 데이터팩을 만들면, 사이트의 AI tool이 이 기준을 자동으로 읽어 비교합니다.
+            아직 이 REP와 바로 비교할 수 있는 공개 승리 조건이 부족합니다.
           </p>
         )}
-      </div>
+      </details>
     </section>
   );
 }
@@ -1432,8 +1424,10 @@ function CoachReport({
   const coach = buildCoachInsights(result, players);
   const [viewerSeekMs, setViewerSeekMs] = useState<number | null>(null);
   const firstProblem = [...coach.moments]
-    .filter((moment) => moment.severity !== "INFO")
+    .filter((moment) => moment.severity !== "INFO" && !isMetricOnlyMoment(moment))
     .sort((a, b) => timeValue(a.timeLabel) - timeValue(b.timeLabel))[0];
+  const hasHmCoach = Boolean(hmCoach);
+  const supportMoments = hasHmCoach ? coach.moments.filter((moment) => !isMetricOnlyMoment(moment)).slice(0, 4) : coach.moments;
   function jumpToFinding(finding: CoachFinding, withLead = false) {
     const nextMs = Math.max(0, finding.startTimeMs - (withLead ? 5000 : 0));
     setViewerSeekMs(nextMs);
@@ -1443,39 +1437,50 @@ function CoachReport({
   }
   return (
     <div className="ai-report-section ai-coach-report">
-      <section className="ai-coach-hero-card">
+      {!hasHmCoach ? <section className="ai-coach-hero-card">
         <div>
           <span className="panel-kicker">한 줄 결론</span>
           <h3>{coach.focus}</h3>
-          <p>{coach.summary}</p>
+          <p>{conciseText(coach.summary, 180)}</p>
           <div className="ai-plain-summary-row">
-            <span>{firstProblem ? `먼저 볼 시간: ${firstProblem.timeLabel}` : "먼저 볼 큰 장면 없음"}</span>
-            <span>분당 명령 수 = 1분 동안 누른 전체 입력</span>
-            <span>분당 유효 명령 수 = 실제로 경기 흐름을 바꾼 입력</span>
+            <span>{firstProblem ? `복기할 장면: ${firstProblem.timeLabel}` : "먼저 볼 큰 장면 없음"}</span>
+            <span>지표는 보조 근거에서만 확인</span>
           </div>
         </div>
         <div className="ai-coach-score">
           <strong>{coach.score}</strong>
           <span>리포트 점수</span>
         </div>
-      </section>
+      </section> : null}
 
       {hmCoach ? <HmCoachBridgeReport hmCoach={hmCoach} /> : null}
       {!hmCoach && hmCoachError ? <div className="ai-error-line" role="status">추가 코칭 생성 실패: {hmCoachError}</div> : null}
 
-      <WinConditionPanel result={result} players={players} model={winConditionModel} />
-
-      <EvidenceBasedCoachPanel result={result} onJumpToFinding={jumpToFinding} />
-
-      <CoachNarrativePanel narrative={coach.narrative} />
+      {hasHmCoach ? (
+        <details className="ai-coach-supporting-evidence">
+          <summary>
+            <span>보조 근거</span>
+            <strong>승리 조건, 원본 분석, 짧은 복기 보기</strong>
+          </summary>
+          <WinConditionPanel result={result} players={players} model={winConditionModel} compact />
+          <EvidenceBasedCoachPanel result={result} onJumpToFinding={jumpToFinding} compact />
+          <CoachNarrativePanel narrative={coach.narrative} compact />
+        </details>
+      ) : (
+        <>
+          <WinConditionPanel result={result} players={players} model={winConditionModel} />
+          <EvidenceBasedCoachPanel result={result} onJumpToFinding={jumpToFinding} />
+          <CoachNarrativePanel narrative={coach.narrative} />
+        </>
+      )}
 
       <ReplayMapViewer2D result={result} players={players} replayFile={replayFile} seekMs={viewerSeekMs} />
 
-      <TacticalReplaySimulator result={result} players={players} moments={coach.moments} />
+      <TacticalReplaySimulator result={result} players={players} moments={supportMoments} />
 
       <CoachVisualPanel result={result} players={players} coach={coach} />
 
-      <div className="ai-coach-profile-grid">
+      {!hasHmCoach ? <div className="ai-coach-profile-grid">
         {coach.profiles.map((profile) => (
           <section key={profile.playerName}>
             <span>{profile.playerName}</span>
@@ -1489,9 +1494,9 @@ function CoachReport({
             </div>
           </section>
         ))}
-      </div>
+      </div> : null}
 
-      <section className="ai-coach-moment-panel">
+      {!hasHmCoach ? <section className="ai-coach-moment-panel">
         <div className="ai-section-title">
           <span className="panel-kicker">시간별 복기</span>
           <h3>몇 초에 흐름이 끊겼는지</h3>
@@ -1525,9 +1530,9 @@ function CoachReport({
             </article>
           ))}
         </div>
-      </section>
+      </section> : null}
 
-      <section className="ai-coach-drill-panel">
+      {!hasHmCoach ? <section className="ai-coach-drill-panel">
         <div className="ai-section-title">
           <span className="panel-kicker">다음 게임에서 해볼 것</span>
           <h3>바로 연습할 과제</h3>
@@ -1541,15 +1546,15 @@ function CoachReport({
             </article>
           ))}
         </div>
-      </section>
+      </section> : null}
 
-      <section className="ai-pdf-guide">
+      {!hasHmCoach ? <section className="ai-pdf-guide">
         <div>
           <span className="panel-kicker">PDF 저장</span>
           <h3>복기용 문서로 내려받기</h3>
-          <p>상단의 PDF 다운로드 버튼을 누르면 그래프와 코치 노트가 들어간 A4 리포트가 저장됩니다. 팀원에게 공유하거나 다음 경기 전에 다시 보기 좋게 정리됩니다.</p>
+          <p>PDF에는 그래프와 코치 노트를 함께 저장합니다.</p>
         </div>
-      </section>
+      </section> : null}
     </div>
   );
 }
@@ -1669,34 +1674,37 @@ function StrategyReportView({ result, players }: { result: AnalyzeSuccess; playe
   );
 }
 
-function CoachNarrativePanel({ narrative }: { narrative: CoachNarrative }) {
+function CoachNarrativePanel({ narrative, compact = false }: { narrative: CoachNarrative; compact?: boolean }) {
+  const feedbackItems = narrative.feedback.filter((item) => !isMetricOnlyText(`${item.title} ${item.body} ${item.meta ?? ""}`)).slice(0, compact ? 3 : 4);
   return (
     <section className="ai-coach-narrative-panel">
       <div className="ai-section-title">
         <span className="panel-kicker">복기 리포트</span>
-        <h3>읽고 바로 다시 볼 수 있게 정리했습니다</h3>
+        <h3>{compact ? "핵심만 짧게 다시 봅니다" : "읽고 바로 다시 볼 수 있게 정리했습니다"}</h3>
       </div>
 
       <article className="ai-narrative-report">
-        <NarrativeCard eyebrow="이번 경기 요약" item={narrative.overall} />
-        <NarrativeFeedbackCard items={narrative.feedback} />
-        <NarrativeCard eyebrow="빌드와 운영 흐름" item={narrative.strategy} />
-        <NarrativeListCard title="잘한 점" items={narrative.strengths} tone="strength" />
-        <NarrativeListCard title="고칠 점" items={narrative.mistakes} tone="mistake" />
-        <NarrativeMomentCard title={`먼저 다시 볼 장면 ${narrative.keyMoments.length}개`} moments={narrative.keyMoments} />
-        <NarrativeListCard title="다음 게임에서 해볼 것" items={narrative.priorities} tone="priority" />
+        {!compact ? <NarrativeCard eyebrow="이번 경기 요약" item={narrative.overall} /> : null}
+        <NarrativeFeedbackCard items={feedbackItems.length ? feedbackItems : narrative.feedback.slice(0, compact ? 2 : 4)} compact={compact} />
+        {!compact ? <NarrativeCard eyebrow="빌드와 운영 흐름" item={narrative.strategy} /> : null}
+        {!compact ? <NarrativeListCard title="잘한 점" items={narrative.strengths} tone="strength" /> : null}
+        {!compact ? <NarrativeListCard title="고칠 점" items={narrative.mistakes} tone="mistake" /> : null}
+        {!compact ? <NarrativeMomentCard title={`복기할 장면 ${narrative.keyMoments.length}개`} moments={narrative.keyMoments} /> : null}
+        <NarrativeListCard title="다음 판에 이렇게 하세요" items={narrative.priorities.slice(0, compact ? 2 : 4)} tone="priority" compact={compact} />
       </article>
     </section>
   );
 }
 
-function EvidenceBasedCoachPanel({ result, onJumpToFinding }: { result: AnalyzeSuccess; onJumpToFinding: (finding: CoachFinding, withLead?: boolean) => void }) {
+function EvidenceBasedCoachPanel({ result, onJumpToFinding, compact = false }: { result: AnalyzeSuccess; onJumpToFinding: (finding: CoachFinding, withLead?: boolean) => void; compact?: boolean }) {
   const { coaching } = result;
-  const findings = coaching.findings.slice(0, 3);
+  const findings = coaching.findings
+    .filter((finding) => !compact || !isMetricOnlyFinding(finding))
+    .slice(0, compact ? 2 : 3);
   const factById = useMemo(() => new Map(coaching.facts.map((fact) => [fact.id, fact])), [coaching.facts]);
   return (
     <section className="ai-evidence-coach-panel">
-      <div className="ai-evidence-scope">
+      {!compact ? <div className="ai-evidence-scope">
         <div>
           <span className="panel-kicker">분석 범위</span>
           <h3>{coaching.scope.headline}</h3>
@@ -1708,17 +1716,17 @@ function EvidenceBasedCoachPanel({ result, onJumpToFinding }: { result: AnalyzeS
           <Metric label="신뢰도" value={percent(coaching.scope.confidence)} />
           <Metric label="검수 상태" value={coaching.review.badge} />
         </div>
-      </div>
+      </div> : null}
 
-      <div className="ai-evidence-limits">
+      {!compact ? <div className="ai-evidence-limits">
         {coaching.scope.limitations.map((item) => (
           <span key={item}>{item}</span>
         ))}
-      </div>
+      </div> : null}
 
       <div className="ai-section-title">
-        <span className="panel-kicker">근거 기반 코칭</span>
-        <h3>이번 판에서 먼저 고칠 장면</h3>
+        <span className="panel-kicker">{compact ? "보조 근거" : "근거 기반 코칭"}</span>
+        <h3>{compact ? "복기할 장면" : "이번 판에서 먼저 고칠 장면"}</h3>
       </div>
 
       <div className="ai-finding-list">
@@ -1731,26 +1739,26 @@ function EvidenceBasedCoachPanel({ result, onJumpToFinding }: { result: AnalyzeS
               </div>
               <div className="ai-finding-body">
                 <div className="ai-finding-head">
-                  <small>{severityLabel(finding.severity)} · {categoryLabel(finding.category)} · 신뢰도 {percent(finding.confidence)}</small>
-                  <h4>{finding.title}</h4>
+                  <small>{severityLabel(finding.severity)} · {categoryLabel(finding.category)}</small>
+                  <h4>{conciseText(finding.title, 72)}</h4>
                 </div>
-                <p>{finding.summary}</p>
-                <div className="ai-finding-cause">
+                <p>{conciseText(finding.summary, compact ? 120 : 220)}</p>
+                {!compact ? <div className="ai-finding-cause">
                   <strong>왜 문제인가</strong>
                   <p>{finding.whyItMatters}</p>
-                </div>
+                </div> : null}
                 <div className="ai-finding-next">
                   <strong>다음 판에는</strong>
-                  <p>{finding.nextAction}</p>
+                  <p>{conciseText(finding.nextAction, compact ? 120 : 220)}</p>
                 </div>
-                <div className="ai-finding-evidence">
+                {!compact ? <div className="ai-finding-evidence">
                   <span>리플레이 근거</span>
                   {finding.evidenceIds.slice(0, 4).map((id) => {
                     const fact = factById.get(id);
                     return <code key={id}>{fact ? `${formatMsLabel(fact.timeMs)} · ${fact.label}` : id}</code>;
                   })}
-                </div>
-                {finding.knowledgeIds.length > 0 ? (
+                </div> : null}
+                {!compact && finding.knowledgeIds.length > 0 ? (
                   <div className="ai-finding-knowledge">
                     <span>참고 지식</span>
                     {finding.knowledgeIds.slice(0, 2).map((id) => {
@@ -1759,7 +1767,7 @@ function EvidenceBasedCoachPanel({ result, onJumpToFinding }: { result: AnalyzeS
                     })}
                   </div>
                 ) : null}
-                {finding.limitations?.length ? (
+                {!compact && finding.limitations?.length ? (
                   <p className="ai-finding-limit">{finding.limitations.join(" ")}</p>
                 ) : null}
                 <div className="ai-finding-actions">
@@ -1772,23 +1780,23 @@ function EvidenceBasedCoachPanel({ result, onJumpToFinding }: { result: AnalyzeS
         ) : (
           <article className="ai-finding-card is-empty">
             <div className="ai-finding-body">
-              <h4>근거가 충분한 핵심 문제를 찾지 못했습니다.</h4>
-              <p>억지로 문제를 만들지 않고, 현재 리플레이에서 확인 가능한 생산·명령·좌표 기록만 표시합니다.</p>
+              <h4>추가로 볼 핵심 장면은 적습니다.</h4>
+              <p>먼저 위의 HM 코칭 카드부터 복기하세요.</p>
             </div>
           </article>
         )}
       </div>
 
-      <div className="ai-knowledge-state">
+      {!compact ? <div className="ai-knowledge-state">
         {coaching.scope.knowledgeState.map((item) => (
           <span key={item}>{item}</span>
         ))}
-      </div>
+      </div> : null}
     </section>
   );
 }
 
-function NarrativeFeedbackCard({ items }: { items: CoachNarrativeItem[] }) {
+function NarrativeFeedbackCard({ items, compact = false }: { items: CoachNarrativeItem[]; compact?: boolean }) {
   return (
     <section className="ai-narrative-block ai-feedback-card">
       <div className="ai-feedback-card-head">
@@ -1796,16 +1804,16 @@ function NarrativeFeedbackCard({ items }: { items: CoachNarrativeItem[] }) {
         <h4>이번 판에서 못한 부분</h4>
         <em>{items.length}개</em>
       </div>
-      <p>애매한 추측은 숨기고, 명령 기록에서 근거가 잡힌 내용만 먼저 보여줍니다.</p>
+      {!compact ? <p>애매한 추측은 숨기고, 근거가 잡힌 내용만 먼저 보여줍니다.</p> : null}
       <ol>
         {items.map((item, index) => (
           <li key={`${item.title}-${index}`}>
             <b>{index + 1}</b>
             <div>
-              <small>가장 먼저 고칠 것</small>
+              <small>{index === 0 ? "이번 판에서 바로 고칠 것" : "다음 판에 이렇게 하세요"}</small>
               <strong>{item.title}</strong>
               <p>
-                <CoachRichText text={item.body} />
+                <CoachRichText text={compact ? conciseText(item.body, 140) : item.body} />
               </p>
               {item.meta ? (
                 <div className="ai-feedback-next">
@@ -1836,7 +1844,7 @@ function NarrativeCard({ eyebrow, item }: { eyebrow: string; item: CoachNarrativ
   );
 }
 
-function NarrativeListCard({ title, items, tone }: { title: string; items: CoachNarrativeItem[]; tone: "strength" | "mistake" | "priority" }) {
+function NarrativeListCard({ title, items, tone, compact = false }: { title: string; items: CoachNarrativeItem[]; tone: "strength" | "mistake" | "priority"; compact?: boolean }) {
   return (
     <section className={`ai-narrative-block ai-narrative-list tone-${tone}`}>
       <h4>{title}</h4>
@@ -1845,9 +1853,9 @@ function NarrativeListCard({ title, items, tone }: { title: string; items: Coach
           <li key={`${title}-${item.title}-${index}`}>
             <strong>{tone === "priority" ? `${index + 1}. ${item.title}` : item.title}</strong>
             <p>
-              <CoachRichText text={item.body} />
+              <CoachRichText text={compact ? conciseText(item.body, 130) : item.body} />
             </p>
-            {item.meta ? <small>{item.meta}</small> : null}
+            {item.meta && !compact ? <small>{item.meta}</small> : null}
           </li>
         ))}
       </ul>
@@ -2924,8 +2932,8 @@ function ApmEapmGuide() {
       </section>
       <section>
         <span>차이가 크면?</span>
-        <strong>마우스 클릭 수는 많았지만 경기에 도움 된 명령은 적었습니다</strong>
-        <p>같은 부대 재선택, 의미 없는 우클릭, 교전 중 생산 건물 호출 누락이 섞였는지 리플레이에서 확인해보면 됩니다.</p>
+        <strong>입력 효율 참고 구간입니다</strong>
+        <p>교전 중 첫 결정이 공격, 후퇴, 생산 중 무엇이었는지 리플레이에서 확인해보면 됩니다.</p>
       </section>
     </aside>
   );
@@ -3749,7 +3757,7 @@ function coachMark(value: string | number) {
 }
 
 function coachProblemLabel(tag: string) {
-  if (tag === "EAPM 저하") return "마우스 클릭 수는 많았지만 도움 된 명령은 적었던 장면";
+  if (tag === "EAPM 저하") return "입력 효율을 참고할 장면";
   if (tag === "생산 공백") return "생산이 끊긴 장면";
   if (tag === "단축키 편중") return "단축키 사용이 한쪽에 몰린 장면";
   if (tag === "화면 전환") return "화면 전환을 확인할 장면";
@@ -3757,7 +3765,7 @@ function coachProblemLabel(tag: string) {
 }
 
 function coachProblemShortLabel(tag: string) {
-  if (tag === "EAPM 저하") return "도움 된 명령 부족";
+  if (tag === "EAPM 저하") return "입력 효율 참고";
   if (tag === "생산 공백") return "생산 끊김";
   if (tag === "단축키 편중") return "단축키 몰림";
   if (tag === "화면 전환") return "화면 이동 확인";
@@ -3773,7 +3781,7 @@ function buildCoachNarrative(
   score: number,
 ): CoachNarrative {
   const activePlayers = players.filter((player) => !player.observer);
-  const playerLine = activePlayers.map((player) => `${coachMark(player.name)} 분당 명령 수 ${player.apm ?? "?"}, 분당 유효 명령 수 ${player.eapm ?? "?"}, 유효 명령 비율 ${percent(player.effectiveRate)}`).join(" · ");
+  const playerLine = activePlayers.map((player) => `${coachMark(player.name)} 입력 효율 참고 ${percent(player.effectiveRate)}`).join(" · ");
   const problemMoments = moments.filter((moment) => moment.severity !== "INFO");
   const firstProblem = [...problemMoments].sort((a, b) => timeValue(a.timeLabel) - timeValue(b.timeLabel))[0];
   const majorProblem = problemMoments.find((moment) => moment.severity === "HIGH") ?? firstProblem;
@@ -3785,19 +3793,19 @@ function buildCoachNarrative(
   const flowLine = buildRegionFlowLine(result);
 
   const overallBody = [
-    "이 리포트는 손이 빠른지보다 그 입력이 경기 결과에 도움이 되었는지를 먼저 봅니다. 분당 명령 수는 1분 동안 누른 전체 입력이고, 분당 유효 명령 수는 그중 생산·이동·공격·후퇴처럼 실제로 경기 흐름을 바꾼 입력입니다.",
-    `전체 조작 흐름은 ${playerLine || "플레이어별 손속도 기록이 충분하지 않습니다"}로 정리됐고, 리포트 점수는 ${coachMark(score)}입니다.`,
+    "이 리포트는 손속도보다 장면별 선택을 먼저 봅니다.",
+    `보조 입력 흐름은 ${playerLine || "확인할 기록이 충분하지 않습니다"}로만 참고하고, 리포트 점수는 ${coachMark(score)}입니다.`,
     majorProblem
       ? `가장 먼저 볼 장면은 ${coachMark(`${majorProblem.timeLabel} ${coachProblemLabel(majorProblem.tag)}`)}입니다. 이 장면은 단순히 수치가 낮아서 표시된 것이 아닙니다. 그 시간에 무엇을 보고 있었는지, 생산 건물을 불렀는지, 병력을 움직인 뒤 다음 행동이 이어졌는지가 같이 드러나기 때문에 직접 다시 볼 가치가 큽니다.`
       : "크게 흔들린 장면은 많지 않습니다. 이럴 때는 승패보다 초반 빌드가 몇 초씩 늦어졌는지, 첫 진출 타이밍이 흔들렸는지, 전투 직후 생산 입력이 유지됐는지를 보면 좋습니다.",
-    `이번 리포트에서는 생산이 빈 시간 ${coachMark(`${productionCount}개`)}, 마우스 클릭 수는 많았지만 경기에 도움 된 명령은 적었던 시간 ${coachMark(`${eapmCount}개`)}, 단축키가 한쪽에 몰린 흐름 ${coachMark(`${hotkeyCount}개`)}를 따로 잡았습니다. 숫자 자체를 벌점처럼 볼 필요는 없습니다. 표시된 시간으로 이동해서 “내 화면이 어디 있었나”, “첫 번째로 도움이 된 명령은 무엇이었나”를 확인하면 원인이 훨씬 빨리 보입니다.`,
+    `이번 리포트에서는 후속 병력이 늦어진 구간 ${coachMark(`${productionCount}개`)}, 입력 효율 참고 구간 ${coachMark(`${eapmCount}개`)}, 부대지정 확인 구간 ${coachMark(`${hotkeyCount}개`)}를 보조로 잡았습니다.`,
   ].join(" ");
 
   const strategyBody = [
     classificationLine,
     openingLine,
     flowLine,
-    "빌드는 이름을 맞히는 것보다 실제 운영으로 이어졌는지가 중요합니다. 초반 빌드가 좋아도 중간에 생산이 오래 비면 빌드의 장점이 사라지고, 손속도 숫자가 낮아 보여도 필요한 순간에 생산·공격·후퇴가 정확히 들어가면 손해는 작습니다. 아래 장점과 고칠 점은 같은 시간대의 리플레이 화면과 함께 보면 더 정확하게 이해됩니다.",
+    "빌드는 이름보다 그 빌드가 강한 시간에 실제 교전과 운영으로 이어졌는지가 중요합니다.",
   ].join(" ");
 
   return {
@@ -3828,8 +3836,8 @@ function buildNarrativeFeedback(result: AnalyzeSuccess, problemMoments: CoachMom
   for (const gap of productionGaps.slice(0, 2)) {
     feedback.push({
       title: `${formatDuration(gap.startSecond)}-${formatDuration(gap.endSecond)} 생산이 멈춰 후속 병력이 늦었습니다`,
-      body: `${coachMark(Math.round(gap.duration).toString())}초 동안 생산·건설·테크 기록 사이가 비었습니다. 이 시간에 전투나 정찰을 보고 있었다면 화면은 보고 있었지만 병력 충원은 뒤로 밀렸을 가능성이 큽니다. 스타크래프트에서는 한 번 비는 생산이 다음 교전 병력 수, 업그레이드 시작, 멀티 활성화 시간까지 같이 늦춥니다.`,
-      meta: `교전이나 정찰 화면을 보기 전에 생산 건물 단축키를 한 번 누르고 예약을 넣으세요. 특히 ${coachMark(formatDuration(Math.max(0, gap.startSecond - 10)))}부터 다시 보면서 화면이 어디 있었는지 확인하면 원인이 더 빨리 보입니다.`,
+      body: `${coachMark(Math.round(gap.duration).toString())}초 동안 후속 병력과 테크가 늦었습니다. 이 구간은 교전 전에 병력을 더 채웠어야 했는지 확인하세요.`,
+      meta: `다음 판에는 ${coachMark(formatDuration(Math.max(0, gap.startSecond - 10)))}부터 생산 예약을 먼저 넣고 교전을 보세요.`,
       tone: "mistake",
     });
   }
@@ -3840,8 +3848,8 @@ function buildNarrativeFeedback(result: AnalyzeSuccess, problemMoments: CoachMom
   for (const build of uncertainBuilds) {
     feedback.push({
       title: `${build.playerName}의 초반 빌드 의도가 기록상 뚜렷하지 않습니다`,
-      body: `${coachMark(build.buildName)} 후보로 읽히지만 확신도는 ${coachMark(percent(build.confidence))}입니다. 이 말은 빌드 이름이 틀렸다는 뜻이 아니라, 초반 생산·테크·확장 순서가 하나의 분명한 흐름으로 이어졌는지 더 봐야 한다는 뜻입니다. 첫 생산 이후 정찰, 추가 생산, 테크 전환이 끊기면 리포트도 빌드 의도를 강하게 잡기 어렵습니다.`,
-      meta: "첫 5분만 다시 보면서 첫 생산, 첫 테크, 첫 확장, 첫 진출 시간을 적어보세요. 다음 판에는 같은 빌드를 할 때 이 네 기준점을 5초 안쪽으로 맞추는 것을 목표로 잡으면 됩니다.",
+      body: `${coachMark(build.buildName)} 후보로 읽힙니다. 초반 선택이 중반 교전 계획으로 이어졌는지만 확인하세요.`,
+      meta: "다음 판에는 첫 생산, 첫 테크, 첫 진출 기준점을 정하고 같은 빌드를 반복하세요.",
       tone: "mistake",
     });
   }
@@ -3853,8 +3861,8 @@ function buildNarrativeFeedback(result: AnalyzeSuccess, problemMoments: CoachMom
   for (const report of hotkeyIssues) {
     feedback.push({
       title: `${report.playerName}는 부대지정이 한쪽에 몰려 조작이 꼬일 수 있습니다`,
-      body: `사용한 번호는 ${coachMark(report.usedGroups.join(", ") || "없음")}이고, 가장 많이 누른 번호 비중은 ${coachMark(`${report.dominantShare.toFixed(1)}%`)}입니다. 주병력, 견제 병력, 생산 확인이 한 번호에 섞이면 교전 중에 다시 찾는 시간이 생기고 생산 루틴도 쉽게 끊깁니다.`,
-      meta: "다음 판에는 1번 주병력, 2번 견제/보조 병력, 3번 생산 또는 수비처럼 역할을 정해서 끝까지 유지하세요. 목표는 손을 더 빨리 움직이는 게 아니라 찾는 시간을 없애는 것입니다.",
+      body: `번호 역할이 섞이면 교전 중 유닛을 다시 찾는 시간이 생깁니다. 주 병력과 보조 병력을 나눠 두세요.`,
+      meta: "다음 판에는 1번 주병력, 2번 보조 병력, 3번 생산 확인처럼 역할을 고정하세요.",
       tone: "mistake",
     });
   }
@@ -3863,20 +3871,20 @@ function buildNarrativeFeedback(result: AnalyzeSuccess, problemMoments: CoachMom
   const eapmMoments = problemMoments.filter((moment) => moment.tag === "EAPM 저하").slice(0, concreteFeedbackCount >= 2 ? 1 : 2);
   for (const moment of eapmMoments) {
     feedback.push({
-      title: `${moment.timeLabel} 마우스 클릭 수는 많았지만 경기 도움 명령이 적었습니다`,
-      body: `${moment.detail} 여기서 중요한 건 “손이 느렸다”가 아닙니다. 같은 유닛 재선택, 목적 없는 우클릭, 화면만 움직이고 생산·공격·후퇴가 이어지지 않은 입력이 섞였을 가능성을 보는 것입니다.`,
-      meta: "이 구간을 0.5배속으로 보고 첫 10초 동안 들어간 명령을 적어보세요. 생산, 공격, 후퇴, 정찰 중 하나로 설명되지 않는 클릭은 줄이는 연습을 하면 됩니다.",
+      title: `${moment.timeLabel} 입력 효율 참고`,
+      body: "이 구간은 손속도 평가가 아니라, 교전 중 첫 명령이 공격·후퇴·생산 중 무엇이었는지 확인하는 보조 지표입니다.",
+      meta: "다음 판에는 같은 장면에서 먼저 공격할지, 빠질지, 생산을 누를지 하나만 정하세요.",
       tone: "mistake",
     });
   }
 
-  if (feedback.length > 0) return feedback.slice(0, 4);
+  if (feedback.length > 0) return feedback.slice(0, 3);
 
   return [
     {
       title: "크게 못한 장면은 적지만 초반 기준점을 더 엄격하게 봐야 합니다",
-      body: "리포트가 강하게 지적할 생산 공백이나 단축키 문제를 많이 찾지는 못했습니다. 이럴 때는 승패보다 첫 생산, 첫 테크, 첫 확장, 첫 진출 시간이 일정했는지 확인하는 편이 좋습니다.",
-      meta: "다음 판에는 같은 빌드를 3번 반복하면서 첫 5분 기준점을 적어보세요. 5초 이상 흔들리는 지점이 나오면 그 부분이 실제 연습 과제입니다.",
+      body: "큰 실수보다 첫 생산, 첫 테크, 첫 진출 기준점이 일정했는지 확인하세요.",
+      meta: "다음 판에는 같은 빌드를 3번 반복하며 첫 5분 기준점을 맞추세요.",
       tone: "mistake",
     },
   ];
@@ -4057,6 +4065,35 @@ function formatMsLabel(value: number) {
   return formatDuration(value / 1000);
 }
 
+function conciseText(value: string, maxLength: number) {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, Math.max(0, maxLength - 1)).trim()}…`;
+}
+
+function isMetricOnlyMoment(moment: CoachMoment) {
+  return isMetricOnlyText(`${moment.tag} ${moment.title} ${moment.detail}`);
+}
+
+function isMetricOnlyFinding(finding: CoachFinding) {
+  if (["control", "hotkey"].includes(finding.category)) return true;
+  return isMetricOnlyText(`${finding.category} ${finding.title} ${finding.summary} ${finding.whyItMatters} ${finding.nextAction}`);
+}
+
+function isMetricOnlyText(value: string) {
+  const text = value.toLowerCase();
+  return (
+    text.includes("eapm") ||
+    text.includes("apm") ||
+    text.includes("클릭") ||
+    text.includes("마우스") ||
+    text.includes("유효 명령") ||
+    text.includes("도움 된 명령") ||
+    text.includes("부대지정") ||
+    text.includes("hotkey")
+  );
+}
+
 function regionSwitchProfile(result: AnalyzeSuccess, playerId: number) {
   const commands = positionedReplayCommands(result, playerId);
   if (commands.length < 2) {
@@ -4212,10 +4249,10 @@ function plainReviewCopy(moment: CoachMoment) {
 
   if (moment.tag.includes("EAPM")) {
     return {
-      problem: "마우스 클릭 수는 많았지만 경기에 도움 된 명령은 적었습니다.",
-      reason: "손은 바쁘게 움직였지만 생산, 공격, 후퇴, 업그레이드처럼 실제로 경기 흐름을 바꾸는 명령이 적었습니다. 같은 유닛을 반복 선택하거나 목적 없는 이동 클릭이 섞였을 가능성이 큽니다.",
-      reviewPoint: "이 시간대를 0.5배속으로 보면서 첫 10초 안에 어떤 명령이 들어갔는지 보세요. 같은 유닛 재선택, 의미 없는 우클릭, 생산 화면 미확인을 찾으면 됩니다.",
-      fixPoint: "분당 명령 수를 더 올리려 하지 말고 불필요한 클릭을 줄이세요. 한 번 클릭할 때 생산, 공격, 후퇴, 정찰 중 어떤 목적이 있는지 분명해야 합니다.",
+      problem: "입력 효율을 참고할 장면입니다.",
+      reason: "이 구간은 손속도 평가가 아니라 첫 결정이 분명했는지 보는 보조 근거입니다.",
+      reviewPoint: "이 시간대를 0.5배속으로 보면서 첫 10초 안에 공격, 후퇴, 생산 중 무엇을 먼저 선택했는지 보세요.",
+      fixPoint: "다음 판에는 같은 상황에서 먼저 싸울지, 빠질지, 생산을 누를지 하나를 정하세요.",
     };
   }
 
@@ -4347,29 +4384,24 @@ function buildCoachInsights(result: AnalyzeSuccess, players: ReplayPlayer[]) {
   const productionGapCount = moments.filter((moment) => moment.tag === "생산 공백").length;
   const eapmDropCount = moments.filter((moment) => moment.tag === "EAPM 저하").length;
   const hotkeyIssueCount = moments.filter((moment) => moment.tag === "단축키 편중").length;
-  const playerLine = players
-    .map((player) => `${player.name}: 분당 명령 수 ${player.apm ?? "?"}, 분당 유효 명령 수 ${player.eapm ?? "?"}, 유효 명령 비율 ${percent(player.effectiveRate)}`)
-    .join(" / ");
   const focus =
     productionGapCount > 0
-      ? "생산이 빈 시간이 경기 템포를 가장 크게 흔듭니다."
+      ? "후속 병력이 늦어진 구간부터 복기하세요."
       : eapmDropCount > 0
-        ? "명령 수보다 유효한 명령을 먼저 늘려야 합니다."
+        ? "교전 중 첫 결정을 더 분명히 해야 합니다."
         : hotkeyIssueCount > 0
           ? "부대지정 역할 분리가 다음 성장 포인트입니다."
           : "큰 실수보다 작은 시간 차이를 줄이는 것이 핵심입니다.";
   const summary = [
-    `전체 흐름은 ${playerLine}로 정리됩니다.`,
     highCount > 0
-      ? `먼저 다시 볼 장면 ${highCount}개와 가볍게 확인할 장면 ${mediumCount}개가 있습니다.`
-      : `크게 흔들린 장면은 적지만 확인할 장면 ${mediumCount}개가 있어 생산 습관과 단축키 사용을 한 번 더 보면 좋습니다.`,
+      ? `복기할 장면 ${highCount}개와 보조 확인 장면 ${mediumCount}개가 있습니다.`
+      : `큰 흔들림은 적고 보조 확인 장면 ${mediumCount}개가 있습니다.`,
     productionGapCount > 0
-      ? `특히 생산이 빈 시간 ${productionGapCount}개는 교전이나 정찰을 보는 동안 병력, 업그레이드, 건물 예약이 뒤로 밀렸을 수 있다는 뜻입니다.`
-      : "생산이 길게 빈 시간은 크게 보이지 않습니다. 대신 분당 명령 수 대비 유효 명령 비율과 단축키 분배를 보면 좋습니다.",
+      ? `후속 병력이 늦어진 구간은 교전 직전 화면과 함께 보세요.`
+      : "후속 병력 흐름은 크게 무너지지 않았습니다.",
     eapmDropCount > 0
-      ? `마우스 클릭 수는 많았지만 경기에 도움 된 명령은 적었던 시간 ${eapmDropCount}개가 있습니다. 반복 선택이나 목적 없는 이동 명령이 섞였는지 확인해보세요.`
-      : "분당 유효 명령 수 흐름은 크게 무너지지 않았습니다. 다음은 빌드 순서와 화면 전환 타이밍을 더 엄격히 비교할 단계입니다.",
-    "아래 시간대는 REP 파일의 기록을 기준으로 잡았습니다. 실제 리플레이 화면과 같이 보면 더 정확하게 복기할 수 있습니다.",
+      ? `입력 효율 참고 구간은 보조 근거에서만 확인하세요.`
+      : "다음은 빌드 순서와 진출 타이밍을 더 엄격히 비교할 단계입니다.",
   ].join(" ");
   return { score, focus, summary, profiles, moments, drills, narrative };
 }
@@ -4406,16 +4438,15 @@ function buildCoachMoments(result: AnalyzeSuccess, players: ReplayPlayer[]) {
 
     for (const point of weakWindows) {
       const rate = point.apm > 0 ? round1((point.eapm * 100) / point.apm) : 0;
-      const apmGap = Math.max(0, point.apm - point.eapm);
       moments.push({
         id: `slow-${player.id}-${point.startSeconds}`,
         timeLabel: `${formatDuration(point.startSeconds)}-${formatDuration(point.endSeconds)}`,
         playerName: player.name,
         severity: rate < 45 ? "HIGH" : "MEDIUM",
         tag: "EAPM 저하",
-      title: `마우스 클릭 수는 많았지만 경기에 도움 된 명령은 적었습니다`,
-      detail: `이 1분은 분당 명령 수 ${point.apm}, 분당 유효 명령 수 ${point.eapm}, 유효 명령 비율 ${rate}%였습니다. 두 숫자의 차이는 ${apmGap}입니다. 손은 빠르게 움직였지만 생산, 공격, 후퇴처럼 경기 흐름을 바꾸는 명령 비중이 낮았습니다. 같은 유닛을 다시 잡거나 목적 없는 우클릭이 반복됐는지 확인해보세요.`,
-        evidence: averageEapm > 0 ? `평균 분당 유효 명령 수 ${Math.round(averageEapm)} 대비 낮음` : "분당 명령 수와 분당 유효 명령 수 비교",
+        title: "입력 효율 참고 구간입니다",
+        detail: `이 구간은 손속도 평가가 아니라 교전 중 첫 결정이 분명했는지 보는 보조 근거입니다. 같은 장면에서 먼저 공격할지, 빠질지, 생산을 누를지 하나를 정해 복기하세요.`,
+        evidence: "입력 효율 참고",
       });
     }
   }
@@ -4480,9 +4511,9 @@ function buildCoachDrills(result: AnalyzeSuccess, players: ReplayPlayer[], momen
   }
   if (moments.some((moment) => moment.tag === "EAPM 저하")) {
     drills.push({
-      title: "쓸모 없는 클릭 줄이기",
-      detail: "문제 구간 20초 전부터 불필요한 선택 반복과 목적 없는 우클릭을 줄여보세요. 공격 이동, 후퇴, 생산, 업그레이드 확인처럼 실제로 경기 흐름을 바꾸는 명령만 남기는 연습입니다. 분당 명령 수가 조금 낮아져도 유효 명령 비율이 올라가면 좋은 방향입니다.",
-      successMetric: "유효 명령 비율 70% 이상 또는 분당 명령 수와 분당 유효 명령 수 차이 60 이하",
+      title: "교전 중 첫 결정 정하기",
+      detail: "문제 구간 20초 전부터 다시 보며 먼저 공격할지, 빠질지, 생산을 누를지 하나를 정하세요.",
+      successMetric: "같은 장면에서 첫 명령을 2초 안에 결정",
     });
   }
   if (moments.some((moment) => moment.tag === "단축키 편중")) {
