@@ -899,7 +899,7 @@ export function AiToolsPage() {
         </nav>
       </header>
 
-      <section className="ai-tools-hero px-5 pb-8 pt-28 sm:px-8 lg:px-10">
+      <section className="ai-tools-hero px-5 pb-6 pt-24 sm:px-8 lg:px-10">
         <div className="ai-hero-grid mx-auto max-w-7xl">
           <div className="ai-hero-copy">
             <div className="panel-kicker">{HM_AI_COPY.productDescriptionEn}</div>

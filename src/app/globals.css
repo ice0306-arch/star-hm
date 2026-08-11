@@ -1101,33 +1101,33 @@ footer {
 
 .ai-hero-grid {
   display: grid;
-  gap: clamp(1.2rem, 3vw, 2.6rem);
+  gap: clamp(1rem, 2.4vw, 2rem);
   align-items: end;
   grid-template-columns: minmax(0, 0.88fr) minmax(340px, 0.72fr);
 }
 
 .ai-tools-hero h1 {
-  margin-top: 0.75rem;
+  margin-top: 0.55rem;
   max-width: 54rem;
   color: var(--ai-warm);
-  font-size: clamp(3rem, 7vw, 7rem);
+  font-size: clamp(2.6rem, 6vw, 5.9rem);
   font-weight: 950;
-  line-height: 0.95;
+  line-height: 0.96;
 }
 
 .ai-tools-hero p {
-  margin-top: 1.2rem;
+  margin-top: 0.9rem;
   max-width: 46rem;
   color: rgba(214, 216, 210, 0.78);
-  font-size: clamp(1rem, 2vw, 1.2rem);
-  line-height: 1.8;
+  font-size: clamp(0.92rem, 1.5vw, 1.08rem);
+  line-height: 1.68;
 }
 
 .ai-tools-hero p strong {
   display: block;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.22rem;
   color: var(--ai-warm);
-  font-size: 1.25rem;
+  font-size: 1.08rem;
   font-weight: 950;
 }
 
@@ -1135,7 +1135,7 @@ footer {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  margin-top: 1.45rem;
+  margin-top: 1.1rem;
 }
 
 .ai-hero-actions .command-button {
@@ -1145,17 +1145,18 @@ footer {
 .ai-scope-note {
   max-width: 680px;
   color: rgba(241, 240, 235, 0.58) !important;
-  font-size: 0.82rem !important;
+  font-size: 0.76rem !important;
+  line-height: 1.58 !important;
 }
 
 .ai-tactical-board {
   position: relative;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.62rem;
+  gap: 0.5rem;
   border: 1px solid rgba(88, 166, 255, 0.16);
   border-radius: 8px;
-  padding: 0.72rem;
+  padding: 0.62rem;
   background: rgba(8, 12, 18, 0.62);
 }
 
@@ -1173,12 +1174,12 @@ footer {
 .ai-tactical-board span {
   position: relative;
   display: grid;
-  min-height: 112px;
+  min-height: 96px;
   align-content: start;
-  gap: 0.34rem;
+  gap: 0.26rem;
   border: 1px solid rgba(241, 240, 235, 0.1);
   border-radius: 8px;
-  padding: 0.85rem;
+  padding: 0.68rem;
   background:
     linear-gradient(145deg, rgba(88, 166, 255, 0.08), transparent 56%),
     rgba(12, 17, 25, 0.86);
@@ -1186,27 +1187,27 @@ footer {
 
 .ai-tactical-board b {
   display: grid;
-  width: 2rem;
-  height: 2rem;
+  width: 1.75rem;
+  height: 1.75rem;
   place-items: center;
   border: 1px solid rgba(88, 166, 255, 0.34);
   border-radius: 999px;
   background: rgba(88, 166, 255, 0.12);
   color: var(--ai-signal);
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   font-weight: 950;
 }
 
 .ai-tactical-board i {
   color: white;
-  font-size: 0.84rem;
+  font-size: 0.78rem;
   font-style: normal;
   font-weight: 950;
 }
 
 .ai-tactical-board small {
   color: rgba(241, 240, 235, 0.6);
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   font-weight: 760;
   line-height: 1.45;
   word-break: keep-all;
@@ -1218,7 +1219,7 @@ footer {
   gap: 0.5rem;
   border: 1px solid rgba(88, 166, 255, 0.14);
   border-radius: 8px;
-  padding: 0.55rem;
+  padding: 0.45rem;
   background:
     linear-gradient(90deg, rgba(88, 166, 255, 0.08), transparent 44%),
     rgba(12, 17, 25, 0.72);
@@ -1230,10 +1231,10 @@ footer {
   gap: 0.1rem 0.48rem;
   align-items: center;
   flex: 1 1 180px;
-  min-height: 58px;
+  min-height: 50px;
   border: 1px solid rgba(241, 240, 235, 0.08);
   border-radius: 7px;
-  padding: 0.58rem 0.68rem;
+  padding: 0.48rem 0.58rem;
   background: rgba(255, 255, 255, 0.028);
 }
 
