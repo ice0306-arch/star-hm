@@ -204,6 +204,7 @@ function buildCoachInputFromAnalysisResult(result: AnalyzeSuccessInput, perspect
         ? result.coaching.scope.matchup
         : buildMatchupLabel(perspectivePlayer?.race, opponent?.race);
   const unitHints = collectUnitHints(result, playerId);
+  const opponentUnitHints = collectUnitHints(result, opponentId);
   const feedbackItems = buildAnalysisFeedbackItems({
     playerName: perspectivePlayer?.name || "관점 플레이어",
     opponentName: opponent?.name || "상대",
@@ -211,6 +212,7 @@ function buildCoachInputFromAnalysisResult(result: AnalyzeSuccessInput, perspect
     opponentRace: opponent?.race,
     matchup,
     unitHints,
+    opponentUnitHints,
     build: playerBuild,
     production: playerProduction,
     command: playerCommand,
@@ -278,6 +280,7 @@ function buildAnalysisFeedbackItems({
   opponentRace,
   matchup,
   unitHints,
+  opponentUnitHints,
   build,
   production,
   command,
@@ -292,6 +295,7 @@ function buildAnalysisFeedbackItems({
   opponentRace?: string;
   matchup: string;
   unitHints: string[];
+  opponentUnitHints: string[];
   build: LooseRecord | null;
   production: LooseRecord | null;
   command: LooseRecord | null;
@@ -316,6 +320,7 @@ function buildAnalysisFeedbackItems({
     breadthScore: breadthScore === null ? null : Math.round(breadthScore),
     firstFindingTime: actionableFindingTime(findings, playerId),
     unitHints,
+    opponentUnitHints,
   };
   const matchupItems = matchupCoachItems({
     playerName,
@@ -368,7 +373,7 @@ function collectUnitHints(result: AnalyzeSuccessInput, playerId: string) {
     ["셔틀", ["shuttle"]],
     ["리버", ["reaver"]],
     ["커세어", ["corsair"]],
-    ["하이템플러", ["templar"]],
+    ["하이템플러", ["high templar"]],
     ["저글링", ["zergling"]],
     ["뮤탈", ["mutalisk"]],
     ["스커지", ["scourge"]],
@@ -412,55 +417,65 @@ function matchupCoachItems({
     breadthScore: number | null;
     firstFindingTime: string | null;
     unitHints: string[];
+    opponentUnitHints: string[];
   };
 }): StarHmFeedbackItem[] {
   const player = raceCode(playerRace);
   const opponent = raceCode(opponentRace);
   const code = player !== "?" && opponent !== "?" ? `${player}v${opponent}` : matchup.replace(/[^PTZ]/gi, "").toUpperCase();
   const context = evidenceLine(evidence);
-  const hasUnit = (...units: string[]) => units.some((unit) => evidence.unitHints.includes(unit));
+  const hasOwnUnit = (...units: string[]) => units.some((unit) => evidence.unitHints.includes(unit));
+  const hasOpponentUnit = (...units: string[]) => units.some((unit) => evidence.opponentUnitHints.includes(unit));
   const withFallback = (items: StarHmFeedbackItem[]) => items.length ? items : [genericEvidenceCoachItem(playerName, opponentName, matchup, context)];
 
   if (code === "TvP") {
-    return [
-      {
+    const items: StarHmFeedbackItem[] = [];
+    if (hasOwnUnit("탱크") && hasOpponentUnit("드라군", "질럿")) {
+      items.push({
         title: "이번 판에서는 탱크가 먼저 나가기보다 자리를 먼저 잡았어야 했어",
         detail: `${playerName}은 ${opponentName}의 드라군/질럿이 들어오는 각을 먼저 끊고, 벌처 마인으로 길목을 잠근 뒤 탱크를 시즈했어야 했어. 탱크가 앞으로 걸어 나가면 드라군 사거리와 질럿 진입 각을 동시에 내줍니다.${context}`,
         next: "다음 판에는 벌처로 앞 경로에 마인을 먼저 깔고, 탱크는 한 줄씩만 전진시키면서 드라군이 때릴 수 없는 언덕/좁은 길부터 잡으세요.",
-      },
-      {
+      });
+    }
+    if (hasOwnUnit("벌처") && hasOwnUnit("탱크")) {
+      items.push({
         title: "이번 판에서는 벌처를 탱크 앞에서 죽이지 말고 상대 이동을 막는 데 썼어야 했어",
         detail: "벌처는 데미지를 넣는 유닛이라기보다 드라군 이동을 늦추고 질럿 돌파 각을 막는 유닛입니다. 탱크 정면에 던지면 마인을 못 깔고 사라져서 탱크가 바로 노출됩니다.",
         next: "다음 판에는 벌처 시야 → 마인으로 길목 잠금 → 탱크 시즈 → 스타포트/드랍 체크 순서로 보세요.",
-      },
-    ];
+      });
+    }
+    return withFallback(items);
   }
 
   if (code === "PvT") {
-    return [
-      {
+    const items: StarHmFeedbackItem[] = [];
+    if (hasOwnUnit("드라군") && hasOpponentUnit("탱크")) {
+      items.push({
         title: "이번 판에서는 드라군을 던지기보다 테란 탱크 자리부터 깨뜨렸어야 했어",
         detail: `${playerName}은 드라군을 한 번에 앞으로 밀기 전에, 테란 탱크가 시즈할 자리와 벌처 마인 라인을 먼저 봤어야 했어. 옵저버나 셔틀이 들어가기 전에 드라군이 정면으로 나가면 탱크 포격에 병력만 줄어듭니다.${context}`,
         next: "다음 판에는 옵저버로 탱크 수와 마인 위치를 먼저 보고, 셔틀/질럿이 먼저 맞아주는 동안 드라군은 뒤에서 탱크를 점사하세요.",
-      },
-      {
+      });
+    }
+    if (hasOwnUnit("질럿") && hasOpponentUnit("탱크")) {
+      items.push({
         title: "이번 판에서는 질럿을 먼저 던져서 탱크 포신을 빼고 드라군이 때렸어야 했어",
         detail: "테란전 큰 싸움은 드라군만 앞으로 가는 싸움이 아닙니다. 질럿이 먼저 들어가 탱크 포격과 벌처 마인을 빼고, 드라군은 탱크가 자리 잡은 라인을 하나씩 지워야 합니다.",
         next: "다음 판에는 질럿 진입 → 셔틀 하차 → 드라군 탱크 점사 → 후속 게이트 생산 순서로 싸움을 여세요.",
-      },
-    ];
+      });
+    }
+    return withFallback(items);
   }
 
   if (code === "ZvP") {
     const items: StarHmFeedbackItem[] = [];
-    if (hasUnit("뮤탈")) {
+    if (hasOwnUnit("뮤탈")) {
       items.push({
         title: "이번 판에서는 뮤탈이 오래 머무르지 말고 피해를 주고 바로 빠졌어야 했어",
         detail: `${playerName}이 뮤탈로 피해를 내려는 순간에는 한 지점에 오래 머무르는 것보다, 빈 곳을 치고 잃지 않고 빠지는 순서가 먼저였어. 뮤탈을 오래 세워두면 다음 싸움에 쓸 숫자가 줄어듭니다.${context}`,
         next: "다음 판에는 뮤탈은 빈 일꾼 라인이나 이동 동선을 찍고, 상대 병력이 모이는 순간 바로 빠지는 순서로 움직이세요.",
       });
     }
-    if (hasUnit("히드라")) {
+    if (hasOwnUnit("히드라")) {
       items.push({
         title: "이번 판에서는 히드라를 한 점으로 뭉치지 말고 넓게 펴서 들어갔어야 했어",
         detail: "히드라가 한 덩어리로 들어가면 앞줄만 맞고 뒤쪽 화력이 늦게 붙습니다. 이번 판에서는 히드라를 넓게 펴서 먼저 맞는 줄과 뒤에서 때리는 줄을 나눴어야 합니다.",
@@ -472,14 +487,14 @@ function matchupCoachItems({
 
   if (code === "PvZ") {
     const items: StarHmFeedbackItem[] = [];
-    if (hasUnit("커세어")) {
+    if (hasOwnUnit("커세어")) {
       items.push({
         title: "이번 판에서는 커세어가 잡는 것보다 보는 역할을 먼저 했어야 했어",
         detail: `${playerName}은 커세어를 띄웠다면 오버로드를 몇 기 잡았는지보다, 저그 병력이 어느 방향으로 나오는지 먼저 확인했어야 했어. 커세어가 시야를 주지 못하면 본진과 앞마당 방어 준비가 늦어집니다.${context}`,
         next: "다음 판에는 커세어를 잡는 유닛보다 시야 유닛으로 먼저 쓰고, 상대 병력이 출발하는 방향을 확인한 뒤 방어 위치를 잡으세요.",
       });
     }
-    if (hasUnit("질럿")) {
+    if (hasOwnUnit("질럿")) {
       items.push({
         title: "이번 판에서는 질럿을 깊게 던지기보다 살아서 압박을 유지했어야 했어",
         detail: "초반 질럿은 한 번 들어가서 죽는 유닛이 아니라, 상대가 앞마당과 병력 동선을 편하게 쓰지 못하게 만드는 유닛입니다. 이번 판에서는 질럿을 더 오래 살려 압박을 유지했어야 합니다.",
@@ -491,14 +506,14 @@ function matchupCoachItems({
 
   if (code === "TvZ") {
     const items: StarHmFeedbackItem[] = [];
-    if (hasUnit("마린")) {
+    if (hasOwnUnit("마린")) {
       items.push({
         title: "이번 판에서는 마린이 열린 공간으로 길게 나가기보다 방어선 안에서 싸웠어야 했어",
         detail: `${playerName}은 마린을 밖으로 길게 끌고 나가기보다 벙커, 터렛, 생산 건물 근처처럼 다시 합류하기 쉬운 자리에서 싸웠어야 했어. 마린이 열린 공간으로 벌어지면 후속 병력과 합류가 늦어집니다.${context}`,
         next: "다음 판에는 마린은 방어선 안에서 먼저 모으고, 후속 병력이 붙기 전까지 중앙으로 길게 나가지 마세요.",
       });
     }
-    if (hasUnit("럴커")) {
+    if (hasOpponentUnit("럴커")) {
       items.push({
         title: "이번 판에서는 럴커를 보기 전에 먼저 시야를 준비했어야 했어",
         detail: "럴커가 확인된 판에서는 병력을 앞으로 먼저 밀기보다, 럴커가 박힌 위치를 확인하고 안전하게 밀어낼 시야가 먼저 필요합니다. 시야 없이 들어가면 병력이 한 번에 묶입니다.",
@@ -510,14 +525,14 @@ function matchupCoachItems({
 
   if (code === "ZvT") {
     const items: StarHmFeedbackItem[] = [];
-    if (hasUnit("저글링")) {
+    if (hasOwnUnit("저글링")) {
       items.push({
         title: "이번 판에서는 저글링으로 테란 진출 시간을 먼저 늦췄어야 했어",
         detail: `${playerName}은 저글링을 일꾼 피해용으로만 쓰기보다 상대 진출 방향과 중앙 길목을 먼저 불편하게 만들었어야 했어. 저글링이 너무 깊게 들어가 죽으면 이후 시야와 수비 시간이 같이 줄어듭니다.${context}`,
         next: "다음 판에는 저글링은 상대 앞마당과 중앙 길목에 나눠 두고, 바로 싸우기보다 진출 방향을 먼저 확인하세요.",
       });
     }
-    if (hasUnit("뮤탈")) {
+    if (hasOwnUnit("뮤탈")) {
       items.push({
         title: "이번 판에서는 뮤탈이 정면 병력보다 상대 전환 타이밍을 먼저 끊었어야 했어",
         detail: "뮤탈은 정면 병력을 오래 때리는 유닛이 아닙니다. 상대가 수비 위치를 잡기 전 빈 생산 라인이나 이동 동선을 흔들고 바로 빠져야 병력이 앞으로 못 나옵니다.",
@@ -529,14 +544,14 @@ function matchupCoachItems({
 
   if (code === "ZvZ") {
     const items: StarHmFeedbackItem[] = [];
-    if (hasUnit("저글링")) {
+    if (hasOwnUnit("저글링")) {
       items.push({
         title: "이번 판에서는 저글링을 깊게 던지기보다 시야와 동선 압박에 썼어야 했어",
         detail: `${playerName}은 저글링을 일꾼만 보러 깊게 넣기보다 상대 앞마당, 가스, 중앙 동선을 불편하게 만들었어야 했어. 저글링을 잃으면 이후 시야와 수비 시간이 같이 줄어듭니다.${context}`,
         next: "다음 판에는 저글링은 일꾼 킬보다 상대 동선 확인과 앞마당 압박을 먼저 목표로 두세요.",
       });
     }
-    if (hasUnit("뮤탈") && hasUnit("스커지")) {
+    if (hasOwnUnit("뮤탈") && hasOwnUnit("스커지")) {
       items.push({
         title: "이번 판에서는 뮤탈 싸움 전에 스커지를 옆 각으로 보냈어야 했어",
         detail: "뮤탈끼리 정면으로만 싸우면 숫자 싸움이 됩니다. 스커지를 옆으로 보내 상대 뮤탈 움직임을 제한하고, 내 뮤탈은 드론 피해를 낸 뒤 잃지 않고 빠졌어야 합니다.",
@@ -547,33 +562,41 @@ function matchupCoachItems({
   }
 
   if (code === "PvP") {
-    return [
-      {
+    const items: StarHmFeedbackItem[] = [];
+    if (hasOwnUnit("드라군") && hasOpponentUnit("리버", "셔틀")) {
+      items.push({
         title: "이번 판에서는 드라군을 먼저 던지지 말고 리버/셔틀 각을 먼저 봤어야 했어",
         detail: `${playerName}은 드라군 숫자만 보고 앞으로 나가기보다 상대 리버와 셔틀 위치를 먼저 확인했어야 했어. 프프전은 드라군 몇 기보다 리버 한 방과 셔틀 시야가 싸움을 갈라요.${context}`,
         next: "다음 판에는 옵저버로 로보 타이밍을 보고, 드라군은 셔틀 점사 각을 유지한 채 리버가 때릴 자리를 먼저 막으세요.",
-      },
-      {
+      });
+    }
+    if (hasOwnUnit("드라군") && hasOpponentUnit("셔틀")) {
+      items.push({
         title: "이번 판에서는 셔틀이 보이면 드라군 점사를 먼저 맞췄어야 했어",
         detail: "셔틀을 놓치면 리버가 원하는 위치에서 먼저 쏩니다. 드라군은 정면 병력보다 셔틀을 먼저 찍고, 리버가 내리면 내 리버나 드라군으로 리버를 먼저 봤어야 합니다.",
         next: "다음 판에는 셔틀 시야 확보 → 드라군 셔틀 점사 → 리버 하차 위치 차단 순서로 싸우세요.",
-      },
-    ];
+      });
+    }
+    return withFallback(items);
   }
 
   if (code === "TvT") {
-    return [
-      {
+    const items: StarHmFeedbackItem[] = [];
+    if (hasOwnUnit("탱크") && hasOpponentUnit("탱크")) {
+      items.push({
         title: "이번 판에서는 탱크가 먼저 많이 나가기보다 자리를 먼저 잡았어야 했어",
         detail: `${playerName}은 탱크를 한 번에 전진시키기보다 벌처 시야와 마인으로 길목을 잠그고 시즈 라인을 먼저 만들었어야 했어. 탱크가 자리 없이 걸어가면 상대 탱크 첫 포격에 라인이 무너집니다.${context}`,
         next: "다음 판에는 벌처 시야 → 마인 길목 잠금 → 탱크 한 줄 시즈 → 레이스/드랍 체크 순서로 전진하세요.",
-      },
-      {
+      });
+    }
+    if (hasOwnUnit("벌처") && hasOwnUnit("탱크")) {
+      items.push({
         title: "이번 판에서는 벌처를 탱크 앞에 던지지 말고 상대 이동을 막는 데 썼어야 했어",
         detail: "테테전 벌처는 탱크 대신 맞아주는 유닛이 아니라 상대 탱크가 자리 잡기 전에 길목을 막는 유닛입니다. 벌처가 사라지면 내 탱크는 시야 없이 움직이게 됩니다.",
         next: "다음 판에는 벌처는 상대 진입로와 언덕 아래에 먼저 두고, 탱크는 시야가 있는 곳까지만 전진시키세요.",
-      },
-    ];
+      });
+    }
+    return withFallback(items);
   }
 
   return [
@@ -609,6 +632,7 @@ function evidenceLine(evidence: {
   breadthScore: number | null;
   firstFindingTime: string | null;
   unitHints: string[];
+  opponentUnitHints: string[];
 }) {
   const meaningfulGap =
     evidence.longestGapSeconds !== null &&
@@ -619,7 +643,8 @@ function evidenceLine(evidence: {
       : "";
   const parts = [
     evidence.buildName ? `초반 선택은 ${evidence.buildName}로 읽혔고` : "",
-    evidence.unitHints.length ? `기록에 보인 핵심 유닛은 ${evidence.unitHints.slice(0, 4).join(", ")}입니다` : "",
+    evidence.unitHints.length ? `내 기록에 보인 핵심 유닛은 ${evidence.unitHints.slice(0, 4).join(", ")}입니다` : "",
+    evidence.opponentUnitHints.length ? `상대 기록에 보인 핵심 유닛은 ${evidence.opponentUnitHints.slice(0, 4).join(", ")}입니다` : "",
     meaningfulGap || (evidence.firstFindingTime ? `다시 볼 판단 구간은 ${evidence.firstFindingTime} 이후입니다` : ""),
   ].filter(Boolean);
   return parts.length ? ` 기록 근거로는 ${parts.join(". ")}.` : "";
