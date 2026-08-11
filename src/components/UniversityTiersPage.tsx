@@ -305,10 +305,11 @@ function SummaryTile({ value, label }: { value: number; label: string }) {
 }
 
 function UniversityLiveBoard({ players, updatedAt }: { players: UniversityLivePlayer[]; updatedAt: number | null }) {
+  const sortedPlayers = sortLivePlayers(players);
   const groupedPlayers = liveTierOrder
     .map((tier) => ({
       tier,
-      players: sortLivePlayers(players.filter((player) => player.tier === tier)),
+      players: sortedPlayers.filter((player) => player.tier === tier),
     }))
     .filter((group) => group.players.length > 0);
 
@@ -324,39 +325,56 @@ function UniversityLiveBoard({ players, updatedAt }: { players: UniversityLivePl
       </div>
 
       {groupedPlayers.length > 0 ? (
-        <div className="university-live-tier-stack">
-          {groupedPlayers.map((group) => (
-            <section key={group.tier} className={`university-live-tier-row tier-card-${group.tier.toLowerCase()}`} aria-label={`${group.tier === "Unknown" ? "티어 확인" : universityTierLabels[group.tier]} 라이브 선수`}>
-              <div className="university-live-tier-rank">
-                <em>{tierCardSuits[group.tier]}</em>
-                <strong>{group.tier === "Unknown" ? "티어 확인" : universityTierLabels[group.tier]}</strong>
-                <span>{group.players.length} LIVE</span>
-              </div>
-              <div className="university-live-tier-players">
-                {group.players.map((player) => (
-                  <a key={`${player.college}-${player.id}`} className={`university-live-card race-${player.race.toLowerCase()}`} href={player.url} target="_blank" rel="noreferrer">
-                    {player.thumbnail ? (
-                      <span className="live-thumbnail-preview" aria-hidden="true">
-                        <img src={player.thumbnail} alt="" loading="lazy" referrerPolicy="no-referrer" />
-                      </span>
-                    ) : null}
-                    <span className="university-live-emblem"><UniversityIcon college={player.college} /></span>
-                    <span className="university-live-college"><span>{player.college}</span>{player.viewers ? <em>시청자 {player.viewers.toLocaleString()}명</em> : null}</span>
-                    <i>{raceLabels[player.race]}</i>
-                    <strong>{player.name}</strong>
-                    {player.title ? <p>{player.title}</p> : null}
-                  </a>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
+        <>
+          <LivePlayerNameStrip players={sortedPlayers} />
+          <div className="university-live-tier-stack">
+            {groupedPlayers.map((group) => (
+              <section key={group.tier} className={`university-live-tier-row tier-card-${group.tier.toLowerCase()}`} aria-label={`${group.tier === "Unknown" ? "티어 확인" : universityTierLabels[group.tier]} 라이브 선수`}>
+                <div className="university-live-tier-rank">
+                  <em>{tierCardSuits[group.tier]}</em>
+                  <strong>{group.tier === "Unknown" ? "티어 확인" : universityTierLabels[group.tier]}</strong>
+                  <span>{group.players.length} LIVE</span>
+                </div>
+                <div className="university-live-tier-players">
+                  {group.players.map((player) => (
+                    <a key={`${player.college}-${player.id}`} className={`university-live-card race-${player.race.toLowerCase()}`} href={player.url} target="_blank" rel="noreferrer">
+                      {player.thumbnail ? (
+                        <span className="live-thumbnail-preview" aria-hidden="true">
+                          <img src={player.thumbnail} alt="" loading="lazy" referrerPolicy="no-referrer" />
+                        </span>
+                      ) : null}
+                      <span className="university-live-emblem"><UniversityIcon college={player.college} /></span>
+                      <span className="university-live-college"><span>{player.college}</span>{player.viewers ? <em>시청자 {player.viewers.toLocaleString()}명</em> : null}</span>
+                      <i>{raceLabels[player.race]}</i>
+                      <strong>{player.name}</strong>
+                      {player.title ? <p>{player.title}</p> : null}
+                    </a>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        </>
       ) : (
         <div className="university-live-empty">
           현재 조건에 맞는 라이브 선수가 없습니다.
         </div>
       )}
     </section>
+  );
+}
+
+function LivePlayerNameStrip({ players }: { players: UniversityLivePlayer[] }) {
+  return (
+    <div className="university-live-name-strip" aria-label="현재 라이브 선수 빠른 보기">
+      {players.map((player) => (
+        <a key={`quick-${player.college}-${player.id}`} className={`race-${player.race.toLowerCase()}`} href={player.url} target="_blank" rel="noreferrer">
+          <strong>{player.name}</strong>
+          <span>{player.college}</span>
+          {player.viewers ? <em>{player.viewers.toLocaleString()}명</em> : null}
+        </a>
+      ))}
+    </div>
   );
 }
 

@@ -771,6 +771,7 @@ function LiveStatusBoard({
     const bLive = liveStatuses[b.id]?.isLive ? 1 : 0;
     return bLive - aLive || a.order - b.order;
   });
+  const liveMembers = sortedMembers.filter((member) => liveStatuses[member.id]?.isLive);
   const liveCount = members.filter((member) => liveStatuses[member.id]?.isLive).length;
 
   return (
@@ -786,6 +787,21 @@ function LiveStatusBoard({
         </div>
       </div>
       <div className="activity-updated">{updatedAt ? `${formatTimestamp(updatedAt)} 기준` : "온라인 상태 확인중"}</div>
+      {liveMembers.length > 0 ? (
+        <div className="live-member-strip" aria-label="현재 온라인 멤버 빠른 보기">
+          {liveMembers.map((member) => {
+            const status = liveStatuses[member.id];
+            const href = status?.url || member.url;
+            return (
+              <a key={member.id} href={href} target="_blank" rel="noopener noreferrer">
+                <span aria-hidden="true" />
+                <strong>{member.name}</strong>
+                {status && status.viewer > 0 ? <em>{status.viewer.toLocaleString()}명</em> : null}
+              </a>
+            );
+          })}
+        </div>
+      ) : null}
       <div className="live-list">
         {sortedMembers.map((member) => {
           const status = liveStatuses[member.id];

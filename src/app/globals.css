@@ -6666,6 +6666,55 @@ footer {
   gap: 0.35rem;
 }
 
+.live-member-strip {
+  display: none;
+}
+
+.live-member-strip a {
+  display: inline-flex;
+  min-width: max-content;
+  align-items: center;
+  gap: 0.34rem;
+  border: 1px solid rgba(91, 209, 143, 0.24);
+  border-radius: 999px;
+  padding: 0.42rem 0.58rem;
+  background: rgba(91, 209, 143, 0.08);
+}
+
+.live-member-strip a > span {
+  width: 0.48rem;
+  height: 0.48rem;
+  border-radius: 999px;
+  background: #71d89a;
+  box-shadow: 0 0 0 4px rgba(113, 216, 154, 0.12);
+}
+
+.live-member-strip strong {
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 950;
+}
+
+.live-member-strip em {
+  color: rgba(214, 216, 210, 0.72);
+  font-size: 0.66rem;
+  font-style: normal;
+  font-weight: 850;
+}
+
+.theme-light .live-member-strip a {
+  border-color: rgba(42, 181, 105, 0.24);
+  background: rgba(42, 181, 105, 0.08);
+}
+
+.theme-light .live-member-strip strong {
+  color: #17202a;
+}
+
+.theme-light .live-member-strip em {
+  color: #667282;
+}
+
 .notice-tools {
   margin-top: 1rem;
   display: grid;
@@ -7457,7 +7506,27 @@ footer {
     max-height: none;
   }
 
+  .live-member-strip {
+    display: flex;
+    gap: 0.42rem;
+    margin-top: 0.75rem;
+    overflow-x: auto;
+    padding: 0.1rem 0.1rem 0.35rem;
+  }
+
+  .live-row {
+    align-items: flex-start;
+  }
+
   .live-row-side {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.34rem;
+  }
+
+  .live-row-side > span:not(.status-pill) {
     display: none;
   }
 
@@ -9062,6 +9131,59 @@ footer {
   margin-top: 1rem;
 }
 
+.university-live-name-strip {
+  display: none;
+}
+
+.university-live-name-strip a {
+  display: inline-flex;
+  min-width: max-content;
+  align-items: center;
+  gap: 0.42rem;
+  border: 1px solid var(--theme-panel-border);
+  border-radius: 999px;
+  padding: 0.48rem 0.64rem;
+  background: var(--theme-panel-soft);
+}
+
+.university-live-name-strip strong {
+  color: var(--theme-strong);
+  font-size: 0.82rem;
+  font-weight: 950;
+}
+
+.university-live-name-strip span,
+.university-live-name-strip em {
+  color: var(--theme-muted);
+  font-size: 0.66rem;
+  font-style: normal;
+  font-weight: 850;
+}
+
+.university-live-name-strip a::before {
+  width: 0.48rem;
+  height: 0.48rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  content: "";
+}
+
+.university-live-name-strip a.race-terran::before {
+  background: #71c7ec;
+}
+
+.university-live-name-strip a.race-zerg::before {
+  background: #b489f0;
+}
+
+.university-live-name-strip a.race-protoss::before {
+  background: #f4c35b;
+}
+
+.university-live-name-strip a.race-unknown::before {
+  background: #9aa4b2;
+}
+
 .university-live-tier-row {
   display: grid;
   grid-template-columns: 132px minmax(0, 1fr);
@@ -9948,6 +10070,79 @@ footer {
 
   .university-tier-summary span {
     margin-top: 0;
+  }
+
+  .university-live-board {
+    padding: 0.85rem;
+  }
+
+  .university-live-board-head {
+    align-items: flex-start;
+  }
+
+  .university-live-board-head h2 {
+    font-size: 1.35rem;
+  }
+
+  .university-live-board-head p {
+    font-size: 0.82rem;
+  }
+
+  .university-live-board-head > span {
+    width: 100%;
+    text-align: center;
+  }
+
+  .university-live-name-strip {
+    display: flex;
+    gap: 0.45rem;
+    margin-top: 0.85rem;
+    overflow-x: auto;
+    padding: 0.08rem 0.08rem 0.42rem;
+  }
+
+  .university-live-tier-stack {
+    margin-top: 0.75rem;
+  }
+
+  .university-live-tier-row {
+    gap: 0.6rem;
+    padding: 0.65rem;
+  }
+
+  .university-live-tier-rank {
+    display: flex;
+    min-height: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.55rem;
+    padding: 0.62rem;
+  }
+
+  .university-live-tier-rank em {
+    font-size: 1.35rem;
+  }
+
+  .university-live-card {
+    grid-template-columns: 3.7rem minmax(0, 1fr);
+    min-height: 108px;
+    column-gap: 0.72rem;
+    padding: 0.78rem;
+  }
+
+  .university-live-emblem,
+  .university-live-emblem .university-icon {
+    width: 3.35rem;
+    height: 3.35rem;
+  }
+
+  .university-live-college {
+    padding-right: 4.75rem;
+    font-size: 0.9rem;
+  }
+
+  .university-live-card strong {
+    font-size: 1.08rem;
   }
 
   .ai-tool-feature,
