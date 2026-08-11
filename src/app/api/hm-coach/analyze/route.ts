@@ -428,6 +428,13 @@ function matchupCoachItems({
   const hasOwnUnit = (...units: string[]) => units.some((unit) => evidence.unitHints.includes(unit));
   const hasOpponentUnit = (...units: string[]) => units.some((unit) => evidence.opponentUnitHints.includes(unit));
   const withFallback = (items: StarHmFeedbackItem[]) => items.length ? items : [genericEvidenceCoachItem(playerName, opponentName, matchup, context)];
+  const protossTankFightSequence = () => {
+    const steps = ["탱크 자리 확인"];
+    if (hasOwnUnit("질럿")) steps.push("질럿이 먼저 맞아주기");
+    if (hasOwnUnit("셔틀")) steps.push("셔틀 하차 각 확인");
+    steps.push("드라군 탱크 점사", "후속 게이트 생산");
+    return steps.join(" → ");
+  };
 
   if (code === "TvP") {
     const items: StarHmFeedbackItem[] = [];
@@ -453,15 +460,15 @@ function matchupCoachItems({
     if (hasOwnUnit("드라군") && hasOpponentUnit("탱크")) {
       items.push({
         title: "이번 판에서는 드라군을 던지기보다 테란 탱크 자리부터 깨뜨렸어야 했어",
-        detail: `${playerName}은 드라군을 한 번에 앞으로 밀기 전에, 테란 탱크가 시즈할 자리와 벌처 마인 라인을 먼저 봤어야 했어. 옵저버나 셔틀이 들어가기 전에 드라군이 정면으로 나가면 탱크 포격에 병력만 줄어듭니다.${context}`,
-        next: "다음 판에는 옵저버로 탱크 수와 마인 위치를 먼저 보고, 셔틀/질럿이 먼저 맞아주는 동안 드라군은 뒤에서 탱크를 점사하세요.",
+        detail: `${playerName}은 드라군을 한 번에 앞으로 밀기 전에, 테란 탱크가 시즈할 자리와 벌처 마인 라인을 먼저 봤어야 했어. 드라군이 정면으로 먼저 나가면 탱크 포격에 병력만 줄어듭니다.${context}`,
+        next: `다음 판에는 ${protossTankFightSequence()} 순서로 싸움을 여세요.`,
       });
     }
     if (hasOwnUnit("질럿") && hasOpponentUnit("탱크")) {
       items.push({
         title: "이번 판에서는 질럿을 먼저 던져서 탱크 포신을 빼고 드라군이 때렸어야 했어",
         detail: "테란전 큰 싸움은 드라군만 앞으로 가는 싸움이 아닙니다. 질럿이 먼저 들어가 탱크 포격과 벌처 마인을 빼고, 드라군은 탱크가 자리 잡은 라인을 하나씩 지워야 합니다.",
-        next: "다음 판에는 질럿 진입 → 셔틀 하차 → 드라군 탱크 점사 → 후속 게이트 생산 순서로 싸움을 여세요.",
+        next: `다음 판에는 ${protossTankFightSequence()} 순서로 싸움을 여세요.`,
       });
     }
     return withFallback(items);
@@ -565,17 +572,22 @@ function matchupCoachItems({
   if (code === "PvP") {
     const items: StarHmFeedbackItem[] = [];
     if (hasOwnUnit("드라군") && hasOpponentUnit("리버", "셔틀")) {
+      const opponentThreat = hasOpponentUnit("리버") && hasOpponentUnit("셔틀") ? "리버/셔틀" : hasOpponentUnit("리버") ? "리버" : "셔틀";
       items.push({
-        title: "이번 판에서는 드라군을 먼저 던지지 말고 리버/셔틀 각을 먼저 봤어야 했어",
-        detail: `${playerName}은 드라군 숫자만 보고 앞으로 나가기보다 상대 리버와 셔틀 위치를 먼저 확인했어야 했어. 프프전은 드라군 몇 기보다 리버 한 방과 셔틀 시야가 싸움을 갈라요.${context}`,
-        next: "다음 판에는 옵저버로 로보 타이밍을 보고, 드라군은 셔틀 점사 각을 유지한 채 리버가 때릴 자리를 먼저 막으세요.",
+        title: `이번 판에서는 드라군을 먼저 던지지 말고 ${opponentThreat} 각을 먼저 봤어야 했어`,
+        detail: `${playerName}은 드라군 숫자만 보고 앞으로 나가기보다 상대 ${opponentThreat} 위치를 먼저 확인했어야 했어. 프프전은 드라군 숫자보다 먼저 때릴 자리와 맞지 않을 자리를 나누는 판단이 중요합니다.${context}`,
+        next: hasOpponentUnit("셔틀") && hasOpponentUnit("리버")
+          ? "다음 판에는 드라군은 셔틀 점사 각을 유지하고, 리버가 때릴 자리를 먼저 막으세요."
+          : hasOpponentUnit("셔틀")
+            ? "다음 판에는 드라군은 상대 셔틀 점사 각을 유지하고, 하차 위치를 먼저 막으세요."
+            : "다음 판에는 드라군을 먼저 밀지 말고, 상대 리버가 때릴 자리를 먼저 막은 뒤 점사하세요.",
       });
     }
     if (hasOwnUnit("드라군") && hasOpponentUnit("셔틀")) {
       items.push({
         title: "이번 판에서는 셔틀이 보이면 드라군 점사를 먼저 맞췄어야 했어",
-        detail: "셔틀을 놓치면 리버가 원하는 위치에서 먼저 쏩니다. 드라군은 정면 병력보다 셔틀을 먼저 찍고, 리버가 내리면 내 리버나 드라군으로 리버를 먼저 봤어야 합니다.",
-        next: "다음 판에는 셔틀 시야 확보 → 드라군 셔틀 점사 → 리버 하차 위치 차단 순서로 싸우세요.",
+        detail: "상대 셔틀을 놓치면 병력이 원하는 위치에서 먼저 맞습니다. 이번 판에서는 드라군으로 정면 병력보다 셔틀 이동 각을 먼저 끊었어야 했어.",
+        next: "다음 판에는 상대 셔틀 확인 → 드라군 셔틀 점사 → 하차 위치 차단 순서로 싸우세요.",
       });
     }
     return withFallback(items);
