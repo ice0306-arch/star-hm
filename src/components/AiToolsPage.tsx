@@ -1236,12 +1236,14 @@ function V2AnalysisReport({
   hmCoach: HmCoachBridgeResult | null;
 }) {
   const data = buildV2ReportData(result, players, coach, hmCoach);
+  const mainScores = data.scores.slice(0, 3);
+  const readableDetails = data.detailSections.slice(0, 6);
   return (
     <section className="ai-v2-report" aria-label="V2 분석 보고서">
       <div className="ai-section-title">
-        <span className="panel-kicker">V2 분석 보고서</span>
-        <h3>코칭 결론 뒤에 보는 경기 분석</h3>
-        <p>없는 데이터는 만들지 않고, 현재 REP 분석에서 확인 가능한 정보만 보고서 형태로 정리했습니다.</p>
+        <span className="panel-kicker">경기 분석 보고서</span>
+        <h3>코칭 결론을 이해하기 쉽게 풀어봤습니다</h3>
+        <p>위에서 고칠 행동을 먼저 봤다면, 여기서는 왜 그런 결론이 나왔는지만 짧게 확인하면 됩니다.</p>
       </div>
 
       <div className="ai-v2-basic-grid">
@@ -1250,25 +1252,21 @@ function V2AnalysisReport({
         ))}
       </div>
 
-      <div className="ai-v2-score-grid">
-        {data.scores.map((item) => (
-          <article key={item.label} className="ai-v2-score-card">
-            <span>{item.label}</span>
-            <strong>{item.value}</strong>
-            <p>{item.detail}</p>
-          </article>
-        ))}
-      </div>
-
-      <div className="ai-v2-summary-grid">
+      <div className="ai-v2-readable-lead">
         <article>
-          <span>AI 한 줄 총평</span>
-          <p>{data.oneLine}</p>
-        </article>
-        <article>
-          <span>경기 흐름 요약</span>
+          <span>한 줄로 보면</span>
+          <strong>{data.oneLine}</strong>
           <p>{data.flowSummary}</p>
         </article>
+        <div>
+          {mainScores.map((item) => (
+            <section key={item.label}>
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
+              <p>{item.detail}</p>
+            </section>
+          ))}
+        </div>
       </div>
 
       <div className="ai-v2-two-column">
@@ -1293,7 +1291,7 @@ function V2AnalysisReport({
       </div>
 
       <div className="ai-v2-detail-grid">
-        {data.detailSections.map((section) => (
+        {readableDetails.map((section) => (
           <article key={section.title}>
             <span>{section.title}</span>
             <strong>{section.headline}</strong>
@@ -1350,21 +1348,19 @@ function buildV2ReportData(result: AnalyzeSuccess, players: ReplayPlayer[], coac
     basicInfo: [
       { label: "맵", value: result.replay.map.name ?? "데이터 부족" },
       { label: "경기 시간", value: formatDuration(result.replay.durationSeconds) },
-      { label: "관점", value: perspectivePlayer ? `${perspectivePlayer.name} · ${resultLabel(perspectivePlayer)}` : "전체 경기" },
+      { label: "보고 있는 선수", value: perspectivePlayer ? `${perspectivePlayer.name} · ${resultLabel(perspectivePlayer)}` : "전체 경기" },
       { label: "매치업", value: result.coaching.scope.matchup || hmCoach?.coachInput.perspective?.matchup || "데이터 부족" },
-      { label: "플레이어", value: players.map((player) => `${player.name} ${raceLabelShort(player.race)}`).join(" vs ") || "데이터 부족" },
-      { label: "분석 상태", value: statusLabel(result.analysisRun.status) },
     ],
     scores: [
-      { label: "HM AI 종합 점수", value: coach.score, detail: coach.focus },
-      { label: "생산 안정성", value: productionAverage > 0 ? Math.round(productionAverage) : "데이터 부족", detail: productionAverage > 0 ? "생산 공백과 안정 점수 기준입니다." : "분석 가능한 데이터가 부족합니다." },
-      { label: "컨트롤/습관", value: hotkeyAverage > 0 ? Math.round(hotkeyAverage) : "데이터 부족", detail: hotkeyAverage > 0 ? "부대지정 활용 폭을 보조 기준으로 봅니다." : "분석 가능한 데이터가 부족합니다." },
-      { label: "승리 조건 근접도", value: readiness ? `${readiness.score}점` : "데이터 부족", detail: readiness ? plainWinReadinessVerdict(readiness.verdict) : "분석 가능한 데이터가 부족합니다." },
+      { label: "전체 흐름", value: coach.score, detail: "점수보다 아래 이유를 먼저 보면 됩니다." },
+      { label: "생산 흐름", value: productionAverage > 0 ? Math.round(productionAverage) : "부족", detail: productionAverage > 0 ? "생산이 끊긴 구간이 있었는지 봅니다." : "생산을 판단할 데이터가 부족합니다." },
+      { label: "조작 습관", value: hotkeyAverage > 0 ? Math.round(hotkeyAverage) : "부족", detail: hotkeyAverage > 0 ? "부대지정과 화면 전환을 보조로 봅니다." : "습관을 판단할 데이터가 부족합니다." },
+      { label: "승리 조건", value: readiness ? `${readiness.score}점` : "부족", detail: readiness ? plainWinReadinessVerdict(readiness.verdict) : "비교할 데이터가 부족합니다." },
     ],
-    oneLine: hmCoach?.coachInput.coaching?.verdict ?? coach.focus,
+    oneLine: readableSentence(hmCoach?.coachInput.coaching?.verdict ?? coach.focus),
     flowSummary: buildNames.length
-      ? `${buildNames.join(" · ")}. ${meaningfulMoments[0] ? `${meaningfulMoments[0].timeLabel} 구간부터 판단 복기가 필요합니다.` : "큰 문제 구간은 제한적입니다."}`
-      : "초반 빌드 흐름을 분류할 데이터가 부족합니다.",
+      ? `${buildNames.join(" · ")}. ${meaningfulMoments[0] ? `${meaningfulMoments[0].timeLabel} 전후를 다시 보면 왜 흐름이 흔들렸는지 보기 쉽습니다.` : "크게 흔들린 장면은 제한적으로 보입니다."}`
+      : "초반 빌드 이름보다, 첫 생산과 첫 교전 전 행동이 이어졌는지를 먼저 보면 됩니다.",
     strengths,
     problems,
     detailSections: buildV2DetailSections(result, players, coach, findings),
@@ -1396,66 +1392,73 @@ function buildV2DetailSections(result: AnalyzeSuccess, players: ReplayPlayer[], 
   const firstProblem = coach.moments.find((moment) => moment.severity !== "INFO" && !isMetricOnlyMoment(moment));
   return [
     {
-      title: "Build",
-      headline: build ? `${build.playerName} · ${build.buildName}` : "데이터 부족",
-      body: build ? `${build.matchup} 기준 ${confidenceLabel(build.confidence)}로 분류됐습니다.` : "분석 가능한 데이터가 부족합니다.",
+      title: "빌드 흐름",
+      headline: build ? `${build.buildName}` : "빌드 판단은 아직 어렵습니다",
+      body: build ? `${build.playerName}의 초반 흐름은 ${build.matchup} 기준 ${build.buildName} 쪽으로 읽힙니다. 이름보다 중요한 건 이 흐름이 중반 생산과 교전 준비로 이어졌는지입니다.` : "초반 건물과 유닛 순서를 읽을 데이터가 부족합니다.",
     },
     {
-      title: "Production",
-      headline: production ? `${production.playerName} · 안정성 ${Math.round(production.stabilityScore)}점` : "데이터 부족",
-      body: production?.productionGaps.length ? `가장 긴 공백은 ${Math.round(Math.max(...production.productionGaps.map((gap) => gap.duration)))}초입니다.` : production ? "큰 생산 공백은 제한적입니다." : "분석 가능한 데이터가 부족합니다.",
+      title: "생산",
+      headline: production?.productionGaps.length ? "생산이 비는 구간이 있었습니다" : production ? "큰 생산 공백은 적었습니다" : "생산 판단은 아직 어렵습니다",
+      body: production?.productionGaps.length ? `${production.playerName} 기준 가장 긴 생산 공백은 ${Math.round(Math.max(...production.productionGaps.map((gap) => gap.duration)))}초입니다. 이 구간에는 화면을 보면서도 생산 건물을 한 번 더 불렀어야 합니다.` : production ? "크게 긴 생산 공백은 제한적입니다. 다음에는 교전 중에도 같은 흐름을 유지하는지 보면 됩니다." : "생산 명령을 판단할 데이터가 부족합니다.",
     },
     {
-      title: "Economy",
-      headline: findingByCategory("economy")?.title ?? "데이터 부족",
-      body: findingByCategory("economy")?.summary ?? "분석 가능한 데이터가 부족합니다.",
+      title: "자원 운영",
+      headline: findingByCategory("economy")?.title ?? "자원 판단은 아직 어렵습니다",
+      body: findingByCategory("economy")?.summary ?? "자원이 남았는지, 부족했는지까지 판단할 데이터가 부족합니다.",
     },
     {
-      title: "Supply",
-      headline: result.coaching.facts.find((fact) => fact.category === "economy" && /supply|서플|파일런|오버로드/i.test(fact.label))?.label ?? "데이터 부족",
-      body: "현재 리포트에서 보급 관련 구조화 데이터가 부족하면 별도 판단을 만들지 않습니다.",
+      title: "보급",
+      headline: result.coaching.facts.find((fact) => fact.category === "economy" && /supply|서플|파일런|오버로드/i.test(fact.label))?.label ?? "보급 판단은 아직 어렵습니다",
+      body: "보급이 막혔다는 확실한 근거가 있을 때만 문제로 봅니다. 현재 데이터가 부족하면 억지로 원인을 만들지 않습니다.",
     },
     {
-      title: "Scouting",
-      headline: findingByCategory("scouting")?.title ?? "데이터 부족",
-      body: findingByCategory("scouting")?.summary ?? "분석 가능한 데이터가 부족합니다.",
+      title: "정찰",
+      headline: findingByCategory("scouting")?.title ?? "정찰 판단은 아직 어렵습니다",
+      body: findingByCategory("scouting")?.summary ?? "상대 본진 확인, 스캔, 오버로드, 옵저버 같은 정보 수단을 충분히 읽을 데이터가 부족합니다.",
     },
     {
-      title: "Battle",
-      headline: findingByCategory("engagement")?.title ?? firstProblem?.title ?? "데이터 부족",
-      body: findingByCategory("engagement")?.nextAction ?? (firstProblem ? tacticalHadToActionFromMoment(firstProblem, coach, result) : "분석 가능한 데이터가 부족합니다."),
+      title: "교전",
+      headline: findingByCategory("engagement")?.title ?? firstProblem?.title ?? "교전 판단은 아직 어렵습니다",
+      body: findingByCategory("engagement")?.nextAction ?? (firstProblem ? tacticalHadToActionFromMoment(firstProblem, coach, result) : "큰 교전 결과를 판단할 데이터가 부족합니다."),
     },
     {
-      title: "Control",
-      headline: command ? `${command.playerName} · 입력 리듬 참고` : "데이터 부족",
-      body: command ? "입력 수 자체보다 교전, 후퇴, 생산 중 첫 행동이 이어졌는지 보조 근거로 봅니다." : "분석 가능한 데이터가 부족합니다.",
+      title: "조작",
+      headline: command ? `${command.playerName}의 입력 흐름을 참고합니다` : "조작 판단은 아직 어렵습니다",
+      body: command ? "마우스를 많이 눌렀는지보다, 생산·이동·공격·후퇴 중 실제로 경기 흐름을 바꾼 입력이 이어졌는지를 봅니다." : "입력 리듬을 판단할 데이터가 부족합니다.",
     },
     {
-      title: "Habit",
-      headline: hotkey ? `${hotkey.playerName} · 부대지정 폭 ${Math.round(hotkey.breadthScore)}` : "데이터 부족",
-      body: hotkey ? `주로 사용한 그룹은 ${hotkey.usedGroups.join(", ") || "데이터 부족"}입니다.` : "분석 가능한 데이터가 부족합니다.",
+      title: "습관",
+      headline: hotkey ? `${hotkey.playerName}의 부대지정 습관을 봅니다` : "습관 판단은 아직 어렵습니다",
+      body: hotkey ? `주로 사용한 그룹은 ${hotkey.usedGroups.join(", ") || "확인 부족"}입니다. 이 숫자는 잘했다/못했다보다 병력, 생산, 정찰 역할이 나뉘어 있었는지 보는 보조 근거입니다.` : "반복 습관을 판단할 데이터가 부족합니다.",
     },
     {
-      title: "Priority",
-      headline: firstProblem?.title ?? "데이터 부족",
+      title: "먼저 고칠 것",
+      headline: firstProblem?.title ?? "우선순위 판단은 아직 어렵습니다",
       body: firstProblem ? tacticalHadToActionFromMoment(firstProblem, coach, result) : "분석 가능한 데이터가 부족합니다.",
     },
     {
-      title: "Training Goal",
-      headline: drill?.title ?? "데이터 부족",
-      body: drill ? `${drill.detail} 기준: ${drill.successMetric}` : "분석 가능한 데이터가 부족합니다.",
+      title: "다음 게임 목표",
+      headline: drill?.title ?? "훈련 목표 판단은 아직 어렵습니다",
+      body: drill ? `${drill.detail} 성공 기준은 ${drill.successMetric}입니다.` : "훈련 목표를 만들 데이터가 부족합니다.",
     },
     {
-      title: "Final Comment",
+      title: "마지막 정리",
       headline: coach.narrative.overall.title,
-      body: stripCoachMarkup(coach.narrative.overall.body),
+      body: readableSentence(stripCoachMarkup(coach.narrative.overall.body)),
     },
     {
-      title: "Screen Flow",
-      headline: multitasking ? `${multitasking.playerName} · 화면 전환 ${multitasking.regionSwitchEstimate}` : "데이터 부족",
-      body: multitasking ? multitasking.qualifier : "분석 가능한 데이터가 부족합니다.",
+      title: "화면 흐름",
+      headline: multitasking ? `${multitasking.playerName}의 화면 이동을 참고합니다` : "화면 흐름 판단은 아직 어렵습니다",
+      body: multitasking ? "화면 전환 수 자체가 아니라, 화면을 옮긴 뒤 생산이나 병력 움직임이 바로 이어졌는지 보는 보조 근거입니다." : "화면 이동을 판단할 데이터가 부족합니다.",
     },
   ];
+}
+
+function readableSentence(value: string) {
+  return stripCoachMarkup(value)
+    .replace(/\s+/g, " ")
+    .replace(/REP 분석에서 확인 가능한 정보만 보고서 형태로 정리했습니다\.?/g, "")
+    .trim();
 }
 
 function tacticalHadToActionFromMoment(moment: CoachMoment, coach: ReturnType<typeof buildCoachInsights>, result: AnalyzeSuccess) {
@@ -5256,25 +5259,25 @@ function drawHmCoachPdfCover(page: PdfPage, result: AnalyzeSuccess, hmCoach: HmC
 
 function drawV2PdfReportSummary(page: PdfPage, data: V2ReportData) {
   const { ctx } = page;
-  drawPdfSectionTitle(page, "V2 분석 보고서", "코칭 결론 뒤에 보는 경기 분석");
+  drawPdfSectionTitle(page, "쉽게 풀어쓴 경기 분석", "코칭 결론이 왜 나왔는지 짧게 확인합니다");
   page.y += 18;
 
-  drawV2PdfTileGrid(page, data.basicInfo.slice(0, 6), 3);
+  drawV2PdfTileGrid(page, data.basicInfo.slice(0, 4), 2);
   page.y += 18;
-  drawV2PdfScoreGrid(page, data.scores.slice(0, 4));
+  drawV2PdfScoreGrid(page, data.scores.slice(0, 3));
   page.y += 18;
 
   const summaryHeight = 184;
   drawPdfRoundRect(ctx, PDF_MARGIN, page.y, PDF_CONTENT_WIDTH, summaryHeight, 16, "#ffffff", PDF_COLORS.line);
   setPdfFont(ctx, 19, 900);
   ctx.fillStyle = PDF_COLORS.gold;
-  ctx.fillText("AI 한 줄 총평", PDF_MARGIN + 24, page.y + 24);
+  ctx.fillText("한 줄로 보면", PDF_MARGIN + 24, page.y + 24);
   setPdfFont(ctx, 24, 800);
   ctx.fillStyle = PDF_COLORS.ink;
   const oneLineEnd = drawPdfWrappedText(ctx, data.oneLine, PDF_MARGIN + 24, page.y + 58, PDF_CONTENT_WIDTH - 48, 31, 2);
   setPdfFont(ctx, 19, 900);
   ctx.fillStyle = PDF_COLORS.blue;
-  ctx.fillText("경기 흐름 요약", PDF_MARGIN + 24, oneLineEnd + 22);
+  ctx.fillText("왜 그렇게 봤는지", PDF_MARGIN + 24, oneLineEnd + 22);
   setPdfFont(ctx, 21, 600);
   ctx.fillStyle = PDF_COLORS.slate;
   drawPdfWrappedText(ctx, data.flowSummary, PDF_MARGIN + 24, oneLineEnd + 56, PDF_CONTENT_WIDTH - 48, 28, 2);
