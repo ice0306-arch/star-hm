@@ -49,6 +49,18 @@ type AnalyzeSuccessInput = {
   canonical?: {
     commandCount?: number;
   };
+  commands?: Array<{
+    playerId?: number | string;
+    type?: string;
+    category?: string;
+    details?: string;
+    unitOrBuilding?: string | null;
+  }>;
+  buildOrder?: Array<{
+    playerId?: number | string;
+    label?: string;
+    category?: string;
+  }>;
 };
 
 type StarHmFeedbackItem = {
@@ -168,10 +180,21 @@ function buildCoachInputFromAnalysisResult(result: AnalyzeSuccessInput): StarHmC
   const playerProduction = findReportForPlayer(productionReports, playerId);
   const playerCommand = findReportForPlayer(commandEfficiency, playerId);
   const playerHotkey = findReportForPlayer(hotkeyReports, playerId);
-  const matchup = stringValue(playerBuild?.matchup) || result.coaching?.scope?.matchup || buildMatchupLabel(perspectivePlayer?.race, opponent?.race);
+  const buildMatchup = stringValue(playerBuild?.matchup);
+  const matchup =
+    buildMatchup && /v|vs/i.test(buildMatchup)
+      ? buildMatchup
+      : result.coaching?.scope?.matchup && /v|vs/i.test(result.coaching.scope.matchup)
+        ? result.coaching.scope.matchup
+        : buildMatchupLabel(perspectivePlayer?.race, opponent?.race);
+  const unitHints = collectUnitHints(result, playerId);
   const feedbackItems = buildAnalysisFeedbackItems({
     playerName: perspectivePlayer?.name || "관점 플레이어",
     opponentName: opponent?.name || "상대",
+    playerRace: perspectivePlayer?.race,
+    opponentRace: opponent?.race,
+    matchup,
+    unitHints,
     build: playerBuild,
     production: playerProduction,
     command: playerCommand,
@@ -201,8 +224,8 @@ function buildCoachInputFromAnalysisResult(result: AnalyzeSuccessInput): StarHmC
       opponentStrategyFocus: opponent ? `${opponent.name} ${raceLabel(opponent.race)}` : "상대 흐름 확인 필요",
     },
     coaching: {
-      headline: "HM 자동 코칭",
-      verdict: `이번 판에서는 ${perspectivePlayer?.name ?? "관점 플레이어"}가 기록에 나온 문제 구간을 먼저 고쳤어야 했어.`,
+      headline: "이번 판에서 못한 부분",
+      verdict: `이번 판에서는 ${perspectivePlayer?.name ?? "관점 플레이어"}가 수치 자체보다 화면에 나온 유닛을 어디에 두고 어떻게 싸웠어야 했는지를 먼저 봐야 했어.`,
       feedbackItems,
       nextGameGuide,
       limitationNote: result.coaching?.scope?.limitations?.join(" ") || "REP 분석 결과에서 확인된 기록만 사용했습니다.",
@@ -214,6 +237,10 @@ function buildCoachInputFromAnalysisResult(result: AnalyzeSuccessInput): StarHmC
 function buildAnalysisFeedbackItems({
   playerName,
   opponentName,
+  playerRace,
+  opponentRace,
+  matchup,
+  unitHints,
   build,
   production,
   command,
@@ -223,6 +250,10 @@ function buildAnalysisFeedbackItems({
 }: {
   playerName: string;
   opponentName: string;
+  playerRace?: string;
+  opponentRace?: string;
+  matchup: string;
+  unitHints: string[];
   build: LooseRecord | null;
   production: LooseRecord | null;
   command: LooseRecord | null;
@@ -230,79 +261,265 @@ function buildAnalysisFeedbackItems({
   findings: LooseRecord[];
   playerId: string;
 }) {
-  const findingItems = findings
-    .filter((finding) => {
-      const findingPlayerId = stringValue(finding.playerId);
-      return !findingPlayerId || !playerId || findingPlayerId === playerId;
-    })
-    .slice(0, 4)
-    .map((finding, index) => {
-      const time = formatMs(numberValue(finding.startTimeMs));
-      const title = stringValue(finding.title) || stringValue(finding.category) || "확인할 장면";
-      const summary = stringValue(finding.summary) || stringValue(finding.whyItMatters) || title;
-      const nextAction = stringValue(finding.nextAction) || "같은 상황에서 먼저 해야 할 행동을 정했어야 했어";
-      return {
-        number: index + 1,
-        label: time,
-        title: `${time} ${title}`,
-        detail: `이번 판에서는 ${playerName}이 ${time} 장면에서 ${summary} 흐름을 그냥 넘기지 말고 바로 수정했어야 했어.`,
-        next: `이번 판에서는 ${nextAction.replace(/[.。]+$/g, "")} 했어야 했어.`,
-      };
-    });
-
-  const metricItems: StarHmFeedbackItem[] = [];
   const buildName = stringValue(build?.buildName);
-  if (buildName) {
-    metricItems.push({
-      title: "빌드 방향 고정",
-      detail: `이번 판에서는 ${playerName}이 ${buildName}으로 분류된 초반 흐름을 탔기 때문에 ${opponentName}의 전환 타이밍을 먼저 확인했어야 했어.`,
-      next: `이번 판에서는 ${buildName} 이후 정찰과 생산 전환을 한 박자 먼저 맞췄어야 했어.`,
-    });
-  }
-
   const gaps = arrayValue(production?.productionGaps);
   const longestGap = gaps
     .map((gap) => recordValue(gap))
     .filter(Boolean)
     .sort((a, b) => numberValue(b?.duration) - numberValue(a?.duration))[0];
-  if (longestGap && numberValue(longestGap.duration) > 0) {
-    metricItems.push({
-      title: "생산 공백 정리",
-      detail: `이번 판에서는 ${playerName}이 ${formatSeconds(numberValue(longestGap.startSecond))}부터 ${Math.round(numberValue(longestGap.duration))}초 동안 생산이 비기 전에 미리 예약 생산을 걸었어야 했어.`,
-      next: `이번 판에서는 교전이나 이동 전에 생산 건물을 한 번 먼저 찍었어야 했어.`,
-    });
-  }
-
   const effectiveRate = optionalNumberValue(command?.effectiveRate);
-  if (effectiveRate !== null) {
-    metricItems.push({
-      title: "유효 명령 비율",
-      detail: `이번 판에서는 ${playerName}이 유효 명령 비율 ${Math.round(effectiveRate)}% 구간에서 반복 클릭보다 생산, 이동, 정찰 명령으로 입력을 바꿨어야 했어.`,
-      next: `이번 판에서는 손이 바쁠수록 같은 명령 반복을 줄이고 다음 해야 할 명령으로 넘겼어야 했어.`,
-    });
-  }
-
   const breadthScore = optionalNumberValue(hotkey?.breadthScore);
-  if (breadthScore !== null) {
-    metricItems.push({
-      title: "부대지정 폭",
-      detail: `이번 판에서는 ${playerName}이 부대지정 활용 점수 ${Math.round(breadthScore)} 기준으로 병력과 생산 건물을 더 나눠 잡았어야 했어.`,
-      next: `이번 판에서는 주 병력, 생산, 정찰 화면을 따로 묶어서 화면 전환 시간을 줄였어야 했어.`,
-    });
+  const evidence = {
+    buildName,
+    longestGapSeconds: longestGap ? Math.round(numberValue(longestGap.duration)) : null,
+    longestGapStart: longestGap ? formatSeconds(numberValue(longestGap.startSecond)) : null,
+    effectiveRate: effectiveRate === null ? null : Math.round(effectiveRate),
+    breadthScore: breadthScore === null ? null : Math.round(breadthScore),
+    firstFindingTime: firstFindingTime(findings, playerId),
+    unitHints,
+  };
+  const matchupItems = matchupCoachItems({
+    playerName,
+    opponentName,
+    playerRace,
+    opponentRace,
+    matchup,
+    evidence,
+  });
+
+  return matchupItems.slice(0, 3).map((item, index) => ({ ...item, number: index + 1 }));
+}
+
+function collectUnitHints(result: AnalyzeSuccessInput, playerId: string) {
+  const chunks = [...(result.commands ?? []), ...(result.buildOrder ?? [])]
+    .filter((item) => !playerId || stringValue(item.playerId) === playerId)
+    .flatMap((item) => [stringValue(item.unitOrBuilding), stringValue(item.details), stringValue(item.label), stringValue(item.category), stringValue(item.type)])
+    .join(" ")
+    .toLowerCase();
+  const labels: Array<[string, string[]]> = [
+    ["탱크", ["tank", "siege"]],
+    ["벌처", ["vulture"]],
+    ["마린", ["marine"]],
+    ["메딕", ["medic"]],
+    ["드라군", ["dragoon"]],
+    ["질럿", ["zealot"]],
+    ["셔틀", ["shuttle"]],
+    ["리버", ["reaver"]],
+    ["커세어", ["corsair"]],
+    ["하이템플러", ["templar"]],
+    ["저글링", ["zergling"]],
+    ["뮤탈", ["mutalisk"]],
+    ["스커지", ["scourge"]],
+    ["히드라", ["hydralisk"]],
+    ["럴커", ["lurker"]],
+  ];
+  return labels.filter(([, tokens]) => tokens.some((token) => chunks.includes(token))).map(([label]) => label);
+}
+
+function firstFindingTime(findings: LooseRecord[], playerId: string) {
+  const finding = findings.find((item) => {
+    const findingPlayerId = stringValue(item.playerId);
+    return !findingPlayerId || !playerId || findingPlayerId === playerId;
+  });
+  return finding ? formatMs(numberValue(finding.startTimeMs)) : null;
+}
+
+function matchupCoachItems({
+  playerName,
+  opponentName,
+  playerRace,
+  opponentRace,
+  matchup,
+  evidence,
+}: {
+  playerName: string;
+  opponentName: string;
+  playerRace?: string;
+  opponentRace?: string;
+  matchup: string;
+  evidence: {
+    buildName: string;
+    longestGapSeconds: number | null;
+    longestGapStart: string | null;
+    effectiveRate: number | null;
+    breadthScore: number | null;
+    firstFindingTime: string | null;
+    unitHints: string[];
+  };
+}): StarHmFeedbackItem[] {
+  const player = raceCode(playerRace);
+  const opponent = raceCode(opponentRace);
+  const code = player !== "?" && opponent !== "?" ? `${player}v${opponent}` : matchup.replace(/[^PTZ]/gi, "").toUpperCase();
+  const context = evidenceLine(evidence);
+
+  if (code === "TvP") {
+    return [
+      {
+        title: "이번 판에서는 탱크가 먼저 나가기보다 자리를 먼저 잡았어야 했어",
+        detail: `${playerName}은 ${opponentName}의 드라군/질럿이 들어오는 각을 먼저 끊고, 벌처 마인으로 길목을 잠근 뒤 탱크를 시즈했어야 했어. 탱크가 앞으로 걸어 나가면 드라군 사거리와 질럿 진입 각을 동시에 내줍니다.${context}`,
+        next: "다음 판에는 벌처로 앞 경로에 마인을 먼저 깔고, 탱크는 한 줄씩만 전진시키면서 드라군이 때릴 수 없는 언덕/좁은 길부터 잡으세요.",
+      },
+      {
+        title: "이번 판에서는 벌처를 탱크 앞에서 죽이지 말고 상대 이동을 막는 데 썼어야 했어",
+        detail: "벌처는 데미지를 넣는 유닛이라기보다 드라군 이동을 늦추고 질럿 돌파 각을 막는 유닛입니다. 탱크 정면에 던지면 마인을 못 깔고 사라져서 탱크가 바로 노출됩니다.",
+        next: "다음 판에는 벌처 시야 → 마인으로 길목 잠금 → 탱크 시즈 → 스타포트/드랍 체크 순서로 보세요.",
+      },
+    ];
   }
 
-  const combined = [...findingItems, ...metricItems].slice(0, 6);
-  if (combined.length) {
-    return combined.map((item, index) => ({ ...item, number: item.number ?? index + 1 }));
+  if (code === "PvT") {
+    return [
+      {
+        title: "이번 판에서는 드라군을 던지기보다 테란 탱크 자리부터 깨뜨렸어야 했어",
+        detail: `${playerName}은 드라군을 한 번에 앞으로 밀기 전에, 테란 탱크가 시즈할 자리와 벌처 마인 라인을 먼저 봤어야 했어. 옵저버나 셔틀이 들어가기 전에 드라군이 정면으로 나가면 탱크 포격에 병력만 줄어듭니다.${context}`,
+        next: "다음 판에는 옵저버로 탱크 수와 마인 위치를 먼저 보고, 셔틀/질럿이 먼저 맞아주는 동안 드라군은 뒤에서 탱크를 점사하세요.",
+      },
+      {
+        title: "이번 판에서는 질럿을 먼저 던져서 탱크 포신을 빼고 드라군이 때렸어야 했어",
+        detail: "테란전 큰 싸움은 드라군만 앞으로 가는 싸움이 아닙니다. 질럿이 먼저 들어가 탱크 포격과 벌처 마인을 빼고, 드라군은 탱크가 자리 잡은 라인을 하나씩 지워야 합니다.",
+        next: "다음 판에는 질럿 진입 → 셔틀 하차 → 드라군 탱크 점사 → 후속 게이트 생산 순서로 싸움을 여세요.",
+      },
+    ];
   }
+
+  if (code === "ZvP") {
+    return [
+      {
+        title: "이번 판에서는 뮤탈이 프로브보다 하이템플러와 커세어를 먼저 끊었어야 했어",
+        detail: `${playerName}이 뮤탈로 피해를 내려는 순간에도 먼저 봐야 할 건 프로브 수가 아니라 커세어 수와 하이템플러 위치입니다. 커세어가 쌓이고 스톰이 준비되면 프로브를 조금 잡아도 뮤탈 싸움이 끝납니다.${context}`,
+        next: "다음 판에는 뮤탈은 하이템플러를 먼저 찍고, 스커지는 커세어 옆 각으로 보내서 커세어가 정면으로 쫓아오지 못하게 만드세요.",
+      },
+      {
+        title: "이번 판에서는 히드라가 한 점으로 뭉치지 말고 스톰을 빼고 들어갔어야 했어",
+        detail: "프로토스가 템플러를 들고 있으면 히드라를 한 덩어리로 밀어 넣는 순간 스톰 한 번에 싸움이 끝납니다. 먼저 저글링이나 뮤탈 움직임으로 스톰을 빼고, 히드라는 넓게 펴서 들어가야 합니다.",
+        next: "다음 판에는 저글링으로 앞선 시야를 잡고, 히드라는 옆으로 펼친 뒤 템플러가 보이면 먼저 빼거나 점사하세요.",
+      },
+    ];
+  }
+
+  if (code === "PvZ") {
+    return [
+      {
+        title: "이번 판에서는 커세어가 오버로드만 보지 말고 뮤탈 출발 방향을 먼저 봤어야 했어",
+        detail: `${playerName}은 저그전에서 커세어를 띄웠다면 오버로드를 잡는 것보다 뮤탈이 어느 방향에서 나오는지 먼저 확인했어야 했어. 뮤탈 출발을 놓치면 하이템플러와 프로브가 동시에 위험해집니다.${context}`,
+        next: "다음 판에는 커세어로 스파이어 이후 뮤탈 출발 방향을 확인하고, 하이템플러는 캐논 뒤쪽에 두고 스톰 에너지를 아끼세요.",
+      },
+      {
+        title: "이번 판에서는 질럿이 드론만 보지 말고 저그 뮤탈 타이밍을 늦췄어야 했어",
+        detail: "저그전 초반 질럿은 드론 한두 기보다 가스 채취와 앞마당 운영을 흔들어서 뮤탈 시간을 늦추는 게 더 중요합니다. 무리하게 깊게 들어가 죽으면 이후 커세어/템플러 준비 시간이 부족해집니다.",
+        next: "다음 판에는 질럿은 살아서 압박을 유지하고, 커세어와 하이템플러가 갖춰질 때까지 캐논 위치를 먼저 완성하세요.",
+      },
+    ];
+  }
+
+  if (code === "TvZ") {
+    return [
+      {
+        title: "이번 판에서는 마린이 뮤탈을 쫓기보다 벙커와 터렛 라인 안에서 싸웠어야 했어",
+        detail: `${playerName}은 뮤탈이 보이면 마린을 밖으로 끌고 나가기보다 터렛/벙커/메딕이 있는 자리로 끌어들였어야 했어. 마린이 열린 공간에서 뮤탈을 쫓으면 스커지와 저글링에 끊기기 쉽습니다.${context}`,
+        next: "다음 판에는 마린은 터렛 라인 안에서 스팀 후 점사하고, 메딕은 뒤에 두고, 베슬이나 탱크가 나오기 전까지 밖으로 길게 나가지 마세요.",
+      },
+      {
+        title: "이번 판에서는 탱크가 러커를 보기 전에 먼저 시야와 스캔을 준비했어야 했어",
+        detail: "러커 싸움은 탱크 숫자보다 스캔과 마린 위치가 먼저입니다. 시야 없이 탱크가 앞으로 가면 러커에 묶이고, 마린은 러커 앞에서 녹습니다.",
+        next: "다음 판에는 스캔 → 마린 산개 → 탱크 시즈 → 베슬/터렛 시야 순서로 러커 라인을 밀어야 합니다.",
+      },
+    ];
+  }
+
+  if (code === "ZvT") {
+    return [
+      {
+        title: "이번 판에서는 저글링으로 테란 진출 시간을 먼저 늦췄어야 했어",
+        detail: `${playerName}은 저글링을 드론 피해용으로만 쓰기보다 마린/메딕이 나오는 길목에서 테란 진출 시간을 늦췄어야 했어. 테란 병력이 편하게 중앙을 잡으면 뮤탈이나 러커가 나오기 전 수비가 계속 끌려갑니다.${context}`,
+        next: "다음 판에는 저글링은 테란 앞마당과 중앙 길목에 나눠 두고, 마린이 나오는 순간 싸우기보다 진출 방향을 먼저 확인하세요.",
+      },
+      {
+        title: "이번 판에서는 뮤탈이 마린 정면이 아니라 메딕과 탱크 전환을 먼저 끊었어야 했어",
+        detail: "뮤탈은 마린 덩어리를 정면으로 때리는 유닛이 아닙니다. 메딕이 빠지거나 탱크/베슬 전환이 늦어지는 순간을 만들어야 테란 병력이 앞으로 못 나옵니다.",
+        next: "다음 판에는 뮤탈은 마린 정면을 피하고, 메딕이 벌어진 순간이나 본진 생산 라인을 찍고 바로 빠지세요.",
+      },
+    ];
+  }
+
+  if (code === "ZvZ") {
+    return [
+      {
+        title: "이번 판에서는 저글링으로 뮤탈 타이밍을 먼저 늦추고 드론을 잡았어야 했어",
+        detail: `${playerName}은 저글링을 드론만 보러 넣기보다 상대 가스와 앞마당 동선을 흔들어서 뮤탈 출발 시간을 늦췄어야 했어. 저글링을 무리하게 깊게 넣어 잃으면 이후 뮤탈 싸움에서 시야와 숫자가 같이 밀립니다.${context}`,
+        next: "다음 판에는 저글링은 드론 킬보다 가스 타이밍과 뮤탈 출발 방향 확인을 먼저 목표로 두세요.",
+      },
+      {
+        title: "이번 판에서는 뮤탈 싸움 전에 스커지를 옆 각으로 보냈어야 했어",
+        detail: "뮤탈끼리 정면으로만 싸우면 숫자 싸움이 됩니다. 스커지를 옆으로 보내 상대 뮤탈 움직임을 제한하고, 내 뮤탈은 드론 피해를 낸 뒤 잃지 않고 빠졌어야 합니다.",
+        next: "다음 판에는 저글링 정찰 유지 → 뮤탈 출발 방향 확인 → 스커지 옆 각 → 피해 후 이탈 순서로 보세요.",
+      },
+    ];
+  }
+
+  if (code === "PvP") {
+    return [
+      {
+        title: "이번 판에서는 드라군을 먼저 던지지 말고 리버/셔틀 각을 먼저 봤어야 했어",
+        detail: `${playerName}은 드라군 숫자만 보고 앞으로 나가기보다 상대 리버와 셔틀 위치를 먼저 확인했어야 했어. 프프전은 드라군 몇 기보다 리버 한 방과 셔틀 시야가 싸움을 갈라요.${context}`,
+        next: "다음 판에는 옵저버로 로보 타이밍을 보고, 드라군은 셔틀 점사 각을 유지한 채 리버가 때릴 자리를 먼저 막으세요.",
+      },
+      {
+        title: "이번 판에서는 셔틀이 보이면 드라군 점사를 먼저 맞췄어야 했어",
+        detail: "셔틀을 놓치면 리버가 원하는 위치에서 먼저 쏩니다. 드라군은 정면 병력보다 셔틀을 먼저 찍고, 리버가 내리면 내 리버나 드라군으로 리버를 먼저 봤어야 합니다.",
+        next: "다음 판에는 셔틀 시야 확보 → 드라군 셔틀 점사 → 리버 하차 위치 차단 순서로 싸우세요.",
+      },
+    ];
+  }
+
+  if (code === "TvT") {
+    return [
+      {
+        title: "이번 판에서는 탱크가 먼저 많이 나가기보다 자리를 먼저 잡았어야 했어",
+        detail: `${playerName}은 탱크를 한 번에 전진시키기보다 벌처 시야와 마인으로 길목을 잠그고 시즈 라인을 먼저 만들었어야 했어. 탱크가 자리 없이 걸어가면 상대 탱크 첫 포격에 라인이 무너집니다.${context}`,
+        next: "다음 판에는 벌처 시야 → 마인 길목 잠금 → 탱크 한 줄 시즈 → 레이스/드랍 체크 순서로 전진하세요.",
+      },
+      {
+        title: "이번 판에서는 벌처를 탱크 앞에 던지지 말고 상대 이동을 막는 데 썼어야 했어",
+        detail: "테테전 벌처는 탱크 대신 맞아주는 유닛이 아니라 상대 탱크가 자리 잡기 전에 길목을 막는 유닛입니다. 벌처가 사라지면 내 탱크는 시야 없이 움직이게 됩니다.",
+        next: "다음 판에는 벌처는 상대 진입로와 언덕 아래에 먼저 두고, 탱크는 시야가 있는 곳까지만 전진시키세요.",
+      },
+    ];
+  }
+
   return [
     {
-      number: 1,
-      title: "기록 기반 복기",
-      detail: `이번 판에서는 ${playerName}이 초반 빌드, 생산 공백, 단축키 기록을 먼저 확인하고 가장 크게 흔들린 구간부터 고쳤어야 했어.`,
-      next: "이번 판에서는 감으로 넘기지 말고 REP 기록에 나온 첫 문제 시간부터 다시 봤어야 했어.",
+      title: "이번 판에서는 수치보다 첫 교전에서 유닛이 맡아야 할 역할을 먼저 정했어야 했어",
+      detail: `${playerName}은 ${opponentName}과의 ${matchup}에서 병력을 한 덩어리로 움직이기보다, 앞에서 맞아줄 유닛과 뒤에서 때릴 유닛을 나눠 싸웠어야 했어.${context}`,
+      next: "다음 판에는 교전 직전 내 병력 중 누가 먼저 맞고, 누가 점사하고, 누가 빠질지 정한 뒤 싸움을 여세요.",
     },
   ];
+}
+
+function raceCode(value?: string) {
+  const lower = (value ?? "").toLowerCase();
+  if (lower.startsWith("t")) return "T";
+  if (lower.startsWith("z")) return "Z";
+  if (lower.startsWith("p")) return "P";
+  return "?";
+}
+
+function evidenceLine(evidence: {
+  buildName: string;
+  longestGapSeconds: number | null;
+  longestGapStart: string | null;
+  effectiveRate: number | null;
+  breadthScore: number | null;
+  firstFindingTime: string | null;
+  unitHints: string[];
+}) {
+  const parts = [
+    evidence.buildName ? `빌드 흐름은 ${evidence.buildName}로 읽혔고` : "",
+    evidence.unitHints.length ? `기록에 보인 핵심 유닛은 ${evidence.unitHints.slice(0, 4).join(", ")}입니다` : "",
+    evidence.firstFindingTime ? `먼저 볼 구간은 ${evidence.firstFindingTime}입니다` : "",
+    evidence.longestGapSeconds && evidence.longestGapStart ? `${evidence.longestGapStart} 부근에 생산 공백 ${evidence.longestGapSeconds}초가 있었습니다` : "",
+  ].filter(Boolean);
+  return parts.length ? ` 기록 근거로는 ${parts.join(". ")}.` : "";
 }
 
 function findReportForPlayer(items: LooseRecord[], playerId: string) {

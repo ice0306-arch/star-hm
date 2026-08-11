@@ -1080,7 +1080,7 @@ function HmCoachBridgeReport({ hmCoach }: { hmCoach: HmCoachBridgeResult }) {
       <div className="ai-hm-coach-meta-grid">
         <Metric label="맵" value={input.match?.map ?? "-"} />
         <Metric label="관점" value={input.perspective?.matchup ?? "-"} />
-        <Metric label="샘플" value={input.dataContext?.sampleSize ?? "-"} />
+        <Metric label="읽은 기록" value={input.dataContext?.sampleSize ?? "-"} />
         <Metric label="신뢰도" value={input.dataContext?.confidenceLabel ?? "-"} />
       </div>
 
