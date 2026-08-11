@@ -1584,9 +1584,12 @@ function CoachReport({
         </>
       )}
 
-      <ReplayMapViewer2D result={result} players={players} replayFile={replayFile} seekMs={viewerSeekMs} />
-
       <TacticalReplaySimulator result={result} players={players} moments={supportMoments} />
+
+      <details className="ai-dev-coordinate-viewer">
+        <summary>개발용 2D 좌표 보기</summary>
+        <ReplayMapViewer2D result={result} players={players} replayFile={replayFile} seekMs={viewerSeekMs} />
+      </details>
 
       <CoachVisualPanel result={result} players={players} coach={coach} />
 
@@ -2205,11 +2208,11 @@ function ReplayMapViewer2D({ result, players, replayFile, seekMs }: { result: An
   return (
     <section className="ai-replay-viewer" aria-label="2D 리플레이 뷰어">
       <div className="ai-section-title">
-        <span className="panel-kicker">2D REPLAY VIEWER</span>
-        <h3>실제 명령 좌표로 보는 2D 복기</h3>
+        <span className="panel-kicker">개발용 2D 좌표 보기</span>
+        <h3>원시 명령 좌표 확인</h3>
       </div>
       <div className="ai-replay-viewer-head">
-        <p>현재 파서가 제공하는 시작 위치, 건설 좌표, 이동·공격 명령 좌표만 표시합니다. 정확한 유닛 이동과 전투 결과는 게임 엔진이 필요하므로 실제값처럼 꾸미지 않습니다.</p>
+        <p>플레이어 코칭용 기본 화면이 아니라, 파서가 제공한 시작 위치와 건설·이동·공격 좌표를 확인하는 개발용 보조 근거입니다.</p>
         <div>
           <span>맵 이미지</span>
           <strong>{mapImageStatus === "READY" ? "표시 중" : mapImageStatus === "LOADING" ? "생성 중" : "표시 실패"}</strong>
@@ -2926,105 +2929,94 @@ function replayViewerRecent(events: ReplayViewerEvent[], currentMs: number, type
 
 function TacticalReplaySimulator({ result, moments }: { result: AnalyzeSuccess; players: ReplayPlayer[]; moments: CoachMoment[] }) {
   const simulation = useMemo(() => buildTacticalReplaySimulation(result, moments), [result, moments]);
-  const [selectedRangeId, setSelectedRangeId] = useState<string | null>(simulation.ranges[0]?.id ?? null);
-  const selectedRange = simulation.ranges.find((range) => range.id === selectedRangeId) ?? simulation.ranges[0] ?? null;
-  const reviewEvents = selectedRange ? tacticalEventsForRange(simulation, selectedRange) : simulation.events.slice(0, 5);
+  const reviewRanges = simulation.ranges.slice(0, 5);
 
   return (
-    <section className="ai-tactical-simulator" aria-label="이번 판에서 바로 고칠 장면">
+    <section className="ai-tactical-simulator" aria-label="핵심 장면 판단 복기">
       <div className="ai-section-title">
-        <span className="panel-kicker">이번 판에서 바로 고칠 장면</span>
-        <h3>좌표가 아니라 행동으로 복기하기</h3>
+        <span className="panel-kicker">핵심 장면 판단 복기</span>
+        <h3>이번 판에서 다시 봐야 할 판단</h3>
+        <p>좌표가 아니라, 그 시간대에 화면에서 무엇을 봤고 어떤 행동을 먼저 했어야 했는지로 복기합니다.</p>
       </div>
 
-      <div className="ai-review-layout">
-        <div className="ai-review-main">
-          {selectedRange ? (
-            <article className={`ai-review-focus severity-${selectedRange.severity.toLowerCase()}`}>
+      {reviewRanges.length ? (
+        <div className="ai-decision-review-grid">
+          {reviewRanges.map((range) => {
+            const reviewEvents = tacticalEventsForRange(simulation, range);
+            return (
+              <article key={range.id} className={`ai-decision-review-card severity-${range.severity.toLowerCase()}`}>
               <div className="ai-review-meta">
-                <span>{formatDuration(selectedRange.start)}-{formatDuration(selectedRange.end)}</span>
-                <strong>{selectedRange.playerName}</strong>
-                <em>{selectedRange.tag}</em>
-              </div>
-              <h4>{selectedRange.problem}</h4>
-              <div className="ai-review-coaching-grid">
-                <section>
-                  <span>실제로 보인 흐름</span>
-                  <p>{tacticalHumanFlow(selectedRange, reviewEvents)}</p>
-                </section>
-                <section>
-                  <span>이번 판에서 했어야 한 행동</span>
-                  <p>{tacticalHadToAction(selectedRange)}</p>
-                </section>
-                <section>
-                  <span>다음 판 체크포인트</span>
-                  <p>{tacticalNextCheckpoint(selectedRange)}</p>
-                </section>
-              </div>
-            </article>
-          ) : (
-            <article className="ai-review-focus">
-              <div className="ai-review-meta">
-                <span>전체 경기</span>
-                <strong>{result.replay.map.name ?? "리플레이"}</strong>
-                <em>안정</em>
-              </div>
-              <h4>크게 튄 문제 구간은 많지 않습니다.</h4>
-              <div className="ai-review-coaching-grid">
-                <section>
-                  <span>실제로 보인 흐름</span>
-                  <p>큰 실수보다 첫 생산, 첫 확장, 첫 진출 타이밍이 얼마나 일정했는지를 봐야 하는 경기입니다.</p>
-                </section>
-                <section>
-                  <span>이번 판에서 했어야 한 행동</span>
-                  <p>이번 판에서는 첫 교전 전에 생산, 정찰, 병력 위치를 한 번씩 확인하고 들어갔어야 했어.</p>
-                </section>
-                <section>
-                  <span>다음 판 체크포인트</span>
-                  <p>첫 6분을 30초 단위로 끊어서 생산, 정찰, 병력 이동이 모두 들어갔는지 확인하세요.</p>
-                </section>
-              </div>
-            </article>
-          )}
-
-          <details className="ai-review-raw-details">
-            <summary>근거 보기</summary>
-            <div className="ai-review-event-list" aria-label="개발용 원시 명령 보기">
-              <span>개발용 원시 명령 보기</span>
-              {reviewEvents.length ? (
-                reviewEvents.slice(0, 8).map((event, index) => (
-                  <article key={`review-event-${event.id}`}>
-                    <b>{index + 1}</b>
-                    <div>
-                      <strong>{event.timeLabel} · {event.playerName}</strong>
-                      <p>{plainTacticalEventLabel(event)} · x={event.position.x}, y={event.position.y}</p>
-                    </div>
-                  </article>
-                ))
-              ) : (
-                <p>이 구간에는 위치가 남은 명령이 적습니다. 그래도 시간대와 생산 공백은 리포트 기준으로 확인할 수 있습니다.</p>
-              )}
-            </div>
-          </details>
-        </div>
-
-        <aside className="ai-review-side">
-            <div className="ai-review-side-head">
-            <span>다시 볼 순서</span>
-            <strong>큰 문제부터 차례대로 눌러보세요</strong>
-          </div>
-          <div className="ai-review-range-list" aria-label="문제 구간 바로가기">
-            {simulation.ranges.slice(0, 5).map((range) => (
-              <button key={range.id} type="button" className={selectedRange?.id === range.id ? "is-active" : ""} onClick={() => setSelectedRangeId(range.id)}>
                 <span>{formatDuration(range.start)}-{formatDuration(range.end)}</span>
-                <strong>{range.problem}</strong>
-                <small>{range.playerName} · {range.tag}</small>
-              </button>
-            ))}
-            {simulation.ranges.length === 0 ? <p>우선 확인할 문제 구간이 적습니다.</p> : null}
+                <strong>{range.playerName}</strong>
+                <em>{range.tag}</em>
+              </div>
+              <h4>{range.problem}</h4>
+              <div className="ai-review-coaching-grid">
+                <section>
+                  <span>상황</span>
+                  <p>{tacticalHumanFlow(range, reviewEvents)}</p>
+                </section>
+                <section>
+                  <span>이번 판에서 했어야 한 행동</span>
+                  <p>{tacticalHadToAction(range)}</p>
+                </section>
+                <section>
+                  <span>다음 판 체크포인트</span>
+                  <p>{tacticalNextCheckpoint(range)}</p>
+                </section>
+              </div>
+              <div className="ai-decision-evidence-chips">
+                {decisionEvidenceChips(range, reviewEvents).map((chip) => (
+                  <span key={chip}>{chip}</span>
+                ))}
+              </div>
+              <details className="ai-review-raw-details">
+                <summary>근거 보기</summary>
+                <div className="ai-review-event-list" aria-label="개발용 원시 명령 보기">
+                  <span>개발용 원시 명령 보기</span>
+                  {reviewEvents.length ? (
+                    reviewEvents.slice(0, 6).map((event, index) => (
+                      <article key={`review-event-${event.id}`}>
+                        <b>{index + 1}</b>
+                        <div>
+                          <strong>{event.timeLabel} · {event.playerName}</strong>
+                          <p>{plainTacticalEventLabel(event)} · x={event.position.x}, y={event.position.y}</p>
+                        </div>
+                      </article>
+                    ))
+                  ) : (
+                    <p>이 구간에는 위치가 남은 명령이 적습니다. 그래도 시간대와 생산 공백은 리포트 기준으로 확인할 수 있습니다.</p>
+                  )}
+                </div>
+              </details>
+            </article>
+            );
+          })}
+        </div>
+      ) : (
+        <article className="ai-decision-review-card">
+          <div className="ai-review-meta">
+            <span>전체 경기</span>
+            <strong>{result.replay.map.name ?? "리플레이"}</strong>
+            <em>안정</em>
           </div>
-        </aside>
-      </div>
+          <h4>크게 튄 문제 구간은 많지 않습니다.</h4>
+          <div className="ai-review-coaching-grid">
+            <section>
+              <span>상황</span>
+              <p>큰 실수보다 첫 생산, 첫 확장, 첫 진출 타이밍이 얼마나 일정했는지를 봐야 하는 경기입니다.</p>
+            </section>
+            <section>
+              <span>이번 판에서 했어야 한 행동</span>
+              <p>이번 판에서는 첫 교전 전에 생산, 정찰, 병력 위치를 한 번씩 확인하고 들어갔어야 했어.</p>
+            </section>
+            <section>
+              <span>다음 판 체크포인트</span>
+              <p>첫 6분을 30초 단위로 끊어서 생산, 정찰, 병력 이동이 모두 들어갔는지 확인하세요.</p>
+            </section>
+          </div>
+        </article>
+      )}
     </section>
   );
 }
@@ -4450,6 +4442,18 @@ function tacticalNextCheckpoint(range: TacticalReplayRange) {
     return "다음 판에는 1번 주병력, 2번 보조 병력, 3번 생산처럼 번호 역할을 정하고 한 경기 동안 유지하세요.";
   }
   return range.fixPoint;
+}
+
+function decisionEvidenceChips(range: TacticalReplayRange, events: TacticalReplayEvent[]) {
+  const chips = [`${range.playerName} · ${range.tag}`];
+  const firstKind = events[0] ? tacticalPlainEventKind(events[0]) : null;
+  if (firstKind) chips.push(`${events[0].timeLabel} ${firstKind}`);
+  const productionEvent = events.find((event) => {
+    const kind = tacticalPlainEventKind(event);
+    return kind.includes("생산") || kind.includes("건설") || kind.includes("테크");
+  });
+  if (productionEvent && chips.length < 3) chips.push(`${productionEvent.timeLabel} 생산/테크`);
+  return chips.slice(0, 3);
 }
 
 function tacticalEventsForRange(simulation: TacticalReplaySimulation, range: TacticalReplayRange) {

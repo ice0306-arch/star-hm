@@ -3398,6 +3398,75 @@ footer {
   word-break: keep-all;
 }
 
+.ai-tactical-simulator .ai-section-title p {
+  max-width: 56rem;
+  color: rgba(241, 240, 235, 0.68);
+  font-size: 0.92rem;
+  font-weight: 760;
+  line-height: 1.7;
+  word-break: keep-all;
+}
+
+.ai-decision-review-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0.85rem;
+}
+
+.ai-decision-review-card {
+  display: grid;
+  gap: 0.85rem;
+  min-width: 0;
+  border: 1px solid rgba(88, 166, 255, 0.22);
+  border-radius: 10px;
+  padding: clamp(1rem, 1.7vw, 1.15rem);
+  background:
+    linear-gradient(135deg, rgba(88, 166, 255, 0.12), transparent 46%),
+    rgba(10, 15, 22, 0.82);
+}
+
+.ai-decision-review-card.severity-high {
+  border-color: rgba(255, 109, 109, 0.36);
+  background:
+    linear-gradient(135deg, rgba(255, 109, 109, 0.12), transparent 48%),
+    rgba(16, 14, 18, 0.84);
+}
+
+.ai-decision-review-card.severity-medium {
+  border-color: rgba(202, 163, 91, 0.36);
+  background:
+    linear-gradient(135deg, rgba(202, 163, 91, 0.13), transparent 48%),
+    rgba(15, 15, 12, 0.84);
+}
+
+.ai-decision-review-card h4 {
+  color: white;
+  font-size: clamp(1rem, 1.35vw, 1.28rem);
+  font-weight: 950;
+  line-height: 1.34;
+  word-break: keep-all;
+}
+
+.ai-decision-review-card .ai-review-coaching-grid {
+  grid-template-columns: 1fr;
+}
+
+.ai-decision-evidence-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.ai-decision-evidence-chips span {
+  border: 1px solid rgba(241, 240, 235, 0.12);
+  border-radius: 999px;
+  padding: 0.42rem 0.58rem;
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(241, 240, 235, 0.72);
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
 .ai-review-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(260px, 0.36fr);
@@ -3557,6 +3626,42 @@ footer {
   background:
     linear-gradient(180deg, rgba(88, 166, 255, 0.045), transparent 42%),
     rgba(9, 11, 15, 0.52);
+}
+
+.ai-dev-coordinate-viewer {
+  overflow: hidden;
+  border: 1px solid rgba(241, 240, 235, 0.1);
+  border-radius: 8px;
+  background: rgba(9, 11, 15, 0.42);
+}
+
+.ai-dev-coordinate-viewer > summary {
+  cursor: pointer;
+  padding: 0.95rem 1.05rem;
+  color: rgba(241, 240, 235, 0.76);
+  font-size: 0.78rem;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+  list-style: none;
+}
+
+.ai-dev-coordinate-viewer > summary::-webkit-details-marker {
+  display: none;
+}
+
+.ai-dev-coordinate-viewer > summary::after {
+  content: " +";
+  color: var(--gold);
+}
+
+.ai-dev-coordinate-viewer[open] > summary::after {
+  content: " -";
+}
+
+.ai-dev-coordinate-viewer .ai-replay-viewer {
+  border-width: 1px 0 0;
+  border-radius: 0;
+  background: rgba(0, 0, 0, 0.18);
 }
 
 .ai-replay-viewer-head {
