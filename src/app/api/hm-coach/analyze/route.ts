@@ -314,7 +314,7 @@ function buildAnalysisFeedbackItems({
     longestGapStart: longestGap ? formatSeconds(numberValue(longestGap.startSecond)) : null,
     effectiveRate: effectiveRate === null ? null : Math.round(effectiveRate),
     breadthScore: breadthScore === null ? null : Math.round(breadthScore),
-    firstFindingTime: firstFindingTime(findings, playerId),
+    firstFindingTime: actionableFindingTime(findings, playerId),
     unitHints,
   };
   const matchupItems = matchupCoachItems({
@@ -382,10 +382,11 @@ function fieldValue(item: unknown, key: string) {
   return item && typeof item === "object" && key in item ? (item as LooseRecord)[key] : undefined;
 }
 
-function firstFindingTime(findings: LooseRecord[], playerId: string) {
+function actionableFindingTime(findings: LooseRecord[], playerId: string) {
   const finding = findings.find((item) => {
     const findingPlayerId = stringValue(item.playerId);
-    return !findingPlayerId || !playerId || findingPlayerId === playerId;
+    const startSeconds = numberValue(item.startTimeMs) / 1000;
+    return (!findingPlayerId || !playerId || findingPlayerId === playerId) && startSeconds >= 180;
   });
   return finding ? formatMs(numberValue(finding.startTimeMs)) : null;
 }
@@ -579,12 +580,27 @@ function evidenceLine(evidence: {
   firstFindingTime: string | null;
   unitHints: string[];
 }) {
+  const meaningfulGap =
+    evidence.longestGapSeconds !== null &&
+    evidence.longestGapSeconds >= 20 &&
+    evidence.longestGapStart &&
+    timeLabelToSeconds(evidence.longestGapStart) >= 120
+      ? `운영이 흔들린 구간은 ${evidence.longestGapStart} 부근입니다`
+      : "";
   const parts = [
     evidence.buildName ? `초반 선택은 ${evidence.buildName}로 읽혔고` : "",
     evidence.unitHints.length ? `기록에 보인 핵심 유닛은 ${evidence.unitHints.slice(0, 4).join(", ")}입니다` : "",
-    evidence.firstFindingTime ? `먼저 볼 구간은 ${evidence.firstFindingTime}입니다` : "",
+    meaningfulGap || (evidence.firstFindingTime ? `다시 볼 판단 구간은 ${evidence.firstFindingTime} 이후입니다` : ""),
   ].filter(Boolean);
   return parts.length ? ` 기록 근거로는 ${parts.join(". ")}.` : "";
+}
+
+function timeLabelToSeconds(value: string) {
+  const parts = value.split(":").map((part) => Number(part));
+  if (parts.some((part) => !Number.isFinite(part))) return 0;
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  return parts[0] ?? 0;
 }
 
 function findReportForPlayer(items: LooseRecord[], playerId: string) {
