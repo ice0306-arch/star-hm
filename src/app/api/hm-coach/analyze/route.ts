@@ -418,6 +418,8 @@ function matchupCoachItems({
   const opponent = raceCode(opponentRace);
   const code = player !== "?" && opponent !== "?" ? `${player}v${opponent}` : matchup.replace(/[^PTZ]/gi, "").toUpperCase();
   const context = evidenceLine(evidence);
+  const hasUnit = (...units: string[]) => units.some((unit) => evidence.unitHints.includes(unit));
+  const withFallback = (items: StarHmFeedbackItem[]) => items.length ? items : [genericEvidenceCoachItem(playerName, opponentName, matchup, context)];
 
   if (code === "TvP") {
     return [
@@ -450,78 +452,98 @@ function matchupCoachItems({
   }
 
   if (code === "ZvP") {
-    return [
-      {
+    const items: StarHmFeedbackItem[] = [];
+    if (hasUnit("뮤탈") && hasUnit("커세어") && hasUnit("하이템플러")) {
+      items.push({
         title: "이번 판에서는 뮤탈이 프로브보다 하이템플러와 커세어를 먼저 끊었어야 했어",
         detail: `${playerName}이 뮤탈로 피해를 내려는 순간에도 먼저 봐야 할 건 프로브 수가 아니라 커세어 수와 하이템플러 위치입니다. 커세어가 쌓이고 스톰이 준비되면 프로브를 조금 잡아도 뮤탈 싸움이 끝납니다.${context}`,
-        next: "다음 판에는 뮤탈은 하이템플러를 먼저 찍고, 스커지는 커세어 옆 각으로 보내서 커세어가 정면으로 쫓아오지 못하게 만드세요.",
-      },
-      {
+        next: "다음 판에는 뮤탈은 하이템플러 위치를 먼저 보고, 커세어가 정면으로 쫓아오기 전에 피해 후 빠지는 순서로 움직이세요.",
+      });
+    }
+    if (hasUnit("히드라") && hasUnit("하이템플러")) {
+      items.push({
         title: "이번 판에서는 히드라가 한 점으로 뭉치지 말고 스톰을 빼고 들어갔어야 했어",
-        detail: "프로토스가 템플러를 들고 있으면 히드라를 한 덩어리로 밀어 넣는 순간 스톰 한 번에 싸움이 끝납니다. 먼저 저글링이나 뮤탈 움직임으로 스톰을 빼고, 히드라는 넓게 펴서 들어가야 합니다.",
-        next: "다음 판에는 저글링으로 앞선 시야를 잡고, 히드라는 옆으로 펼친 뒤 템플러가 보이면 먼저 빼거나 점사하세요.",
-      },
-    ];
+        detail: "프로토스가 템플러를 들고 있으면 히드라를 한 덩어리로 밀어 넣는 순간 스톰 한 번에 싸움이 끝납니다. 먼저 병력을 넓게 펼쳐 스톰을 빼고, 히드라는 한 점으로 뭉치지 않게 들어가야 합니다.",
+        next: "다음 판에는 히드라를 옆으로 펼친 뒤 템플러가 보이면 먼저 빼거나 점사하세요.",
+      });
+    }
+    return withFallback(items);
   }
 
   if (code === "PvZ") {
-    return [
-      {
+    const items: StarHmFeedbackItem[] = [];
+    if (hasUnit("커세어") && hasUnit("뮤탈") && hasUnit("하이템플러")) {
+      items.push({
         title: "이번 판에서는 커세어가 오버로드만 보지 말고 뮤탈 출발 방향을 먼저 봤어야 했어",
         detail: `${playerName}은 저그전에서 커세어를 띄웠다면 오버로드를 잡는 것보다 뮤탈이 어느 방향에서 나오는지 먼저 확인했어야 했어. 뮤탈 출발을 놓치면 하이템플러와 프로브가 동시에 위험해집니다.${context}`,
         next: "다음 판에는 커세어로 스파이어 이후 뮤탈 출발 방향을 확인하고, 하이템플러는 캐논 뒤쪽에 두고 스톰 에너지를 아끼세요.",
-      },
-      {
+      });
+    }
+    if (hasUnit("질럿") && hasUnit("뮤탈")) {
+      items.push({
         title: "이번 판에서는 질럿이 드론만 보지 말고 저그 뮤탈 타이밍을 늦췄어야 했어",
-        detail: "저그전 초반 질럿은 드론 한두 기보다 가스 채취와 앞마당 운영을 흔들어서 뮤탈 시간을 늦추는 게 더 중요합니다. 무리하게 깊게 들어가 죽으면 이후 커세어/템플러 준비 시간이 부족해집니다.",
-        next: "다음 판에는 질럿은 살아서 압박을 유지하고, 커세어와 하이템플러가 갖춰질 때까지 캐논 위치를 먼저 완성하세요.",
-      },
-    ];
+        detail: "저그전 초반 질럿은 드론 한두 기보다 가스 채취와 앞마당 운영을 흔들어서 뮤탈 시간을 늦추는 게 더 중요합니다. 무리하게 깊게 들어가 죽으면 이후 본진과 앞마당 방어 준비 시간이 부족해집니다.",
+        next: "다음 판에는 질럿은 살아서 압박을 유지하고, 뮤탈이 출발하기 전 본진과 앞마당 방어 위치를 먼저 완성하세요.",
+      });
+    }
+    return withFallback(items);
   }
 
   if (code === "TvZ") {
-    return [
-      {
+    const items: StarHmFeedbackItem[] = [];
+    if (hasUnit("마린") && hasUnit("메딕") && hasUnit("뮤탈")) {
+      items.push({
         title: "이번 판에서는 마린이 뮤탈을 쫓기보다 벙커와 터렛 라인 안에서 싸웠어야 했어",
-        detail: `${playerName}은 뮤탈이 보이면 마린을 밖으로 끌고 나가기보다 터렛/벙커/메딕이 있는 자리로 끌어들였어야 했어. 마린이 열린 공간에서 뮤탈을 쫓으면 스커지와 저글링에 끊기기 쉽습니다.${context}`,
-        next: "다음 판에는 마린은 터렛 라인 안에서 스팀 후 점사하고, 메딕은 뒤에 두고, 베슬이나 탱크가 나오기 전까지 밖으로 길게 나가지 마세요.",
-      },
-      {
+        detail: `${playerName}은 뮤탈이 보이면 마린을 밖으로 끌고 나가기보다 터렛/벙커/메딕이 있는 자리로 끌어들였어야 했어. 마린이 열린 공간에서 뮤탈을 쫓으면 수비선이 벌어지고 병력이 끊기기 쉽습니다.${context}`,
+        next: "다음 판에는 마린은 터렛 라인 안에서 스팀 후 점사하고, 메딕은 뒤에 두고, 후속 수비 준비가 되기 전까지 밖으로 길게 나가지 마세요.",
+      });
+    }
+    if (hasUnit("럴커") && hasUnit("탱크") && hasUnit("마린")) {
+      items.push({
         title: "이번 판에서는 탱크가 러커를 보기 전에 먼저 시야와 스캔을 준비했어야 했어",
         detail: "러커 싸움은 탱크 숫자보다 스캔과 마린 위치가 먼저입니다. 시야 없이 탱크가 앞으로 가면 러커에 묶이고, 마린은 러커 앞에서 녹습니다.",
-        next: "다음 판에는 스캔 → 마린 산개 → 탱크 시즈 → 베슬/터렛 시야 순서로 러커 라인을 밀어야 합니다.",
-      },
-    ];
+        next: "다음 판에는 스캔 → 마린 산개 → 탱크 시즈 → 터렛 시야 순서로 러커 라인을 밀어야 합니다.",
+      });
+    }
+    return withFallback(items);
   }
 
   if (code === "ZvT") {
-    return [
-      {
+    const items: StarHmFeedbackItem[] = [];
+    if (hasUnit("저글링") && hasUnit("마린") && hasUnit("메딕")) {
+      items.push({
         title: "이번 판에서는 저글링으로 테란 진출 시간을 먼저 늦췄어야 했어",
-        detail: `${playerName}은 저글링을 드론 피해용으로만 쓰기보다 마린/메딕이 나오는 길목에서 테란 진출 시간을 늦췄어야 했어. 테란 병력이 편하게 중앙을 잡으면 뮤탈이나 러커가 나오기 전 수비가 계속 끌려갑니다.${context}`,
+        detail: `${playerName}은 저글링을 드론 피해용으로만 쓰기보다 마린/메딕이 나오는 길목에서 테란 진출 시간을 늦췄어야 했어. 테란 병력이 편하게 중앙을 잡으면 이후 수비와 후속 병력 준비가 계속 끌려갑니다.${context}`,
         next: "다음 판에는 저글링은 테란 앞마당과 중앙 길목에 나눠 두고, 마린이 나오는 순간 싸우기보다 진출 방향을 먼저 확인하세요.",
-      },
-      {
-        title: "이번 판에서는 뮤탈이 마린 정면이 아니라 메딕과 탱크 전환을 먼저 끊었어야 했어",
-        detail: "뮤탈은 마린 덩어리를 정면으로 때리는 유닛이 아닙니다. 메딕이 빠지거나 탱크/베슬 전환이 늦어지는 순간을 만들어야 테란 병력이 앞으로 못 나옵니다.",
-        next: "다음 판에는 뮤탈은 마린 정면을 피하고, 메딕이 벌어진 순간이나 본진 생산 라인을 찍고 바로 빠지세요.",
-      },
-    ];
+      });
+    }
+    if (hasUnit("뮤탈")) {
+      items.push({
+        title: "이번 판에서는 뮤탈이 정면 병력보다 상대 전환 타이밍을 먼저 끊었어야 했어",
+        detail: "뮤탈은 정면 병력을 오래 때리는 유닛이 아닙니다. 상대가 수비 위치를 잡기 전 빈 생산 라인이나 이동 동선을 흔들고 바로 빠져야 병력이 앞으로 못 나옵니다.",
+        next: "다음 판에는 뮤탈은 정면 싸움을 피하고, 상대가 벌어진 순간이나 본진 생산 라인을 찍고 바로 빠지세요.",
+      });
+    }
+    return withFallback(items);
   }
 
   if (code === "ZvZ") {
-    return [
-      {
+    const items: StarHmFeedbackItem[] = [];
+    if (hasUnit("저글링") && hasUnit("뮤탈")) {
+      items.push({
         title: "이번 판에서는 저글링으로 뮤탈 타이밍을 먼저 늦추고 드론을 잡았어야 했어",
         detail: `${playerName}은 저글링을 드론만 보러 넣기보다 상대 가스와 앞마당 동선을 흔들어서 뮤탈 출발 시간을 늦췄어야 했어. 저글링을 무리하게 깊게 넣어 잃으면 이후 뮤탈 싸움에서 시야와 숫자가 같이 밀립니다.${context}`,
         next: "다음 판에는 저글링은 드론 킬보다 가스 타이밍과 뮤탈 출발 방향 확인을 먼저 목표로 두세요.",
-      },
-      {
+      });
+    }
+    if (hasUnit("뮤탈") && hasUnit("스커지")) {
+      items.push({
         title: "이번 판에서는 뮤탈 싸움 전에 스커지를 옆 각으로 보냈어야 했어",
         detail: "뮤탈끼리 정면으로만 싸우면 숫자 싸움이 됩니다. 스커지를 옆으로 보내 상대 뮤탈 움직임을 제한하고, 내 뮤탈은 드론 피해를 낸 뒤 잃지 않고 빠졌어야 합니다.",
-        next: "다음 판에는 저글링 정찰 유지 → 뮤탈 출발 방향 확인 → 스커지 옆 각 → 피해 후 이탈 순서로 보세요.",
-      },
-    ];
+        next: "다음 판에는 뮤탈 출발 방향 확인 → 스커지 옆 각 → 피해 후 이탈 순서로 보세요.",
+      });
+    }
+    return withFallback(items);
   }
 
   if (code === "PvP") {
@@ -561,6 +583,14 @@ function matchupCoachItems({
       next: "다음 판에는 교전 직전 내 병력 중 누가 먼저 맞고, 누가 점사하고, 누가 빠질지 정한 뒤 싸움을 여세요.",
     },
   ];
+}
+
+function genericEvidenceCoachItem(playerName: string, opponentName: string, matchup: string, context: string): StarHmFeedbackItem {
+  return {
+    title: "이번 판에서는 확인된 유닛 기준으로 병력 위치부터 고쳤어야 했어",
+    detail: `${playerName}은 ${opponentName}과의 ${matchup}에서 특정 유닛 빌드명을 맞히기보다, 실제 기록에 보인 병력이 어디에서 시작했고 어디로 빠졌는지를 먼저 봐야 했어. 앞에서 맞아줄 병력과 뒤에서 때릴 병력이 나뉘지 않으면 첫 교전 판단이 계속 늦어집니다.${context}`,
+    next: "다음 판에는 첫 교전 직전 내 병력이 앞에서 맞을 유닛과 뒤에서 때릴 유닛으로 나뉘어 있는지 확인하세요.",
+  };
 }
 
 function raceCode(value?: string) {
