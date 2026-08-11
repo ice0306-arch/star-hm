@@ -11,8 +11,9 @@ import {
 const BRAND_EMBLEM_SRC = "/brand/hm-emblem.png";
 
 function formatCupDate(value: string) {
-  const date = new Date(`${value}T00:00:00+09:00`);
-  return date.toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" });
+  const [, month, day] = value.split("-").map(Number);
+  const weekday = ["일", "월", "화", "수", "목", "금", "토"][new Date(`${value}T12:00:00`).getDay()];
+  return `${month}월 ${day}일 (${weekday})`;
 }
 
 function TeamBadge({ teamKey }: { teamKey: CupTeamKey }) {
@@ -76,7 +77,7 @@ export function KJungmanCupPage() {
       </header>
 
       <section className="kj-cup-hero px-5 pb-10 pt-28 sm:px-8 lg:px-10">
-        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1fr_420px] lg:items-end">
+        <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[minmax(0,1fr)_390px] lg:items-end">
           <div>
             <div className="panel-kicker">K-JUNGMAN CUP 2026</div>
             <h1>K-중만컵</h1>
@@ -129,9 +130,11 @@ export function KJungmanCupPage() {
                       <span className="kj-cup-rank">{standing.rank}</span>
                       <TeamBadge teamKey={standing.team} />
                       {standing.seed ? <span className="kj-cup-seed">{standing.seed}</span> : null}
-                      <span className="kj-cup-record">{standing.wins}승 {standing.losses}패</span>
-                      <strong>{standing.setScore}</strong>
-                      <em>{standing.points}점</em>
+                      <div className="kj-cup-standing-stats">
+                        <span><small>승패</small>{standing.wins}승 {standing.losses}패</span>
+                        <span><small>세트</small>{standing.setScore}</span>
+                        <span><small>승점</small>{standing.points}점</span>
+                      </div>
                     </div>
                   ))}
                 </div>
