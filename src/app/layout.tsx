@@ -6,15 +6,15 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://star-hm.vercel.app"),
-  title: "THE HM | StarCraft Team Roster",
-  description: "전략, 성장, 그리고 팀워크로 완성되는 스타크래프트 팀 THE HM 공식 로스터 사이트",
-  applicationName: "THE HM",
+  title: "스타 대학 정보",
+  description: "스타크래프트 대학 티어표, FA 현황, 라이브 상태, AI 리플레이 분석을 모아 보는 정보 허브",
+  applicationName: "스타 대학 정보",
   alternates: {
     canonical: "https://star-hm.vercel.app",
   },
   openGraph: {
-    title: "THE HM | StarCraft Team Roster",
-    description: "THE HM의 직책, 밸런스 티어, 종족별 로스터를 확인하세요.",
+    title: "스타 대학 정보",
+    description: "스타크래프트 대학 티어표, FA 현황, 라이브 상태, AI 리플레이 분석을 확인하세요.",
     type: "website",
     images: ["/brand/hm-emblem.png"],
   },

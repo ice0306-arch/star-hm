@@ -52,7 +52,7 @@ const groupOrder: MemberGroup[] = ["leadership", "faculty-coach", "student"];
 const groupMeta: Record<MemberGroup, { title: string; description: string }> = {
   leadership: {
     title: "이사장",
-    description: "THE HM의 방향과 팀 정체성을 대표합니다.",
+    description: "스타 대학 정보의 주요 운영 흐름을 정리합니다.",
   },
   "faculty-coach": {
     title: "총장 / 교수 / 코치",
@@ -65,14 +65,10 @@ const groupMeta: Record<MemberGroup, { title: string; description: string }> = {
 };
 
 const navItems = [
-  { label: "AI분석툴", href: "/ai-tools" },
-  { label: "TEAM", href: "#team" },
-  { label: "ACTIVITY", href: "#activity" },
-  { label: "ROSTER", href: "#roster" },
-  { label: "INTEL", href: "#intel" },
+  { label: "HOME", href: "#star-info" },
   { label: "대학티어", href: "/university-tiers" },
   { label: "FA현황", href: "/free-agents" },
-  { label: "K-중만컵", href: "/k-jungman-cup" },
+  { label: "AI분석툴", href: "/ai-tools" },
   { label: "ABOUT", href: "#about" },
 ];
 
@@ -117,77 +113,29 @@ export function HomePage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showEntry, setShowEntry] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [activeRace, setActiveRace] = useState<RaceFilter>("전체");
-  const [liveStatuses, setLiveStatuses] = useState<Record<string, LiveStatus>>({});
-  const [activityUpdatedAt, setActivityUpdatedAt] = useState<number | null>(null);
-  const [posts, setPosts] = useState<PostItem[]>([]);
-  const [postsLoading, setPostsLoading] = useState(true);
-  const [activePostTier, setActivePostTier] = useState<NoticeTierFilter>("전체");
-  const [activePostMember, setActivePostMember] = useState("전체");
   const [themeMode, setThemeMode] = useState<ThemeMode>("dark");
   const [hasCompletedEntry, setHasCompletedEntry] = useState(true);
 
   const entryOverlayEnabled = process.env.NEXT_PUBLIC_ENABLE_ENTRY_OVERLAY !== "false";
   const forceEntryOverlay = process.env.NEXT_PUBLIC_FORCE_ENTRY_OVERLAY === "true";
 
-  const raceCounts = useMemo(
-    () => countBy(orderedMembers, (member) => member.race),
-    [],
-  );
-
-  const fallbackPosts = useMemo(
-    () =>
-      orderedMembers.map((member) => ({
-        id: `${member.id}-station-board`,
-        memberId: member.id,
-        memberName: member.name,
-        title: `${member.name} 공지 게시판`,
-        summary: "최신 공지는 멤버 채널 게시판에서 확인할 수 있습니다.",
-        url: member.url,
-        regDate: "",
-        commentCount: 0,
-        readCount: 0,
-        boardName: "채널 공지",
-        isNotice: true,
-      })),
-    [],
-  );
-
-  const activePosts = posts.length ? posts : fallbackPosts;
-
-  const filteredIntelMembers = useMemo(() => {
-    if (activeRace === "전체") {
-      return orderedMembers;
-    }
-    return orderedMembers.filter((member) => member.race === activeRace);
-  }, [activeRace]);
-
-  const filteredPosts = useMemo(() => {
-    return activePosts.filter((post) => {
-      const member = orderedMembers.find((item) => item.id === post.memberId);
-      const tierMatches = activePostTier === "전체" || (member ? noticeTierValue(member) === activePostTier : false);
-      const memberMatches = activePostMember === "전체" || post.memberId === activePostMember;
-      return tierMatches && memberMatches;
-    });
-  }, [activePostMember, activePostTier, activePosts]);
-
   const stats = useMemo(
     () => [
       {
-        label: "이사장",
-        value: orderedMembers.filter((member) => member.group === "leadership").length,
+        label: "대학 정보",
+        value: 13,
       },
       {
-        label: "총장 / 교수 / 코치",
-        value: orderedMembers.filter((member) => member.group === "faculty-coach").length,
+        label: "FA 등록",
+        value: 105,
       },
       {
-        label: "학생",
-        value: orderedMembers.filter((member) => member.group === "student").length,
+        label: "라이브 현황",
+        value: 1,
       },
       {
-        label: "총 멤버",
-        value: orderedMembers.length,
+        label: "AI 분석",
+        value: 1,
       },
     ],
     [],
@@ -209,49 +157,6 @@ export function HomePage() {
       setShowEntry(true);
     }
   }, [entryOverlayEnabled, forceEntryOverlay]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function loadLiveStatus() {
-      try {
-        const response = await fetch("/api/live", { signal: controller.signal });
-
-        if (response.ok) {
-          const payload = await response.json();
-          setLiveStatuses(
-            Object.fromEntries((payload.statuses ?? []).map((status: LiveStatus) => [status.memberId, status])),
-          );
-          setActivityUpdatedAt(Number(payload.updatedAt || Date.now()));
-        }
-      } catch {
-        return;
-      }
-    }
-
-    async function loadPosts() {
-      try {
-        const response = await fetch("/api/posts", { signal: controller.signal });
-
-        if (response.ok) {
-          const payload = await response.json();
-          setPosts(Array.isArray(payload.posts) ? payload.posts : []);
-        }
-      } catch {
-        return;
-      } finally {
-        setPostsLoading(false);
-      }
-    }
-
-    loadLiveStatus();
-    const postsTimer = window.setTimeout(loadPosts, 300);
-
-    return () => {
-      window.clearTimeout(postsTimer);
-      controller.abort();
-    };
-  }, []);
 
   const playEntrySound = async () => {
     if (!soundEnabled) {
@@ -310,8 +215,8 @@ export function HomePage() {
       <Header
         isMenuOpen={isMenuOpen}
         setIsMenuOpen={setIsMenuOpen}
-        homeHref={hasCompletedEntry ? "#activity" : "#team"}
-        items={hasCompletedEntry ? navItems.filter((item) => item.href !== "#team") : navItems}
+        homeHref="#star-info"
+        items={navItems}
       />
 
       {!hasCompletedEntry ? (
@@ -321,23 +226,23 @@ export function HomePage() {
               <div className="max-w-3xl">
                 <div className="mb-7 inline-flex items-center gap-3 border border-gold/35 bg-gold/10 px-3 py-2 text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-gold">
                   <span className="h-1.5 w-1.5 bg-gold" />
-                  Premium esports institution
+                  StarCraft information board
                 </div>
-                <h1 className="text-[clamp(3.25rem,12vw,8.7rem)] font-black uppercase leading-[0.84] tracking-0 text-white">
-                  THE HM
+                <h1 className="text-[clamp(3rem,8vw,7rem)] font-black leading-[0.96] tracking-0 text-white">
+                  스타 대학 정보
                 </h1>
                 <p className="mt-5 text-sm font-semibold uppercase tracking-[0.42em] text-steel sm:text-base">
-                  StarCraft Team Roster
+                  StarCraft University Info
                 </p>
                 <p className="mt-7 max-w-2xl text-balance text-lg leading-8 text-silver/84 sm:text-xl">
-                  전략, 성장, 그리고 팀워크로 완성되는 스타크래프트 팀 THE HM
+                  스타크래프트 대학 티어표, FA 현황, 라이브 흐름, 리플레이 분석을 한 화면에서 확인하는 정보 허브
                 </p>
                 <div className="mt-9 flex flex-wrap gap-3">
-                  <a className="command-button command-button-primary" href="#activity">
-                    LIVE STATUS
+                  <a className="command-button command-button-primary" href="/university-tiers">
+                    대학티어 보기
                   </a>
-                  <a className="command-button" href="#roster">
-                    VIEW ROSTER
+                  <a className="command-button" href="/free-agents">
+                    FA현황 보기
                   </a>
                 </div>
                 <StatsGrid stats={stats} className="mt-8 lg:hidden" />
@@ -348,7 +253,7 @@ export function HomePage() {
                   <img
                     className="mx-auto h-auto w-full max-w-[360px]"
                     src={BRAND_EMBLEM_ANIMATED_SRC}
-                    alt="THE HM emblem"
+                    alt="스타 대학 정보 emblem"
                     width={288}
                     height={288}
                     fetchPriority="high"
@@ -356,7 +261,7 @@ export function HomePage() {
                   />
                 </div>
                 <div className="mt-5 text-center text-xs font-semibold uppercase tracking-[0.34em] text-steel/80">
-                  Strategic hierarchy protocol
+                  University live intelligence
                 </div>
               </div>
             </div>
@@ -368,82 +273,38 @@ export function HomePage() {
         </>
       ) : null}
 
-      <section id="activity" className="activity-priority section-band px-5 py-20 sm:px-8 lg:px-10">
+      <section id="star-info" className="activity-priority section-band px-5 py-20 sm:px-8 lg:px-10">
         <div className="mx-auto max-w-7xl">
           <SectionHeader
-            eyebrow="ACTIVITY"
-            title="LIVE STATUS & NOTICE BOARD"
-            description="현재 온라인 여부와 멤버별 공지 게시글을 한 화면에서 확인할 수 있습니다."
+            eyebrow="STAR INFO"
+            title="스타 대학 정보 허브"
+            description="팀 소개보다 실제로 필요한 대학 티어, FA 현황, 라이브 선수, AI 리플레이 분석을 먼저 볼 수 있게 정리했습니다."
           />
-          <div className="activity-layout mt-8">
-            <LiveStatusBoard members={orderedMembers} liveStatuses={liveStatuses} updatedAt={activityUpdatedAt} />
-            <NoticeBoard
-              posts={filteredPosts}
-              allPosts={activePosts}
-              loading={postsLoading}
-              activeTier={activePostTier}
-              activeMember={activePostMember}
-              onTierChange={(tier) => {
-                setActivePostTier(tier);
-                setActivePostMember("전체");
-              }}
-              onMemberChange={setActivePostMember}
-            />
-          </div>
-        </div>
-      </section>
-
-      <section id="roster" className="section-band px-5 py-20 sm:px-8 lg:px-10">
-        <div className="mx-auto max-w-7xl">
-          <SectionHeader
-            eyebrow="ROSTER"
-            title="THE HM COMMAND ROSTER"
-            description="직책, 밸런스 티어, 종족을 분리해 팀의 구조와 전력을 한눈에 볼 수 있도록 구성했습니다."
-          />
-          <div className="mt-10 space-y-14">
-            {groupOrder.map((group) => (
-              <RosterGroup
-                key={group}
-                title={groupMeta[group].title}
-                description={groupMeta[group].description}
-                members={orderedMembers.filter((member) => member.group === group)}
-                liveStatuses={liveStatuses}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="intel" className="section-band px-5 py-20 sm:px-8 lg:px-10">
-        <div className="mx-auto max-w-7xl">
-          <SectionHeader
-            eyebrow="INTEL"
-            title="RACE INTEL"
-            description="종족별 멤버 구성을 빠르게 볼 수 있도록 정리했습니다."
-          />
-          <div className="intel-panel mt-8">
-            <div className="race-intel-head">
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            <a className="ai-tool-feature" href="/university-tiers">
               <div>
-                <span className="panel-kicker">RACE FILTER</span>
-                <strong>{activeRace === "전체" ? "전체 종족" : activeRace}</strong>
+                <span className="panel-kicker">UNIVERSITY TIERS</span>
+                <h3>대학 티어표 현황</h3>
+                <p>대학별 총원, 티어 분포, 종족 비율, 현재 라이브 선수를 한눈에 비교합니다.</p>
               </div>
-              <span>{filteredIntelMembers.length} members</span>
-            </div>
-            <div className="filter-chip-grid race-only mt-5" aria-label="Race filter">
-              <RaceChip race="전체" count={orderedMembers.length} active={activeRace === "전체"} onClick={() => setActiveRace("전체")} />
-              {races.map((race) => (
-                <RaceChip
-                  key={race}
-                  race={race}
-                  count={raceCounts[race] ?? 0}
-                  active={activeRace === race}
-                  onClick={() => setActiveRace(race)}
-                />
-              ))}
-            </div>
-            <div className="mt-6">
-              <IntelMemberList members={filteredIntelMembers} liveStatuses={liveStatuses} />
-            </div>
+              <span className="ai-tool-feature-action">열기</span>
+            </a>
+            <a className="ai-tool-feature" href="/free-agents">
+              <div>
+                <span className="panel-kicker">FREE AGENT BOARD</span>
+                <h3>FA 현황판</h3>
+                <p>무소속 선수와 기존 HM 멤버를 FA 기준으로 합쳐 티어와 종족별로 확인합니다.</p>
+              </div>
+              <span className="ai-tool-feature-action">열기</span>
+            </a>
+            <a className="ai-tool-feature" href="/ai-tools">
+              <div>
+                <span className="panel-kicker">REPLAY COACH</span>
+                <h3>AI 분석툴</h3>
+                <p>REP 업로드 후 어떤 판단을 고쳐야 하는지 코칭 중심으로 복기합니다.</p>
+              </div>
+              <span className="ai-tool-feature-action">열기</span>
+            </a>
           </div>
         </div>
       </section>
@@ -452,14 +313,14 @@ export function HomePage() {
         <div className="mx-auto max-w-7xl">
           <SectionHeader
             eyebrow="AI ANALYSIS TOOL"
-            title="HM AI 분석툴"
-            description="리플레이는 기록이 아니라 증거다. 경기 기록과 플레이 명령을 분석해 전략, 빌드, 생산, 단축키와 플레이 습관을 근거 기반으로 보여줍니다."
+            title="AI 리플레이 분석툴"
+            description="리플레이는 기록이 아니라 다음 판을 바꾸는 근거입니다. 업로드한 REP를 바탕으로 빌드, 생산, 판단 장면을 코칭 문장으로 정리합니다."
           />
           <a className="ai-tool-feature mt-8" href="/ai-tools">
             <div>
               <span className="panel-kicker">STARCRAFT MATCH INTELLIGENCE</span>
-              <h3>HM AI 분석툴</h3>
-              <p>공개되거나 HM AI 분석툴에 수집된 리플레이를 기준으로 빌드, 생산, 명령 효율과 분석 근거를 확인합니다.</p>
+              <h3>AI 분석툴</h3>
+              <p>리플레이를 업로드하면 승자/패자 관점별로 이번 판에서 바로 고칠 포인트와 다음 판 실행 순서를 확인합니다.</p>
             </div>
             <span className="ai-tool-feature-action">도구 열기</span>
           </a>
@@ -468,11 +329,11 @@ export function HomePage() {
 
       <section id="about" className="px-5 py-20 sm:px-8 lg:px-10">
         <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.8fr_1fr] lg:items-center">
-          <SectionHeader eyebrow="ABOUT" title="THE HM IDENTITY" />
+          <SectionHeader eyebrow="ABOUT" title="스타 대학 정보 안내" />
           <div className="about-panel">
             <p>
-              THE HM은 스타크래프트를 중심으로 각자의 성장과 전략을 함께 만들어가는 팀입니다.
-              직급과 티어를 넘어, 모든 멤버가 하나의 팀으로 연결됩니다.
+              이 페이지는 스타크래프트 대학 티어표, 무소속 FA 현황, 라이브 선수 정보, 리플레이 분석을 모아 보는 커뮤니티 정보 허브입니다.
+              대학 소속과 FA 상태가 바뀌는 흐름을 빠르게 확인하고, 실제 경기를 복기할 때 필요한 정보만 앞에 배치합니다.
             </p>
           </div>
         </div>
@@ -503,13 +364,13 @@ function Header({
           <img
             className="h-12 w-12 object-contain"
             src={BRAND_EMBLEM_SRC}
-            alt="THE HM emblem"
+            alt="스타 대학 정보 emblem"
             width={48}
             height={48}
             loading="eager"
             decoding="async"
           />
-          <span className="text-sm font-black uppercase tracking-[0.24em]">THE HM</span>
+          <span className="text-sm font-black uppercase tracking-[0.24em]">스타 대학 정보</span>
         </a>
 
         <button
@@ -562,20 +423,20 @@ function EntryOverlay({
         <img
           className="mx-auto h-auto w-44 sm:w-56"
           src={BRAND_EMBLEM_ANIMATED_SRC}
-          alt="THE HM emblem"
+          alt="스타 대학 정보 emblem"
           width={288}
           height={288}
           loading="eager"
           decoding="async"
         />
         <h2 id="entry-title" className="mt-6 text-4xl font-black uppercase tracking-[0.18em] text-white sm:text-6xl">
-          THE HM
+          STAR INFO
         </h2>
         <p className="mt-3 text-xs font-semibold uppercase tracking-[0.34em] text-steel sm:text-sm">
-          StarCraft Team Roster
+          StarCraft University Board
         </p>
         <button className="command-button command-button-primary mt-8" type="button" onClick={onEnter}>
-          ENTER THE HM
+          ENTER STAR INFO
         </button>
         <button className="mx-auto mt-4 block text-xs font-semibold uppercase tracking-[0.18em] text-steel transition hover:text-white" type="button" onClick={onSoundToggle}>
           {soundEnabled ? "SOUND ON" : "SOUND OFF"}
@@ -1008,15 +869,15 @@ function Footer({
           <img
             className="h-14 w-14 object-contain"
             src={BRAND_EMBLEM_SRC}
-            alt="THE HM emblem"
+            alt="스타 대학 정보 emblem"
             width={56}
             height={56}
             loading="lazy"
             decoding="async"
           />
-          <div className="mt-3 font-black uppercase tracking-[0.2em] text-white">THE HM STARCRAFT TEAM</div>
-          <p className="mt-2">Independent community team site. Not affiliated with Blizzard Entertainment.</p>
-          <p className="mt-1 text-xs text-steel/70">Copyright 2026 THE HM. All rights reserved.</p>
+          <div className="mt-3 font-black uppercase tracking-[0.2em] text-white">STARCRAFT UNIVERSITY INFO</div>
+          <p className="mt-2">Independent community information site. Not affiliated with Blizzard Entertainment.</p>
+          <p className="mt-1 text-xs text-steel/70">Copyright 2026 스타 대학 정보. All rights reserved.</p>
         </div>
         {entryOverlayEnabled ? (
           <button className="replay-button" type="button" onClick={onReplayIntro}>

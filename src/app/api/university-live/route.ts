@@ -7,8 +7,21 @@ export const runtime = "nodejs";
 const UNIVERSITY_TIER_SOURCE_URL = "https://onek-soop.com/tier";
 const CACHE_TTL_MS = 45_000;
 const FETCH_TIMEOUT_MS = 4_000;
-const EXCLUDED_LIVE_SOOP_IDS = new Set(["bangsong12", "yeom1020", "jjyjeh5454", "595935"]);
+const EXCLUDED_LIVE_SOOP_IDS = new Set(["bangsong12", "yeom1020", "jjyjeh5454", "595935", "suhi370erw"]);
 const LIVE_PLAYER_OVERRIDES = new Map<string, Partial<Pick<UniversityLivePlayer, "college" | "name" | "race" | "tier">>>([
+  ["nalra82", { college: "무소속", name: "강민", race: "Protoss", tier: "Spade" }],
+  ["ghtjs3833", { college: "무소속", name: "최호선", race: "Terran", tier: "God" }],
+  ["bts150", { college: "무소속", name: "방태수", race: "Zerg", tier: "King" }],
+  ["jhyhlli123", { college: "무소속", name: "박준혁", race: "Protoss", tier: "Joker" }],
+  ["heksd", { college: "무소속", name: "파메", race: "Protoss", tier: "0" }],
+  ["igoldtree", { college: "무소속", name: "카리스", race: "Terran", tier: "1" }],
+  ["sr629", { college: "무소속", name: "사랑e", race: "Protoss", tier: "3" }],
+  ["ekfrqkf", { college: "무소속", name: "슬아", race: "Protoss", tier: "4" }],
+  ["snowssa", { college: "무소속", name: "설둥이", race: "Protoss", tier: "5" }],
+  ["ynblbee", { college: "무소속", name: "연블비", race: "Zerg", tier: "6" }],
+  ["asdsa1113", { college: "무소속", name: "세월", race: "Protoss", tier: "7" }],
+  ["onzzang", { college: "무소속", name: "이응씨", race: "Terran", tier: "8" }],
+  ["ara9687", { college: "무소속", name: "이아라", race: "Protoss", tier: "Baby" }],
   ["2ahgo1203", { college: "뉴캣슬", name: "이아깽" }],
   ["sulstyle00", { college: "신세계", name: "설영욱", race: "Protoss", tier: "Baby" }],
   ["jmc06170", { college: "캄몬스타즈", name: "왜냐맨", race: "Protoss", tier: "Jack" }],

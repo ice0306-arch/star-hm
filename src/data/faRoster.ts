@@ -104,6 +104,19 @@ export const faRoster: FaRosterEntry[] = [
   { name: "야생땃쥐", tier: "8", race: "Zerg", soopId: "dlwjddls30", url: "https://www.sooplive.com/station/dlwjddls30", profileImage: "https://profile.img.sooplive.com/LOGO/dl/dlwjddls30/dlwjddls30.jpg", sourceCrew: "FA" },
   { name: "진땅콩", tier: "8", race: "Protoss", soopId: "wlswn6565", url: "https://www.sooplive.com/station/wlswn6565", profileImage: "https://profile.img.sooplive.com/LOGO/wl/wlswn6565/wlswn6565.jpg", sourceCrew: "FA" },
   { name: "요괴버스", tier: "Baby", race: "Terran", soopId: "j4141h", url: "https://www.sooplive.com/station/j4141h", profileImage: "https://profile.img.sooplive.com/LOGO/j4/j4141h/j4141h.jpg", sourceCrew: "FA" },
+  { name: "강민", tier: "Spade", race: "Protoss", soopId: "nalra82", url: "https://www.sooplive.com/station/nalra82", profileImage: "/members/kangmin.jpg", sourceCrew: "FA" },
+  { name: "최호선", tier: "God", race: "Terran", soopId: "ghtjs3833", url: "https://www.sooplive.com/station/ghtjs3833", profileImage: "/members/choi-hoseon.gif", sourceCrew: "FA" },
+  { name: "방태수", tier: "King", race: "Zerg", soopId: "bts150", url: "https://www.sooplive.com/station/bts150", profileImage: "/members/bang-taesu.jpg", sourceCrew: "FA" },
+  { name: "박준혁", tier: "Joker", race: "Protoss", soopId: "jhyhlli123", url: "https://www.sooplive.com/station/jhyhlli123", profileImage: "/members/park-junhyuk.png", sourceCrew: "FA" },
+  { name: "파메", tier: "0", race: "Protoss", soopId: "heksd", url: "https://www.sooplive.com/station/heksd", profileImage: "/members/pame.gif", sourceCrew: "FA" },
+  { name: "카리스", tier: "1", race: "Terran", soopId: "igoldtree", url: "https://www.sooplive.com/station/igoldtree", profileImage: "/members/karis.gif", sourceCrew: "FA" },
+  { name: "사랑e", tier: "3", race: "Protoss", soopId: "sr629", url: "https://www.sooplive.com/station/sr629", profileImage: "/members/sarange.gif", sourceCrew: "FA" },
+  { name: "슬아", tier: "4", race: "Protoss", soopId: "ekfrqkf", url: "https://www.sooplive.com/station/ekfrqkf", profileImage: "/members/seula.gif", sourceCrew: "FA" },
+  { name: "설둥이", tier: "5", race: "Protoss", soopId: "snowssa", url: "https://www.sooplive.com/station/snowssa", profileImage: "/members/seoldungi.gif", sourceCrew: "FA" },
+  { name: "연블비", tier: "6", race: "Zerg", soopId: "ynblbee", url: "https://www.sooplive.com/station/ynblbee", profileImage: "/members/yeonblbi.gif", sourceCrew: "FA" },
+  { name: "세월", tier: "7", race: "Protoss", soopId: "asdsa1113", url: "https://www.sooplive.com/station/asdsa1113", profileImage: "/members/sewol.gif", sourceCrew: "FA" },
+  { name: "이응씨", tier: "8", race: "Terran", soopId: "onzzang", url: "https://www.sooplive.com/station/onzzang", profileImage: "/members/ieungssi.jpg", sourceCrew: "FA" },
+  { name: "이아라", tier: "Baby", race: "Protoss", soopId: "ara9687", url: "https://www.sooplive.com/station/ara9687", profileImage: "/members/iara.png", sourceCrew: "FA" },
 ];
 
 export const faRosterBySoopId = new Map(faRoster.map((player) => [player.soopId, player]));

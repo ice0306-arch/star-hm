@@ -34,18 +34,6 @@ export interface Member {
 
 export const members: Member[] = [
   {
-    id: "hyukmin",
-    name: "혁민",
-    role: "이사장",
-    group: "leadership",
-    balanceTier: null,
-    race: "Zerg",
-    url: "https://www.sooplive.com/station/suhi370erw",
-    linkLabel: "숲티비 채널 바로가기",
-    order: 1,
-    avatar: "/members/hyukmin.gif",
-  },
-  {
     id: "kangmin",
     name: "강민",
     role: "총장",

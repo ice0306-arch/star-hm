@@ -213,14 +213,13 @@ export function UniversityTiersPage() {
       <header className="fixed left-0 right-0 top-0 z-40 border-b border-white/10 bg-carbon/82 backdrop-blur-xl">
         <nav className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-10" aria-label="대학 티어표 내비게이션">
           <a className="flex items-center gap-3 text-white" href="/">
-            <img className="h-12 w-12 object-contain" src={BRAND_EMBLEM_SRC} alt="THE HM emblem" width={48} height={48} />
-            <span className="text-sm font-black uppercase tracking-[0.24em]">THE HM</span>
+            <img className="h-12 w-12 object-contain" src={BRAND_EMBLEM_SRC} alt="스타 대학 정보 emblem" width={48} height={48} />
+            <span className="text-sm font-black uppercase tracking-[0.24em]">스타 대학 정보</span>
           </a>
           <div className="university-tier-nav-links">
             <a className="nav-link" href="/">HOME</a>
             <a className="nav-link" href="/university-tiers">대학티어</a>
             <a className="nav-link" href="/free-agents">FA현황</a>
-            <a className="nav-link" href="/k-jungman-cup">K-중만컵</a>
             <a className="nav-link" href="/ai-tools">AI분석툴</a>
           </div>
         </nav>
@@ -382,7 +381,7 @@ function UniversityTierCard({ college, liveCount }: { college: UniversityTierSna
   const strongestRace = mainRace(college);
   const topCount = topTierCount(college);
   const sortedTiers = universitySnapshotTierOrder.filter((tier) => (college.tiers[tier] ?? 0) > 0);
-  const eyebrow = college.college === "무소속" ? "FREE AGENT" : college.featured ? "THE HM" : "UNIVERSITY";
+  const eyebrow = college.college === "무소속" ? "FREE AGENT" : "UNIVERSITY";
   const displayTotal = college.college === "무소속" && liveCount > 0 ? liveCount : college.total;
 
   return (
