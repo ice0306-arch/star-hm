@@ -15,7 +15,6 @@ import {
 const ENTRY_KEY = "the-hm-entry-completed";
 const SOUND_KEY = "the-hm-sound-enabled";
 const THEME_KEY = "the-hm-theme-mode";
-const BRAND_EMBLEM_SRC = "/brand/hm-emblem.png";
 const BRAND_EMBLEM_ANIMATED_SRC = "/brand/hm-emblem.gif";
 
 type NoticeTierFilter = "전체" | "CHAIRMAN" | Exclude<BalanceTier, null>;
@@ -116,8 +115,8 @@ export function HomePage() {
   const [themeMode, setThemeMode] = useState<ThemeMode>("dark");
   const [hasCompletedEntry, setHasCompletedEntry] = useState(true);
 
-  const entryOverlayEnabled = process.env.NEXT_PUBLIC_ENABLE_ENTRY_OVERLAY !== "false";
-  const forceEntryOverlay = process.env.NEXT_PUBLIC_FORCE_ENTRY_OVERLAY === "true";
+  const entryOverlayEnabled = false;
+  const forceEntryOverlay = false;
 
   const stats = useMemo(
     () => [
@@ -273,57 +272,64 @@ export function HomePage() {
         </>
       ) : null}
 
-      <section id="star-info" className="activity-priority section-band px-5 py-20 sm:px-8 lg:px-10">
+      <section id="star-info" className="home-editorial px-5 pb-20 pt-32 sm:px-8 lg:px-10">
         <div className="mx-auto max-w-7xl">
-          <SectionHeader
-            eyebrow="STAR INFO"
-            title="스타 대학 정보 허브"
-            description="팀 소개보다 실제로 필요한 대학 티어, FA 현황, 라이브 선수, AI 리플레이 분석을 먼저 볼 수 있게 정리했습니다."
-          />
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            <a className="ai-tool-feature" href="/university-tiers">
-              <div>
-                <span className="panel-kicker">UNIVERSITY TIERS</span>
-                <h3>대학 티어표 현황</h3>
-                <p>대학별 총원, 티어 분포, 종족 비율, 현재 라이브 선수를 한눈에 비교합니다.</p>
+          <div className="home-editorial-hero">
+            <div className="home-editorial-copy">
+              <div className="home-eyebrow">STARCRAFT UNIVERSITY INDEX</div>
+              <h1>스타 대학 흐름을 한 화면에서 봅니다.</h1>
+              <p className="home-lede">
+                대학 티어표, FA 이동, 라이브 선수, 리플레이 분석을 따로 찾지 않도록 핵심 정보만 정리했습니다.
+                오늘 누가 온라인이고 어느 티어에 있는지 먼저 확인하세요.
+              </p>
+              <div className="home-actions" aria-label="주요 화면 바로가기">
+                <a className="command-button command-button-primary" href="/university-tiers">
+                  대학티어 보기
+                </a>
+                <a className="command-button" href="/free-agents">
+                  FA현황 보기
+                </a>
               </div>
-              <span className="ai-tool-feature-action">열기</span>
+            </div>
+            <aside className="home-priority-panel" aria-label="오늘 볼 정보 순서">
+              <span>오늘 볼 순서</span>
+              <ol>
+                <li>라이브 중인 선수와 소속 대학 확인</li>
+                <li>티어별·종족별 FA 풀 비교</li>
+                <li>REP 업로드 후 다음 판 코칭 확인</li>
+              </ol>
+            </aside>
+          </div>
+
+          <div className="home-stat-strip" aria-label="서비스 요약">
+            {stats.map((stat) => (
+              <div key={stat.label}>
+                <strong>{stat.value}</strong>
+                <span>{stat.label}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="home-feature-grid" aria-label="주요 기능">
+            <a className="home-feature-card home-feature-primary" href="/university-tiers">
+              <span>UNIVERSITY TIERS</span>
+              <strong>대학 티어표 현황</strong>
+              <p>대학별 총원, 티어 분포, 종족 비율, 라이브 선수를 같은 기준으로 비교합니다.</p>
+              <em>대학별 보기</em>
             </a>
-            <a className="ai-tool-feature" href="/free-agents">
-              <div>
-                <span className="panel-kicker">FREE AGENT BOARD</span>
-                <h3>FA 현황판</h3>
-                <p>무소속 선수와 기존 HM 멤버를 FA 기준으로 합쳐 티어와 종족별로 확인합니다.</p>
-              </div>
-              <span className="ai-tool-feature-action">열기</span>
+            <a className="home-feature-card" href="/free-agents">
+              <span>FREE AGENT BOARD</span>
+              <strong>FA 현황판</strong>
+              <p>무소속 선수와 기존 HM 멤버를 FA 기준으로 합쳐 티어와 종족별로 확인합니다.</p>
+              <em>FA 풀 보기</em>
             </a>
-            <a className="ai-tool-feature" href="/ai-tools">
-              <div>
-                <span className="panel-kicker">REPLAY COACH</span>
-                <h3>AI 분석툴</h3>
-                <p>REP 업로드 후 어떤 판단을 고쳐야 하는지 코칭 중심으로 복기합니다.</p>
-              </div>
-              <span className="ai-tool-feature-action">열기</span>
+            <a className="home-feature-card" href="/ai-tools">
+              <span>REPLAY COACH</span>
+              <strong>AI 분석툴</strong>
+              <p>REP 업로드 후 승자·패자 관점별로 이번 판에서 바로 고칠 포인트를 복기합니다.</p>
+              <em>분석 열기</em>
             </a>
           </div>
-        </div>
-      </section>
-
-      <section id="ai-tools" className="section-band px-5 py-20 sm:px-8 lg:px-10">
-        <div className="mx-auto max-w-7xl">
-          <SectionHeader
-            eyebrow="AI ANALYSIS TOOL"
-            title="AI 리플레이 분석툴"
-            description="리플레이는 기록이 아니라 다음 판을 바꾸는 근거입니다. 업로드한 REP를 바탕으로 빌드, 생산, 판단 장면을 코칭 문장으로 정리합니다."
-          />
-          <a className="ai-tool-feature mt-8" href="/ai-tools">
-            <div>
-              <span className="panel-kicker">STARCRAFT MATCH INTELLIGENCE</span>
-              <h3>AI 분석툴</h3>
-              <p>리플레이를 업로드하면 승자/패자 관점별로 이번 판에서 바로 고칠 포인트와 다음 판 실행 순서를 확인합니다.</p>
-            </div>
-            <span className="ai-tool-feature-action">도구 열기</span>
-          </a>
         </div>
       </section>
 
@@ -360,17 +366,9 @@ function Header({
   return (
     <header className="fixed left-0 right-0 top-0 z-40 border-b border-white/10 bg-carbon/82 backdrop-blur-xl">
       <nav className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-10" aria-label="Primary navigation">
-        <a className="flex items-center gap-3 text-white" href={homeHref} onClick={() => setIsMenuOpen(false)}>
-          <img
-            className="h-12 w-12 object-contain"
-            src={BRAND_EMBLEM_SRC}
-            alt="스타 대학 정보 emblem"
-            width={48}
-            height={48}
-            loading="eager"
-            decoding="async"
-          />
-          <span className="text-sm font-black uppercase tracking-[0.24em]">스타 대학 정보</span>
+        <a className="home-wordmark" href={homeHref} onClick={() => setIsMenuOpen(false)}>
+          <span>STAR</span>
+          <strong>스타 대학 정보</strong>
         </a>
 
         <button
@@ -866,16 +864,7 @@ function Footer({
     <footer className="border-t border-white/10 px-5 py-10 sm:px-8 lg:px-10">
       <div className="mx-auto flex max-w-7xl flex-col gap-6 text-sm text-steel sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <img
-            className="h-14 w-14 object-contain"
-            src={BRAND_EMBLEM_SRC}
-            alt="스타 대학 정보 emblem"
-            width={56}
-            height={56}
-            loading="lazy"
-            decoding="async"
-          />
-          <div className="mt-3 font-black uppercase tracking-[0.2em] text-white">STARCRAFT UNIVERSITY INFO</div>
+          <div className="font-black uppercase tracking-[0.2em] text-white">STARCRAFT UNIVERSITY INFO</div>
           <p className="mt-2">Independent community information site. Not affiliated with Blizzard Entertainment.</p>
           <p className="mt-1 text-xs text-steel/70">Copyright 2026 스타 대학 정보. All rights reserved.</p>
         </div>
